@@ -225,13 +225,13 @@ final class ReaderViewController: UIViewController {
             topBar.topAnchor.constraint(equalTo: view.topAnchor),
             topBar.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             topBar.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            topBar.heightAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 44),
+            topBar.heightAnchor.constraint(equalToConstant: 88),
 
             // 下工具栏
             bottomBar.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             bottomBar.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             bottomBar.bottomAnchor.constraint(equalTo: view.bottomAnchor),
-            bottomBar.heightAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: 54),
+            bottomBar.heightAnchor.constraint(equalToConstant: 88),
 
             chapterTitleLabel.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 8),
             chapterTitleLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
@@ -488,9 +488,136 @@ final class ReaderViewController: UIViewController {
 
     // MARK: - 动作
     @objc private func handleTap() {
-        configPanel.isHidden.toggle()
-        navigationController?.setNavigationBarHidden(!configPanel.isHidden, animated: true)
+        toggleBars()
     }
+    // MARK: - 工具栏显隐
+    private func toggleBars() {
+        areBarsHidden.toggle()
+        let alpha: CGFloat = areBarsHidden ? 0 : 1
+        UIView.animate(withDuration: DesignToken.Animation.normal) {
+            self.topBar.alpha = alpha
+            self.bottomBar.alpha = alpha
+        }
+        if !areBarsHidden {
+            resetAutoHideTimer()
+        } else {
+            autoHideTimer?.invalidate()
+        }
+    }
+
+    private func resetAutoHideTimer() {
+        autoHideTimer?.invalidate()
+        autoHideTimer = Timer.scheduledTimer(withTimeInterval: 3.0, repeats: false) { [weak self] _ in
+            self?.hideBars()
+        }
+    }
+
+    private func hideBars() {
+        guard !areBarsHidden else { return }
+        areBarsHidden = true
+        UIView.animate(withDuration: DesignToken.Animation.normal) {
+            self.topBar.alpha = 0
+            self.bottomBar.alpha = 0
+        }
+    }
+
+    // MARK: - 更多菜单
+    private func showMoreMenu() {
+        guard moreMenu == nil else { return }
+        let menu = NRReaderMoreMenu()
+        menu.onMenuItemSelected = { [weak self] item in
+            self?.handleMenuSelection(item)
+        }
+        menu.onMenuDismissed = { [weak self] in
+            self?.moreMenu = nil
+        }
+        moreMenu = menu
+        menu.show(in: view)
+        FeedbackManager.shared.lightImpact()
+    }
+
+    private func handleMenuSelection(_ item: NRReaderMoreMenu.MenuItemType) {
+        switch item {
+        case .fontSize:
+            configPanel.isHidden = false
+        case .typography:
+            NRToast.shared.info("排版设置开发中")
+        case .bookmark:
+            toggleBookmark()
+        case .search:
+            showSearch()
+        case .share:
+            NRToast.shared.info("分享功能开发中")
+        case .info:
+            showReadingInfo()
+        }
+    }
+
+    // MARK: - 目录
+    private func showCatalog() {
+        guard catalogView == nil else { return }
+        let catalog = NRReaderCatalogView()
+        catalog.configure(chapters: chapters, currentIndex: currentChapterIndex)
+        catalog.onChapterSelected = { [weak self] index in
+            self?.jumpToChapter(index)
+        }
+        catalog.onDismiss = { [weak self] in
+            self?.catalogView = nil
+        }
+        catalogView = catalog
+        catalog.show(in: view)
+        FeedbackManager.shared.lightImpact()
+    }
+
+    private func jumpToChapter(_ index: Int) {
+        guard index >= 0 && index < chapters.count else { return }
+        currentChapterIndex = index
+        loadChapter(at: index, restorePage: false)
+        updateProgress()
+    }
+
+    // MARK: - 夜间模式
+    private func toggleNightMode() {
+        isNightMode.toggle()
+        updateNightModeUI()
+        FeedbackManager.shared.mediumImpact()
+    }
+
+    private func updateNightModeUI() {
+        topBar.updateForNightMode(isNightMode)
+        bottomBar.setNightMode(isNightMode)
+        UIView.animate(withDuration: 0.4) {
+            if self.isNightMode {
+                self.view.backgroundColor = UIColor(red: 0.1, green: 0.1, blue: 0.1, alpha: 1.0)
+            } else {
+                self.view.backgroundColor = DesignToken.Color.backgroundPrimary
+            }
+        }
+    }
+
+    // MARK: - 进度详情
+    private func showProgressDetail() {
+        let chapter = chapters[currentChapterIndex]
+        let chapterProgress = Double(currentPageIndex + 1) / Double(max(1, currentPages.count))
+        let overallProgress = (Double(currentChapterIndex) + chapterProgress) / Double(max(1, chapters.count))
+        let message = "第\(currentChapterIndex + 1)章 \(chapter.title) - 全书\(Int(overallProgress * 100))%"
+        NRToast.shared.info(message)
+    }
+
+    // MARK: - 阅读信息
+    private func showReadingInfo() {
+        let chapter = chapters[currentChapterIndex]
+        let message = "\(chapter.title) - \(chapter.content.count)字 - 第\(currentChapterIndex + 1)/\(chapters.count)章"
+        NRToast.shared.info(message)
+    }
+
+    // MARK: - 更新进度
+    private func updateProgress() {
+        let chapterProgress = Double(currentPageIndex + 1) / Double(max(1, currentPages.count))
+        let overallProgress = (Double(currentChapterIndex) + chapterProgress) / Double(max(1, chapters.count))
+        bottomBar.setProgress(overallProgress)
+    }
+
 
     @objc private func fontSizeChanged() {
         viewModel.updateFontSize(CGFloat(fontSizeSlider.value))
