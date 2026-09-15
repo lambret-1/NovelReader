@@ -19,6 +19,7 @@ final class AppContainer {
     let bookmarkRepository: BookmarkRepository
     let readingProgressRepository: ReadingProgressRepository
     let syncMetadataRepository: SyncMetadataRepository
+    let conflictRepository: ConflictRepository
 
     // MARK: - SyncEngine
     let syncEngine: SyncEngine
@@ -45,12 +46,14 @@ final class AppContainer {
         self.bookmarkRepository = BookmarkRepository(dbQueue: databaseManager.dbQueue)
         self.readingProgressRepository = ReadingProgressRepository(dbQueue: databaseManager.dbQueue)
         self.syncMetadataRepository = SyncMetadataRepository(dbQueue: databaseManager.dbQueue)
+        self.conflictRepository = ConflictRepository(dbQueue: databaseManager.dbQueue)
 
         // SyncEngine
         self.syncEngine = SyncEngine(
             bookRepository: bookRepository,
             chapterRepository: chapterRepository,
             syncMetadataRepository: syncMetadataRepository,
+            conflictRepository: conflictRepository,
             readingProgressRepository: readingProgressRepository,
             fileService: fileService,
             gitService: gitService,
@@ -140,7 +143,16 @@ final class AppContainer {
         return SyncViewController(viewModel: viewModel)
     }
 
+    func makeConflictListViewController() -> ConflictListViewController {
+        let viewModel = ConflictListViewModel(
+            conflictRepository: conflictRepository,
+            syncEngine: syncEngine
+        )
+        return ConflictListViewController(viewModel: viewModel)
+    }
+
     func makeSettingsViewController() -> SettingsViewController {
         SettingsViewController()
     }
 }
+
