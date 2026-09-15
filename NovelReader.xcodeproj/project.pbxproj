@@ -73,11 +73,11 @@
 
 /* Begin PBXFileReference section */
 		29CE550132313F1FB52FB33C /* NRReaderProgressView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NRReaderProgressView.swift"; sourceTree = "<group>"; };
-		B1F2C3D4E5F6A7B8C9D0E1F2 /* MainTabBarController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "MainTabBarController.swift"; sourceTree = "<group>"; };
-		80FD6B229210479DA9B8A9B9 /* LibraryViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "LibraryViewController.swift"; sourceTree = "<group>"; };
-		81E55BB844C04D879E69A5F7 /* ChapterListViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ChapterListViewController.swift"; sourceTree = "<group>"; };
-		9DF9B19B73C648EF9E63B7C7 /* SettingsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SettingsViewController.swift"; sourceTree = "<group>"; };
-		D268A326C32F428284A29609 /* SyncViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SyncViewController.swift"; sourceTree = "<group>"; };
+		B1F2C3D4E5F6A7B8C9D0E1F2 /* MainTabBarController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Presentation/Main/MainTabBarController.swift"; sourceTree = "<group>"; };
+		80FD6B229210479DA9B8A9B9 /* LibraryViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Presentation/Library/LibraryViewController.swift"; sourceTree = "<group>"; };
+		81E55BB844C04D879E69A5F7 /* ChapterListViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Presentation/Chapter/ChapterListViewController.swift"; sourceTree = "<group>"; };
+		9DF9B19B73C648EF9E63B7C7 /* SettingsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Presentation/Settings/SettingsViewController.swift"; sourceTree = "<group>"; };
+		D268A326C32F428284A29609 /* SyncViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Presentation/Sync/SyncViewController.swift"; sourceTree = "<group>"; };
 		812BD2FF36E3F188AAA83EB0 /* NRReaderTopBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NRReaderTopBar.swift"; sourceTree = "<group>"; };
 		D247452C5A70EDB3542A4E44 /* NRReaderBottomBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NRReaderBottomBar.swift"; sourceTree = "<group>"; };
 		9F44D65A8798892145546C3C /* NRReaderMoreMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NRReaderMoreMenu.swift"; sourceTree = "<group>"; };
