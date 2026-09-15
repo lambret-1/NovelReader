@@ -167,6 +167,7 @@ final class SyncEngine: SyncEngineProtocol {
             repo: repo,
             promise: promise
         )
+    }
 
 
     // MARK: - 拉取成功后同步处理（独立方法，支持空仓库复用）
