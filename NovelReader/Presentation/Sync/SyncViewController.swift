@@ -1,13 +1,31 @@
 import UIKit
 import Combine
 
-/// 同步状态视图控制器
+/// 同步视图控制器
 final class SyncViewController: UIViewController {
-    private let viewModel: SyncViewModel
+
+    private let syncEngine = AppContainer.shared.syncEngine
     private var cancellables = Set<AnyCancellable>()
 
     // MARK: - UI 组件
-    private lazy var statusIcon: UIImageView = {
+    private let scrollView: UIScrollView = {
+        let sv = UIScrollView()
+        sv.translatesAutoresizingMaskIntoConstraints = false
+        sv.alwaysBounceVertical = true
+        return sv
+    }()
+
+    private let contentView = UIView()
+
+    private let statusCard: UIView = {
+        let v = UIView()
+        v.translatesAutoresizingMaskIntoConstraints = false
+        v.backgroundColor = DesignToken.Color.backgroundPrimary
+        v.layer.cornerRadius = DesignToken.Radius.lg // 圆角16pt
+        return v
+    }()
+
+    private let statusIconView: UIImageView = {
         let iv = UIImageView()
         iv.translatesAutoresizingMaskIntoConstraints = false
         iv.contentMode = .scaleAspectFit
@@ -15,445 +33,206 @@ final class SyncViewController: UIViewController {
         return iv
     }()
 
-    private lazy var statusLabel: UILabel = {
+    private let statusTitleLabel: UILabel = {
         let label = UILabel()
         label.translatesAutoresizingMaskIntoConstraints = false
-        label.font = DesignToken.Font.title3 // 状态标题字号18pt，清晰醒目
+        label.font = DesignToken.Font.title3
+        label.textColor = DesignToken.Color.textPrimary
         label.textAlignment = .center
         return label
     }()
 
-    private lazy var detailLabel: UILabel = {
+    private let statusDetailLabel: UILabel = {
         let label = UILabel()
         label.translatesAutoresizingMaskIntoConstraints = false
-        label.font = DesignToken.Font.footnote // 详情文字14pt，辅助信息
+        label.font = DesignToken.Font.subhead
         label.textColor = DesignToken.Color.textSecondary
         label.textAlignment = .center
         label.numberOfLines = 0
         return label
     }()
 
-    private lazy var repoInfoLabel: UILabel = {
-        let label = UILabel()
-        label.translatesAutoresizingMaskIntoConstraints = false
-        label.font = DesignToken.Font.footnote // 仓库信息13pt，紧凑展示
-        label.textColor = DesignToken.Color.textSecondary
-        label.textAlignment = .center
-        label.numberOfLines = 0
-        return label
-    }()
-
-    private lazy var changeRepoButton: UIButton = {
-        let button = UIButton(type: .system)
-        button.translatesAutoresizingMaskIntoConstraints = false
-        button.setTitle("修改仓库", for: .normal)
-        button.titleLabel?.font = DesignToken.Font.footnote // 按钮文字14pt
-        button.addTarget(self, action: #selector(changeRepoTapped), for: .touchUpInside)
-        return button
-    }()
-
-    private lazy var progressView: UIProgressView = {
+    private let progressView: UIProgressView = {
         let pv = UIProgressView(progressViewStyle: .default)
         pv.translatesAutoresizingMaskIntoConstraints = false
+        pv.progressTintColor = DesignToken.Color.primary
+        pv.trackTintColor = DesignToken.Color.separator
         pv.isHidden = true
         return pv
     }()
 
-    private lazy var syncButton: UIButton = {
-        let button = UIButton(type: .system)
-        button.translatesAutoresizingMaskIntoConstraints = false
-        button.setTitle("立即同步", for: .normal)
-        button.titleLabel?.font = DesignToken.Font.headline // 主按钮17pt加粗
-        button.backgroundColor = DesignToken.Color.primary
-        button.setTitleColor(.white, for: .normal)
-        button.layer.cornerRadius = 12 // 圆角12pt，标准卡片圆角
-        button.addTarget(self, action: #selector(syncTapped), for: .touchUpInside)
-        return button
+    private lazy var syncButton: NRButton = {
+        let btn = NRButton(style: .primary)
+        btn.translatesAutoresizingMaskIntoConstraints = false
+        btn.setTitle("开始同步", for: .normal)
+        btn.addTarget(self, action: #selector(startSync), for: .touchUpInside)
+        return btn
     }()
 
-    private lazy var accountInfoLabel: UILabel = {
+    private let infoLabel: UILabel = {
         let label = UILabel()
         label.translatesAutoresizingMaskIntoConstraints = false
-        label.font = DesignToken.Font.footnote // 账号信息14pt
+        label.font = DesignToken.Font.caption1
         label.textColor = DesignToken.Color.textSecondary
         label.textAlignment = .center
+        label.numberOfLines = 0
+        label.text = "同步数据将保存到 GitHub 仓库\n包含书籍、章节、阅读进度和书签"
         return label
     }()
-
-    private lazy var logoutButton: UIButton = {
-        let button = UIButton(type: .system)
-        button.translatesAutoresizingMaskIntoConstraints = false
-        button.setTitle("退出登录", for: .normal)
-        button.setTitleColor(DesignToken.Color.error, for: .normal)
-        button.addTarget(self, action: #selector(logoutTapped), for: .touchUpInside)
-        return button
-    }()
-
-    // MARK: - 初始化
-    init(viewModel: SyncViewModel) {
-        self.viewModel = viewModel
-        super.init(nibName: nil, bundle: nil)
-    }
-
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
 
     // MARK: - 生命周期
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
-        bindViewModel()
-        viewModel.checkLoginStatus()
-    }
-
-    // MARK: - UI 设置
-    private func setupUI() {
-        view.backgroundColor = DesignToken.Color.backgroundPrimary
-        title = "云同步"
-
-        view.addSubview(statusIcon)
-        view.addSubview(statusLabel)
-        view.addSubview(detailLabel)
-        view.addSubview(repoInfoLabel)
-        view.addSubview(changeRepoButton)
-        view.addSubview(progressView)
-        view.addSubview(syncButton)
-        view.addSubview(accountInfoLabel)
-        view.addSubview(logoutButton)
-
-        NSLayoutConstraint.activate([
-            statusIcon.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 48), // 顶部间距48pt，留出呼吸空间
-            statusIcon.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            statusIcon.widthAnchor.constraint(equalToConstant: 60), // 图标60pt，视觉焦点
-            statusIcon.heightAnchor.constraint(equalToConstant: 60),
-
-            statusLabel.topAnchor.constraint(equalTo: statusIcon.bottomAnchor, constant: 16), // 图标与标题间距16pt
-            statusLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
-            statusLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
-
-            detailLabel.topAnchor.constraint(equalTo: statusLabel.bottomAnchor, constant: 8), // 标题与详情间距8pt
-            detailLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 30),
-            detailLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -30),
-
-            repoInfoLabel.topAnchor.constraint(equalTo: detailLabel.bottomAnchor, constant: 12), // 详情与仓库信息间距12pt
-            repoInfoLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 30),
-            repoInfoLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -30),
-
-            changeRepoButton.topAnchor.constraint(equalTo: repoInfoLabel.bottomAnchor, constant: 4), // 仓库信息与按钮间距4pt
-            changeRepoButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-
-            progressView.topAnchor.constraint(equalTo: changeRepoButton.bottomAnchor, constant: 16),
-            progressView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 40),
-            progressView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -40),
-
-            syncButton.topAnchor.constraint(equalTo: progressView.bottomAnchor, constant: 32), // 进度条与按钮间距32pt，突出主操作
-            syncButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            syncButton.widthAnchor.constraint(equalToConstant: 200), // 按钮宽度200pt，足够点击
-            syncButton.heightAnchor.constraint(equalToConstant: 50), // 按钮高度50pt，符合触控标准
-
-            accountInfoLabel.bottomAnchor.constraint(equalTo: logoutButton.topAnchor, constant: -16),
-            accountInfoLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-
-            logoutButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -20),
-            logoutButton.centerXAnchor.constraint(equalTo: view.centerXAnchor)
-        ])
-    }
-
-    private func bindViewModel() {
-        viewModel.$viewState
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] state in
-                self?.updateUI(with: state)
-            }
-            .store(in: &cancellables)
-
-        viewModel.$syncResult
-            .compactMap { $0 }
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] result in
-                self?.showSyncResult(result)
-            }
-            .store(in: &cancellables)
-
-        viewModel.$repoFullName
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] repo in
-                if let repo = repo, !repo.isEmpty {
-                    self?.repoInfoLabel.text = "同步仓库：\(repo)"
-                    self?.changeRepoButton.isHidden = false
-                } else {
-                    self?.repoInfoLabel.text = nil
-                    self?.changeRepoButton.isHidden = true
-                }
-            }
-            .store(in: &cancellables)
-    }
-
-    private func updateUI(with state: SyncViewState) {
-        switch state {
-        case .notLoggedIn:
-            statusIcon.image = UIImage(systemName: "person.crop.circle.badge.questionmark")
-            statusIcon.tintColor = .systemGray
-            statusLabel.text = "未登录 GitHub"
-            detailLabel.text = "请先登录 GitHub 账号以启用云同步"
-            progressView.isHidden = true
-            syncButton.setTitle("登录 GitHub", for: .normal)
-            accountInfoLabel.isHidden = true
-            logoutButton.isHidden = true
-            changeRepoButton.isHidden = true
-
-        case .idle(let username, let lastSync):
-            statusIcon.image = UIImage(systemName: "checkmark.icloud")
-            statusIcon.tintColor = DesignToken.Color.success
-            statusLabel.text = "同步就绪"
-            if let lastSync = lastSync {
-                let formatter = RelativeDateTimeFormatter()
-                detailLabel.text = "上次同步：\(formatter.localizedString(for: lastSync, relativeTo: Date()))"
-            } else {
-                detailLabel.text = "尚未同步过"
-            }
-            progressView.isHidden = true
-            syncButton.setTitle("立即同步", for: .normal)
-            syncButton.isEnabled = true
-            accountInfoLabel.text = "已登录：\(username)"
-            accountInfoLabel.isHidden = false
-            logoutButton.isHidden = false
-
-        case .syncing(let progress, let message):
-            statusIcon.image = UIImage(systemName: "arrow.triangle.2.circlepath.icloud")
-            statusIcon.tintColor = DesignToken.Color.primary
-            statusLabel.text = message
-            detailLabel.text = "正在同步，请稍候..."
-            progressView.isHidden = false
-            progressView.progress = Float(progress)
-            syncButton.setTitle("同步中...", for: .normal)
-            syncButton.isEnabled = false
-
-        case .error(let message):
-            statusIcon.image = UIImage(systemName: "exclamationmark.icloud")
-            statusIcon.tintColor = DesignToken.Color.error
-            statusLabel.text = "同步失败"
-            detailLabel.text = message
-            progressView.isHidden = true
-            syncButton.setTitle("重试同步", for: .normal)
-            syncButton.isEnabled = true
-        }
-    }
-
-    private func showSyncResult(_ result: SyncResult) {
-        let message = "上传 \(result.uploadedCount) 个文件，下载 \(result.downloadedCount) 个文件"
-        + (result.conflictCount > 0 ? "，\(result.conflictCount) 个冲突" : "")
-        showAlert(title: "同步完成", message: message)
-    }
-
-    // MARK: - 动作
-    @objc private func syncTapped() {
-        if case .notLoggedIn = viewModel.viewState {
-            showLoginAlert()
-        } else {
-            viewModel.startSync()
-        }
-    }
-
-    @objc private func logoutTapped() {
-        let alert = UIAlertController(title: "退出登录", message: "确定要退出 GitHub 登录吗？", preferredStyle: .alert)
-        alert.addAction(UIAlertAction(title: "取消", style: .cancel))
-        alert.addAction(UIAlertAction(title: "退出", style: .destructive, handler: { [weak self] _ in
-            self?.viewModel.logout()
-        }))
-        present(alert, animated: true)
-    }
-
-    @objc private func changeRepoTapped() {
-        let alert = UIAlertController(title: "修改同步仓库", message: "请输入仓库全名，格式：用户名/仓库名\n例如：lambret-1/MyNovels", preferredStyle: .alert)
-        alert.addTextField { [weak self] textField in
-            textField.placeholder = "用户名/仓库名"
-            textField.text = self?.viewModel.repoFullName
-            textField.autocapitalizationType = .none
-            textField.autocorrectionType = .no
-        }
-        alert.addAction(UIAlertAction(title: "取消", style: .cancel))
-        alert.addAction(UIAlertAction(title: "保存", style: .default, handler: { [weak self] _ in
-            if let repo = alert.textFields?.first?.text?.trimmingCharacters(in: .whitespacesAndNewlines),
-               !repo.isEmpty {
-                self?.viewModel.updateRepository(repoFullName: repo)
-            }
-        }))
-        present(alert, animated: true)
-    }
-
-    /// 展示冲突解决页面
-    private func showConflictList() {
-        // 防止重复弹出
-        guard presentedViewController == nil else { return }
-        let conflictVC = AppContainer.shared.makeConflictListViewController()
-        let nav = UINavigationController(rootViewController: conflictVC)
-        // iOS 14 兼容：使用 fullScreen，避免使用 iOS 15+ 的 pageSheet
-        nav.modalPresentationStyle = UIModalPresentationStyle.fullScreen
-        present(nav, animated: true)
-    }
-
-    private func showLoginAlert() {
-        let alert = UIAlertController(title: "GitHub 登录", message: "请输入 Personal Access Token\n\n在 GitHub → Settings → Developer settings → Personal access tokens 生成，勾选 repo 权限", preferredStyle: .alert)
-        alert.addTextField { textField in
-            textField.placeholder = "ghp_xxxxxxxxxxxx"
-            textField.isSecureTextEntry = true
-        }
-        alert.addAction(UIAlertAction(title: "取消", style: .cancel))
-        alert.addAction(UIAlertAction(title: "登录", style: .default, handler: { [weak self] _ in
-            if let token = alert.textFields?.first?.text, !token.isEmpty {
-                self?.viewModel.login(with: token)
-            }
-        }))
-        present(alert, animated: true)
-    }
-}
-
-/// 同步视图状态
-enum SyncViewState: Equatable {
-    case notLoggedIn
-    case idle(username: String, lastSync: Date?)
-    case syncing(progress: Double, message: String)
-    case error(message: String)
-}
-
-/// 同步 ViewModel
-final class SyncViewModel {
-    @Published var viewState: SyncViewState = .notLoggedIn
-    @Published var syncResult: SyncResult?
-    @Published var repoFullName: String?
-    /// 当前登录用户名，用于同步完成后重置 UI 状态
-    private var currentUsername: String?
-
-    private let authService: GitHubAuthService
-    private let syncEngine: SyncEngineProtocol
-    private let syncMetadataRepository: SyncMetadataRepositoryProtocol
-    private var cancellables = Set<AnyCancellable>()
-
-    init(authService: GitHubAuthService,
-         syncEngine: SyncEngineProtocol,
-         syncMetadataRepository: SyncMetadataRepositoryProtocol) {
-        self.authService = authService
-        self.syncEngine = syncEngine
-        self.syncMetadataRepository = syncMetadataRepository
+        setupNavigationBar()
+        updateStatus()
         bindSyncStatus()
     }
 
-    private func bindSyncStatus() {
-        syncEngine.statusPublisher
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] status in
-                switch status {
-                case .idle:
-                    break
-                case .pulling(let progress):
-                    self?.viewState = .syncing(progress: progress, message: "正在拉取远端数据...")
-                case .merging:
-                    self?.viewState = .syncing(progress: 0.6, message: "正在合并数据...")
-                case .pushing(let progress):
-                    self?.viewState = .syncing(progress: 0.7 + progress * 0.3, message: "正在上传本地数据...")
-                case .conflictWaiting(let count):
-                    self?.viewState = .error(message: "存在 \(count) 个冲突需要解决")
-                case .error(let message):
-                    self?.viewState = .error(message: message)
-                }
-            }
-            .store(in: &cancellables)
+    // MARK: - UI 搭建
+    private func setupUI() {
+        view.backgroundColor = DesignToken.Color.backgroundSecondary
+
+        view.addSubview(scrollView)
+        scrollView.addSubview(contentView)
+        contentView.addSubview(statusCard)
+        statusCard.addSubview(statusIconView)
+        statusCard.addSubview(statusTitleLabel)
+        statusCard.addSubview(statusDetailLabel)
+        statusCard.addSubview(progressView)
+        contentView.addSubview(syncButton)
+        contentView.addSubview(infoLabel)
+
+        contentView.translatesAutoresizingMaskIntoConstraints = false
+
+        NSLayoutConstraint.activate([
+            scrollView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+            scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            scrollView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+
+            contentView.topAnchor.constraint(equalTo: scrollView.topAnchor),
+            contentView.leadingAnchor.constraint(equalTo: scrollView.leadingAnchor),
+            contentView.trailingAnchor.constraint(equalTo: scrollView.trailingAnchor),
+            contentView.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor),
+            contentView.widthAnchor.constraint(equalTo: scrollView.widthAnchor),
+
+            statusCard.topAnchor.constraint(equalTo: contentView.topAnchor, constant: DesignToken.Spacing.xl),
+            statusCard.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: DesignToken.Spacing.lg),
+            statusCard.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -DesignToken.Spacing.lg),
+
+            statusIconView.topAnchor.constraint(equalTo: statusCard.topAnchor, constant: DesignToken.Spacing.xl),
+            statusIconView.centerXAnchor.constraint(equalTo: statusCard.centerXAnchor),
+            statusIconView.widthAnchor.constraint(equalToConstant: 48), // 图标尺寸48pt
+            statusIconView.heightAnchor.constraint(equalToConstant: 48),
+
+            statusTitleLabel.topAnchor.constraint(equalTo: statusIconView.bottomAnchor, constant: DesignToken.Spacing.md),
+            statusTitleLabel.leadingAnchor.constraint(equalTo: statusCard.leadingAnchor, constant: DesignToken.Spacing.lg),
+            statusTitleLabel.trailingAnchor.constraint(equalTo: statusCard.trailingAnchor, constant: -DesignToken.Spacing.lg),
+
+            statusDetailLabel.topAnchor.constraint(equalTo: statusTitleLabel.bottomAnchor, constant: DesignToken.Spacing.sm),
+            statusDetailLabel.leadingAnchor.constraint(equalTo: statusCard.leadingAnchor, constant: DesignToken.Spacing.lg),
+            statusDetailLabel.trailingAnchor.constraint(equalTo: statusCard.trailingAnchor, constant: -DesignToken.Spacing.lg),
+
+            progressView.topAnchor.constraint(equalTo: statusDetailLabel.bottomAnchor, constant: DesignToken.Spacing.lg),
+            progressView.leadingAnchor.constraint(equalTo: statusCard.leadingAnchor, constant: DesignToken.Spacing.xl),
+            progressView.trailingAnchor.constraint(equalTo: statusCard.trailingAnchor, constant: -DesignToken.Spacing.xl),
+            progressView.bottomAnchor.constraint(equalTo: statusCard.bottomAnchor, constant: -DesignToken.Spacing.xl),
+
+            syncButton.topAnchor.constraint(equalTo: statusCard.bottomAnchor, constant: DesignToken.Spacing.xl),
+            syncButton.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: DesignToken.Spacing.lg),
+            syncButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -DesignToken.Spacing.lg),
+            syncButton.heightAnchor.constraint(equalToConstant: 48), // 按钮高度48pt
+
+            infoLabel.topAnchor.constraint(equalTo: syncButton.bottomAnchor, constant: DesignToken.Spacing.lg),
+            infoLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: DesignToken.Spacing.xl),
+            infoLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -DesignToken.Spacing.xl),
+            infoLabel.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -DesignToken.Spacing.xl)
+        ])
     }
 
-    func checkLoginStatus() {
-        if let token = authService.loadSavedToken() {
-            // Token 已在 AppDelegate 启动时设置到容器的 apiClient 实例
-            // 此处验证 Token 是否仍然有效
-            authService.fetchCurrentUser()
-                .receive(on: DispatchQueue.main)
-                .sink(receiveCompletion: { [weak self] completion in
-                    if case .failure = completion {
-                        self?.viewState = .notLoggedIn
-                    }
-                }, receiveValue: { [weak self] user in
-                    self?.loadMetadata(username: user.login)
-                })
-                .store(in: &cancellables)
+    private func setupNavigationBar() {
+        title = "同步"
+        navigationController?.navigationBar.prefersLargeTitles = true
+    }
+
+    // MARK: - 状态更新
+    private func updateStatus() {
+        let isLoggedIn = AppContainer.shared.authService.loadSavedToken() != nil
+
+        if !isLoggedIn {
+            statusIconView.image = UIImage(systemName: "person.crop.circle.badge.questionmark")
+            statusTitleLabel.text = "未登录 GitHub"
+            statusDetailLabel.text = "请先在「我的」页面登录 GitHub 账号"
+            syncButton.isEnabled = false
+            syncButton.setTitle("请先登录", for: .normal)
         } else {
-            viewState = .notLoggedIn
+            statusIconView.image = UIImage(systemName: "checkmark.circle.fill")
+            statusTitleLabel.text = "已连接 GitHub"
+            statusDetailLabel.text = "数据将同步到 MyNovels 仓库"
+            syncButton.isEnabled = true
+            syncButton.setTitle("开始同步", for: .normal)
         }
     }
 
-    private func loadMetadata(username: String) {
-        currentUsername = username
-        syncMetadataRepository.fetchMetadata()
+    private func bindSyncStatus() {
+        syncEngine.$currentStatus
             .receive(on: DispatchQueue.main)
-            .sink(receiveCompletion: { _ in }, receiveValue: { [weak self] metadata in
-                // 如果未配置仓库，自动设置为 username/MyNovels
-                var meta = metadata
-                if meta.repoFullName == nil {
-                    meta.repoFullName = "\(username)/MyNovels"
-                    meta.githubUsername = username
-                    _ = self?.syncMetadataRepository.updateMetadata(meta)
-                }
-                self?.repoFullName = meta.repoFullName
-                self?.viewState = .idle(username: username, lastSync: meta.lastSyncAt)
-            })
-            .store(in: &cancellables)
-    }
-
-    func login(with token: String) {
-        viewState = .syncing(progress: 0, message: "正在验证 Token...")
-        authService.loginWithPAT(token)
-            .receive(on: DispatchQueue.main)
-            .sink(receiveCompletion: { [weak self] completion in
-                if case .failure(let error) = completion {
-                    self?.viewState = .error(message: "登录失败：\(error.localizedDescription)")
-                }
-            }, receiveValue: { [weak self] user in
-                self?.loadMetadata(username: user.login)
-            })
-            .store(in: &cancellables)
-    }
-
-    func logout() {
-        authService.logout()
-        currentUsername = nil
-        repoFullName = nil
-        viewState = .notLoggedIn
-    }
-
-    func updateRepository(repoFullName: String) {
-        syncMetadataRepository.fetchMetadata()
-            .flatMap { metadata -> AnyPublisher<SyncMetadata, Error> in
-                var meta = metadata
-                meta.repoFullName = repoFullName
-                return self.syncMetadataRepository.updateMetadata(meta)
+            .sink { [weak self] status in
+                self?.handleSyncStatus(status)
             }
-            .receive(on: DispatchQueue.main)
-            .sink(receiveCompletion: { completion in
-                if case .failure(let error) = completion {
-                    AppLogger.error("更新仓库配置失败: \(error)")
-                }
-            }, receiveValue: { [weak self] meta in
-                self?.repoFullName = meta.repoFullName
-            })
             .store(in: &cancellables)
     }
 
-    func startSync() {
+    private func handleSyncStatus(_ status: SyncStatus) {
+        switch status {
+        case .idle:
+            progressView.isHidden = true
+            syncButton.isEnabled = true
+            syncButton.setTitle("开始同步", for: .normal)
+        case .pulling(let progress):
+            progressView.isHidden = false
+            progressView.setProgress(Float(progress), animated: true)
+            statusTitleLabel.text = "正在拉取..."
+            statusDetailLabel.text = "从 GitHub 拉取最新数据"
+            syncButton.isEnabled = false
+        case .pushing(let progress):
+            progressView.isHidden = false
+            progressView.setProgress(Float(0.5 + progress * 0.5), animated: true)
+            statusTitleLabel.text = "正在上传..."
+            statusDetailLabel.text = "上传本地数据到 GitHub"
+            syncButton.isEnabled = false
+        case .success(let result):
+            progressView.isHidden = true
+            progressView.setProgress(1.0, animated: false)
+            statusIconView.image = UIImage(systemName: "checkmark.circle.fill")
+            statusTitleLabel.text = "同步完成"
+            statusDetailLabel.text = "上传 \(result.uploadedCount) 个文件，下载 \(result.downloadedCount) 个文件"
+            syncButton.isEnabled = true
+            syncButton.setTitle("再次同步", for: .normal)
+            NRToast.shared.success("同步完成")
+        case .error(let message):
+            progressView.isHidden = true
+            statusIconView.image = UIImage(systemName: "xmark.circle.fill")
+            statusIconView.tintColor = DesignToken.Color.error
+            statusTitleLabel.text = "同步失败"
+            statusDetailLabel.text = message
+            syncButton.isEnabled = true
+            syncButton.setTitle("重试", for: .normal)
+            NRToast.shared.error(message)
+        }
+    }
+
+    // MARK: - 动作
+    @objc private func startSync() {
+        guard AppContainer.shared.authService.loadSavedToken() != nil else {
+            NRToast.shared.error("请先登录 GitHub")
+            return
+        }
+
         syncEngine.startSync()
             .receive(on: DispatchQueue.main)
-            .sink(receiveCompletion: { [weak self] completion in
-                if case .failure(let error) = completion {
-                    self?.viewState = .error(message: error.localizedDescription)
-                }
-            }, receiveValue: { [weak self] result in
-                self?.syncResult = result
-                // 同步完成后无论当前状态都重置为 idle，修复进度条卡住问题
-                if let username = self?.currentUsername {
-                    self?.viewState = .idle(username: username, lastSync: Date())
-                }
-            })
+            .sink(receiveCompletion: { _ in }, receiveValue: { _ in })
             .store(in: &cancellables)
     }
 }
-
-

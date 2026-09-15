@@ -11,12 +11,9 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
         let window = UIWindow(windowScene: windowScene)
 
-        // 设置根视图控制器为书架
-        let libraryVC = AppContainer.shared.makeLibraryViewController()
-        let navController = UINavigationController(rootViewController: libraryVC)
-        navController.navigationBar.prefersLargeTitles = true
-
-        window.rootViewController = navController
+        // 设置根视图控制器为主标签栏
+        let tabBarController = MainTabBarController()
+        window.rootViewController = tabBarController
         window.makeKeyAndVisible()
 
         self.window = window

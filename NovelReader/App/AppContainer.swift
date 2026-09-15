@@ -109,13 +109,7 @@ final class AppContainer {
     }
 
     func makeChapterListViewController(book: Book) -> ChapterListViewController {
-        let viewModel = ChapterListViewModel(
-            book: book,
-            fetchChaptersUseCase: makeFetchChaptersUseCase(),
-            createChapterUseCase: makeCreateChapterUseCase(),
-            deleteChapterUseCase: makeDeleteChapterUseCase()
-        )
-        return ChapterListViewController(book: book, viewModel: viewModel, readingProgressRepository: readingProgressRepository)
+        return ChapterListViewController(book: book)
     }
 
     func makeReaderViewController(book: Book, chapters: [Chapter], startIndex: Int) -> ReaderViewController {
@@ -137,12 +131,7 @@ final class AppContainer {
     }
 
     func makeSyncViewController() -> SyncViewController {
-        let viewModel = SyncViewModel(
-            authService: authService,
-            syncEngine: syncEngine,
-            syncMetadataRepository: syncMetadataRepository
-        )
-        return SyncViewController(viewModel: viewModel)
+        return SyncViewController()
     }
 
     func makeConflictListViewController() -> ConflictListViewController {
@@ -154,7 +143,7 @@ final class AppContainer {
     }
 
     func makeSettingsViewController() -> SettingsViewController {
-        SettingsViewController()
+        return SettingsViewController()
     }
 
     func makeUpdateViewController(release: LatestRelease) -> UpdateViewController {
