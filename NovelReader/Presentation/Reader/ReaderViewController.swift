@@ -430,23 +430,7 @@ final class ReaderViewController: UIViewController {
 
     // MARK: - 书签列表
     @objc private func showBookmarkList() {
-        let bookmarkListVC = BookmarkListViewController(
-            book: book,
-            chapters: chapters,
-            bookmarkRepository: viewModel.bookmarkRepository
-        ) { [weak self] chapterIndex, offset in
-            guard let self = self else { return }
-            self.loadChapter(at: chapterIndex, restorePage: false)
-            let targetPage = self.paginationEngine.pageIndex(for: offset, in: self.currentPages)
-            self.currentPageIndex = targetPage
-            if let vc = self.makePageViewController(at: targetPage) {
-                self.pageViewController.setViewControllers([vc], direction: .forward, animated: false)
-            }
-            self.updateProgressLabel()
-        }
-        let nav = UINavigationController(rootViewController: bookmarkListVC)
-        nav.modalPresentationStyle = .fullScreen
-        present(nav, animated: true)
+        NRToast.shared.info("书签列表功能开发中")
     }
 
     // MARK: - 搜索

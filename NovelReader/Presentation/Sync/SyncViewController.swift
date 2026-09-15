@@ -202,15 +202,14 @@ final class SyncViewController: UIViewController {
             statusTitleLabel.text = "正在上传..."
             statusDetailLabel.text = "上传本地数据到 GitHub"
             syncButton.isEnabled = false
-        case .success(let result):
+        case .idle:
             progressView.isHidden = true
-            progressView.setProgress(1.0, animated: false)
             statusIconView.image = UIImage(systemName: "checkmark.circle.fill")
+            statusIconView.tintColor = DesignToken.Color.success
             statusTitleLabel.text = "同步完成"
-            statusDetailLabel.text = "上传 \(result.uploadedCount) 个文件，下载 \(result.downloadedCount) 个文件"
+            statusDetailLabel.text = "数据已同步"
             syncButton.isEnabled = true
             syncButton.setTitle("再次同步", for: .normal)
-            NRToast.shared.success("同步完成")
         case .error(let message):
             progressView.isHidden = true
             statusIconView.image = UIImage(systemName: "xmark.circle.fill")

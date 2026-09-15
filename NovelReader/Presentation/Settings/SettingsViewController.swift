@@ -186,8 +186,7 @@ extension SettingsViewController: UITableViewDataSource, UITableViewDelegate {
     }
 
     @objc private func toggleDarkMode(_ sender: UISwitch) {
-        ThemeManager.shared.setMode(sender.isOn ? .dark : .light)
-        // 通知所有页面更新
-        NotificationCenter.default.post(name: .themeDidChange, object: nil)
+        ThemeManager.shared.setTheme(sender.isOn ? .dark : .light)
+        // 主题已更新，系统会自动应用
     }
 }

@@ -99,14 +99,18 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             return
         }
 
-        // 避免重复弹出
-        if rootVC is UpdateViewController || rootVC.presentedViewController is UpdateViewController {
-            AppLogger.info("更新窗口已在显示中，跳过重复弹出")
-            return
-        }
-
-        let updateVC = AppContainer.shared.makeUpdateViewController(release: release)
-        rootVC.present(updateVC, animated: true)
+        let alert = UIAlertController(
+            title: "发现新版本 \(release.tagName)",
+            message: release.body ?? "有新的更新可用",
+            preferredStyle: .alert
+        )
+        alert.addAction(UIAlertAction(title: "稍后提醒", style: .cancel))
+        alert.addAction(UIAlertAction(title: "立即更新", style: .default) { _ in
+            if let url = URL(string: release.htmlURL) {
+                UIApplication.shared.open(url)
+            }
+        })
+        rootVC.present(alert, animated: true)
         AppLogger.info("更新提示窗口已弹出")
     }
 

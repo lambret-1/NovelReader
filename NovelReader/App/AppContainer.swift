@@ -100,12 +100,7 @@ final class AppContainer {
     // MARK: - ViewController 工厂
 
     func makeLibraryViewController() -> LibraryViewController {
-        let viewModel = LibraryViewModel(
-            fetchBooksUseCase: makeFetchBooksUseCase(),
-            createBookUseCase: makeCreateBookUseCase(),
-            deleteBookUseCase: makeDeleteBookUseCase()
-        )
-        return LibraryViewController(viewModel: viewModel, readingProgressRepository: readingProgressRepository)
+        return LibraryViewController()
     }
 
     func makeChapterListViewController(book: Book) -> ChapterListViewController {
@@ -122,32 +117,12 @@ final class AppContainer {
         return ReaderViewController(book: book, chapters: chapters, startIndex: startIndex, viewModel: viewModel)
     }
 
-    func makeEditorViewController(chapter: Chapter) -> EditorViewController {
-        let viewModel = EditorViewModel(
-            updateContentUseCase: makeUpdateChapterContentUseCase(),
-            updateTitleUseCase: makeUpdateChapterTitleUseCase()
-        )
-        return EditorViewController(chapter: chapter, viewModel: viewModel)
-    }
-
     func makeSyncViewController() -> SyncViewController {
         return SyncViewController()
     }
 
-    func makeConflictListViewController() -> ConflictListViewController {
-        let viewModel = ConflictListViewModel(
-            conflictRepository: conflictRepository,
-            syncEngine: syncEngine
-        )
-        return ConflictListViewController(viewModel: viewModel)
-    }
-
     func makeSettingsViewController() -> SettingsViewController {
         return SettingsViewController()
-    }
-
-    func makeUpdateViewController(release: LatestRelease) -> UpdateViewController {
-        UpdateViewController(release: release, updateService: updateService)
     }
 }
 
