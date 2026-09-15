@@ -241,17 +241,15 @@ final class ReaderViewController: UIViewController {
     }
 
     // MARK: - 加载章节
-    private func loadChapter(at index: Int, restorePage: Bool = false) {
+    /// 只加载分页数据，不设置视图控制器（用于数据源方法中）
+    private func loadChapterPages(at index: Int) {
         guard index >= 0 && index < chapters.count else { return }
         currentChapterIndex = index
         let chapter = chapters[index]
         chapterTitleLabel.text = chapter.title
 
-        // 检查缓存
         if let cachedPages = chapterCache[index] {
             currentPages = cachedPages
-            setupInitialPage(restorePage: restorePage, chapter: chapter)
-            preloadAdjacentChapters()
             return
         }
 
@@ -260,8 +258,13 @@ final class ReaderViewController: UIViewController {
         let bounds = view.bounds.inset(by: UIEdgeInsets(top: 16, left: 20, bottom: 16, right: 20))
         currentPages = paginationEngine.paginate(attributedString: attributedString, bounds: bounds)
         chapterCache[index] = currentPages
+    }
 
-        setupInitialPage(restorePage: restorePage, chapter: chapter)
+    /// 加载章节并设置初始页面
+    private func loadChapter(at index: Int, restorePage: Bool = false) {
+        loadChapterPages(at: index)
+        guard index < chapters.count else { return }
+        setupInitialPage(restorePage: restorePage, chapter: chapters[index])
         preloadAdjacentChapters()
     }
 
@@ -471,9 +474,9 @@ extension ReaderViewController: UIPageViewControllerDataSource {
         if currentPageIndex > 0 {
             return makePageViewController(at: currentPageIndex - 1)
         } else if currentChapterIndex > 0 {
-            // 切换到上一章最后一页
+            // 切换到上一章最后一页（只加载分页，不设置视图控制器）
             let prevIndex = currentChapterIndex - 1
-            loadChapter(at: prevIndex, restorePage: false)
+            loadChapterPages(at: prevIndex)
             currentPageIndex = max(0, currentPages.count - 1)
             return makePageViewController(at: currentPageIndex)
         }
@@ -484,9 +487,9 @@ extension ReaderViewController: UIPageViewControllerDataSource {
         if currentPageIndex < currentPages.count - 1 {
             return makePageViewController(at: currentPageIndex + 1)
         } else if currentChapterIndex < chapters.count - 1 {
-            // 切换到下一章第一页
+            // 切换到下一章第一页（只加载分页，不设置视图控制器）
             let nextIndex = currentChapterIndex + 1
-            loadChapter(at: nextIndex, restorePage: false)
+            loadChapterPages(at: nextIndex)
             currentPageIndex = 0
             return makePageViewController(at: 0)
         }
@@ -502,6 +505,11 @@ extension ReaderViewController: UIPageViewControllerDelegate {
             currentPageIndex = index
             updateProgressLabel()
             updateBookmarkButtonState()
+            // 更新章节标题
+            if currentChapterIndex < chapters.count {
+                chapterTitleLabel.text = chapters[currentChapterIndex].title
+            }
+            preloadAdjacentChapters()
         }
     }
 }

@@ -1,6 +1,7 @@
 import UIKit
 
 /// 分页引擎：基于 TextKit 计算文本分页
+/// 每次 paginate 调用使用独立的 TextKit 实例，避免互相干扰
 final class PaginationEngine {
     /// 单页内容
     struct Page: Equatable {
@@ -9,17 +10,9 @@ final class PaginationEngine {
         let pageIndex: Int
     }
 
-    private let textStorage = NSTextStorage()
-    private let layoutManager = NSLayoutManager()
-    private var textContainer: NSTextContainer?
-
     /// 分页结果缓存
     private var cachedPages: [Page] = []
     private var cachedKey: String?
-
-    init() {
-        textStorage.addLayoutManager(layoutManager)
-    }
 
     /// 计算分页
     /// - Parameters:
@@ -27,48 +20,45 @@ final class PaginationEngine {
     ///   - bounds: 页面可用区域
     /// - Returns: 分页结果
     func paginate(attributedString: NSAttributedString, bounds: CGRect) -> [Page] {
-        let key = "\(attributedString.hashValue)-\(bounds.width)-\(bounds.height)"
+        let key = "\(attributedString.hashValue)-\(Int(bounds.width))-\(Int(bounds.height))"
         if key == cachedKey, !cachedPages.isEmpty {
             return cachedPages
         }
 
+        // 每次调用创建独立的 TextKit 实例，避免共享状态导致的干扰
+        let textStorage = NSTextStorage()
+        let layoutManager = NSLayoutManager()
+        textStorage.addLayoutManager(layoutManager)
         textStorage.setAttributedString(attributedString)
 
-        let container = NSTextContainer(size: CGSize(width: bounds.width, height: bounds.height))
-        container.lineFragmentPadding = 0
-        container.maximumNumberOfLines = 0
-        layoutManager.addTextContainer(container)
-        textContainer = container
-
         var pages: [Page] = []
-        var currentRange = NSRange(location: 0, length: 0)
+        var currentLocation = 0
         var pageIndex = 0
+        let maxPages = 10000 // 安全上限，防止死循环
 
-        while currentRange.location < attributedString.length {
+        while currentLocation < attributedString.length && pageIndex < maxPages {
+            // 每次循环创建新的 container，确保获取最新范围
+            let container = NSTextContainer(size: CGSize(width: bounds.width, height: bounds.height))
+            container.lineFragmentPadding = 0
+            container.maximumNumberOfLines = 0
+            layoutManager.addTextContainer(container)
+
+            // 强制布局，确保 glyph 已生成
+            layoutManager.ensureLayout(for: container)
+
             let glyphRange = layoutManager.glyphRange(for: container)
             let charRange = layoutManager.characterRange(forGlyphRange: glyphRange, actualGlyphRange: nil)
 
-            if charRange.location >= attributedString.length || charRange.length == 0 {
+            // 安全检查：无内容或超出范围则停止
+            guard charRange.length > 0, charRange.location < attributedString.length else {
                 break
             }
 
             let pageAttributed = attributedString.attributedSubstring(from: charRange)
             pages.append(Page(attributedString: pageAttributed, range: charRange, pageIndex: pageIndex))
 
-            currentRange = NSRange(location: charRange.upperBound, length: 0)
+            currentLocation = charRange.upperBound
             pageIndex += 1
-
-            if currentRange.location < attributedString.length {
-                let newContainer = NSTextContainer(size: container.size)
-                newContainer.lineFragmentPadding = 0
-                layoutManager.addTextContainer(newContainer)
-                textContainer = newContainer
-            }
-        }
-
-        // 清理多余的 container
-        while layoutManager.textContainers.count > pages.count {
-            layoutManager.removeTextContainer(at: layoutManager.textContainers.count - 1)
         }
 
         cachedPages = pages
@@ -78,6 +68,7 @@ final class PaginationEngine {
 
     /// 根据字符偏移找到页码
     func pageIndex(for offset: Int, in pages: [Page]) -> Int {
+        guard !pages.isEmpty else { return 0 }
         for (index, page) in pages.enumerated() {
             if NSLocationInRange(offset, page.range) || offset == page.range.upperBound {
                 return index
