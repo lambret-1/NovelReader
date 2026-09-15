@@ -1,120 +1,96 @@
 #!/bin/bash
 # ============================================
 # 可视化警告日志报告生成器
-# 强制使用 UTF-8 编码，避免中文乱码
+# 分析 build.log，生成 bug/readme.md
+# 使用 Python 确保 UTF-8 编码输出
+# ============================================
+
 export LANG=en_US.UTF-8
 export LC_ALL=en_US.UTF-8
 export LC_CTYPE=en_US.UTF-8
-# 分析 build.log，生成 bug/readme.md
-# ============================================
-
-set -e
 
 BUILD_LOG="${1:-build.log}"
 OUTPUT_DIR="${2:-bug}"
 mkdir -p "$OUTPUT_DIR"
 
-# 安全计数函数
-count_matches() {
-    local pattern="$1"
-    local file="$2"
-    if [ ! -f "$file" ]; then
-        echo 0
-        return
-    fi
-    local n
-    n=$(grep -cE "$pattern" "$file" 2>/dev/null || true)
-    echo "${n:-0}"
-}
+python3 << PYEOF
+import os
+import re
+from datetime import datetime, timezone
 
-# 统计错误和警告
-ERROR_COUNT=$(count_matches "error:" "$BUILD_LOG")
-WARNING_COUNT=$(count_matches "warning:" "$BUILD_LOG")
+build_log = os.environ.get("BUILD_LOG", "$BUILD_LOG")
+output_dir = os.environ.get("OUTPUT_DIR", "$OUTPUT_DIR")
+
+# 读取构建日志
+errors = []
+warnings = []
+if os.path.exists(build_log):
+    with open(build_log, "r", encoding="utf-8", errors="replace") as f:
+        for line in f:
+            if "error:" in line and not line.strip().startswith("echo") and "ERROR_COUNT" not in line:
+                errors.append(line.strip())
+            if "warning:" in line and not line.strip().startswith("echo") and "WARNING_COUNT" not in line:
+                warnings.append(line.strip())
+
+error_count = len(errors)
+warning_count = len(warnings)
 
 # 构建状态
-if [ "$ERROR_COUNT" -gt 0 ]; then
-    BUILD_STATUS="❌ 构建失败"
-else
-    BUILD_STATUS="✅ 构建成功"
-fi
+build_status = "❌ 构建失败" if error_count > 0 else "✅ 构建成功"
 
-# 警告类型分类
-UNUSED_VAR=$(count_matches "warning:.*(never used|was never used|defined but never used|immutable value.*never used)" "$BUILD_LOG")
-DEPRECATED=$(count_matches "warning:.*(deprecated|was deprecated)" "$BUILD_LOG")
-TYPE_CAST=$(count_matches "warning:.*(type cast|conditional cast|forced cast)" "$BUILD_LOG")
-NULLABILITY=$(count_matches "warning:.*(optional|nil coalescing|non-optional)" "$BUILD_LOG")
-OTHER_WARN=$((WARNING_COUNT - UNUSED_VAR - DEPRECATED - TYPE_CAST - NULLABILITY))
-if [ "$OTHER_WARN" -lt 0 ]; then OTHER_WARN=0; fi
+# 警告分类
+unused_var = [w for w in warnings if re.search(r"never used|was never used|defined but never used|immutable value.*never used", w, re.IGNORECASE)]
+deprecated = [w for w in warnings if re.search(r"deprecated|was deprecated", w, re.IGNORECASE)]
+type_cast = [w for w in warnings if re.search(r"type cast|conditional cast|forced cast", w, re.IGNORECASE)]
+nullability = [w for w in warnings if re.search(r"optional|nil coalescing|non-optional", w, re.IGNORECASE)]
+other = [w for w in warnings if w not in unused_var and w not in deprecated and w not in type_cast and w not in nullability]
 
-# 计算占比
-calc_percent() {
-    if [ "$WARNING_COUNT" -gt 0 ]; then
-        echo "$(( $1 * 100 / WARNING_COUNT ))%"
-    else
-        echo "0%"
-    fi
-}
+def calc_percent(count):
+    return f"{count * 100 // warning_count}%" if warning_count > 0 else "0%"
 
-# 警告文件分布 Top 20
-generate_file_dist() {
-    if [ ! -f "$BUILD_LOG" ] || [ "$WARNING_COUNT" -eq 0 ]; then
-        echo "| - | 无 | 0 个 | 🟢 低 |"
-        return
-    fi
-    local rank=0
-    grep "warning:" "$BUILD_LOG" | sed 's/:.*//' | awk -F'/' '{print $NF}' | sort | uniq -c | sort -rn | head -20 | while read -r count filename; do
-        rank=$((rank + 1))
-        if [ "$count" -ge 5 ]; then
-            severity="🔴 高"
-        elif [ "$count" -ge 3 ]; then
-            severity="🟡 中"
-        else
-            severity="🟢 低"
-        fi
-        echo "| $rank | \`$filename\` | $count 个 | $severity |"
-    done
-}
+# 文件分布
+from collections import Counter
+file_counts = Counter()
+for w in warnings:
+    match = re.match(r"^([^:]+):", w)
+    if match:
+        filename = match.group(1).split("/")[-1]
+        file_counts[filename] += 1
 
-# 警告详情
-generate_warning_details() {
-    local pattern="$1"
-    local label="$2"
-    local count="$3"
-    echo "### $label ($count个)"
-    echo ""
-    echo '```'
-    if [ -f "$BUILD_LOG" ] && [ "$count" -gt 0 ]; then
-        grep -E "$pattern" "$BUILD_LOG" | head -20
-    else
-        echo "无"
-    fi
-    echo '```'
-    echo ""
-}
+top_files = file_counts.most_common(20)
 
-# 代码总行数
-TOTAL_LINES=$(find NovelReader -name "*.swift" -exec cat {} + 2>/dev/null | wc -l | tr -d ' ')
+# 代码行数
+total_lines = 0
+for root, dirs, files in os.walk("NovelReader"):
+    for f in files:
+        if f.endswith(".swift"):
+            try:
+                with open(os.path.join(root, f), "r", encoding="utf-8", errors="replace") as fh:
+                    total_lines += sum(1 for _ in fh)
+            except:
+                pass
 
 # 质量评级
-if [ "$ERROR_COUNT" -gt 0 ]; then
-    QUALITY="F级（构建失败）"
-elif [ "$WARNING_COUNT" -eq 0 ]; then
-    QUALITY="A级（优秀，无警告）"
-elif [ "$WARNING_COUNT" -lt 10 ]; then
-    QUALITY="B级（良好，警告较少）"
-elif [ "$WARNING_COUNT" -lt 30 ]; then
-    QUALITY="C级（一般，建议清理警告）"
-else
-    QUALITY="D级（较差，警告较多）"
-fi
+if error_count > 0:
+    quality = "F级（构建失败）"
+elif warning_count == 0:
+    quality = "A级（优秀，无警告）"
+elif warning_count < 10:
+    quality = "B级（良好，警告较少）"
+elif warning_count < 30:
+    quality = "C级（一般，建议清理警告）"
+else:
+    quality = "D级（较差，警告较多）"
+
+# 生成时间
+gen_time = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
 
 # 生成报告
-cat > "$OUTPUT_DIR/readme.md" << EOF
-# 🐛 可视化警告日志报告 (Bug Log)
+report = f"""# 🐛 可视化警告日志报告 (Bug Log)
 
-**生成时间**: $(date -u +"%Y-%m-%d %H:%M:%S UTC")
+**生成时间**: {gen_time}
 **源日志文件**: \`build.log\`
-**构建状态**: $BUILD_STATUS
+**构建状态**: {build_status}
 
 ---
 
@@ -122,8 +98,8 @@ cat > "$OUTPUT_DIR/readme.md" << EOF
 
 | 类型 | 数量 | 状态 |
 |------|------|------|
-| 🔴 错误 | **$(printf "%02d" "$ERROR_COUNT")** 个 | $(if [ "$ERROR_COUNT" -gt 0 ]; then echo "需修复"; else echo "无错误"; fi) |
-| 🟡 警告 | **$(printf "%02d" "$WARNING_COUNT")** 个 | $(if [ "$WARNING_COUNT" -gt 0 ]; then echo "建议清理"; else echo "无警告"; fi) |
+| 🔴 错误 | **{error_count:02d}** 个 | {"需修复" if error_count > 0 else "无错误"} |
+| 🟡 警告 | **{warning_count:02d}** 个 | {"建议清理" if warning_count > 0 else "无警告"} |
 
 ---
 
@@ -131,11 +107,11 @@ cat > "$OUTPUT_DIR/readme.md" << EOF
 
 | 警告类型 | 数量 | 占比 |
 |----------|------|------|
-| ⚠️ 弃用API警告 | $(printf "%02d" "$DEPRECATED") 个 | $(calc_percent "$DEPRECATED") |
-| 📦 未使用变量警告 | $(printf "%02d" "$UNUSED_VAR") 个 | $(calc_percent "$UNUSED_VAR") |
-| 🔄 类型转换警告 | $(printf "%02d" "$TYPE_CAST") 个 | $(calc_percent "$TYPE_CAST") |
-| 🔍 可空性警告 | $(printf "%02d" "$NULLABILITY") 个 | $(calc_percent "$NULLABILITY") |
-| 📝 其他警告 | $(printf "%02d" "$OTHER_WARN") 个 | $(calc_percent "$OTHER_WARN") |
+| ⚠️ 弃用API警告 | {len(deprecated):02d} 个 | {calc_percent(len(deprecated))} |
+| 📦 未使用变量警告 | {len(unused_var):02d} 个 | {calc_percent(len(unused_var))} |
+| 🔄 类型转换警告 | {len(type_cast):02d} 个 | {calc_percent(len(type_cast))} |
+| 🔍 可空性警告 | {len(nullability):02d} 个 | {calc_percent(len(nullability))} |
+| 📝 其他警告 | {len(other):02d} 个 | {calc_percent(len(other))} |
 
 ---
 
@@ -143,22 +119,54 @@ cat > "$OUTPUT_DIR/readme.md" << EOF
 
 | 排名 | 文件名 | 警告数量 | 严重程度 |
 |------|--------|----------|----------|
-$(generate_file_dist)
+"""
 
+for i, (filename, count) in enumerate(top_files, 1):
+    if count >= 5:
+        severity = "🔴 高"
+    elif count >= 3:
+        severity = "🟡 中"
+    else:
+        severity = "🟢 低"
+    report += f"| {i} | \`{filename}\` | {count} 个 | {severity} |\n"
+
+if not top_files:
+    report += "| - | 无 | 0 个 | 🟢 低 |\n"
+
+report += """
 ---
 
 ## 📝 警告详情列表
 
-$(generate_warning_details "warning:.*(never used|was never used|defined but never used)" "📦 未使用变量警告" "$UNUSED_VAR")
-$(generate_warning_details "warning:.*(deprecated|was deprecated)" "⚠️ 弃用API警告" "$DEPRECATED")
-$(generate_warning_details "warning:.*(type cast|conditional cast|forced cast)" "🔄 类型转换警告" "$TYPE_CAST")
-$(generate_warning_details "warning:.*(optional|nil coalescing|non-optional)" "🔍 可空性警告" "$NULLABILITY")
+### 📦 未使用变量警告 (""" + str(len(unused_var)) + """个)
 
-### 📝 其他警告 ($OTHER_WARN个)
+```
+""" + ("\n".join(unused_var[:20]) if unused_var else "无") + """
+```
 
-\`\`\`
-$(if [ -f "$BUILD_LOG" ] && [ "$OTHER_WARN" -gt 0 ]; then grep "warning:" "$BUILD_LOG" | grep -vE "(never used|deprecated|type cast|optional|nil coalescing)" | head -20; else echo "无"; fi)
-\`\`\`
+### ⚠️ 弃用API警告 (""" + str(len(deprecated)) + """个)
+
+```
+""" + ("\n".join(deprecated[:20]) if deprecated else "无") + """
+```
+
+### 🔄 类型转换警告 (""" + str(len(type_cast)) + """个)
+
+```
+""" + ("\n".join(type_cast[:20]) if type_cast else "无") + """
+```
+
+### 🔍 可空性警告 (""" + str(len(nullability)) + """个)
+
+```
+""" + ("\n".join(nullability[:20]) if nullability else "无") + """
+```
+
+### 📝 其他警告 (""" + str(len(other)) + """个)
+
+```
+""" + ("\n".join(other[:20]) if other else "无") + """
+```
 
 ---
 
@@ -166,26 +174,37 @@ $(if [ -f "$BUILD_LOG" ] && [ "$OTHER_WARN" -gt 0 ]; then grep "warning:" "$BUIL
 
 ### 📊 质量评级
 
-- **质量评级**: **$QUALITY**
-- **警告密度**: 每千行约 $(if [ "$TOTAL_LINES" -gt 0 ]; then echo "$(( WARNING_COUNT * 1000 / TOTAL_LINES ))"; else echo "0"; fi) 个警告
-- **代码总行数**: $TOTAL_LINES 行
+- **质量评级**: **""" + quality + """**
+- **警告密度**: 每千行约 """ + str(warning_count * 1000 // total_lines if total_lines > 0 else 0) + """ 个警告
+- **代码总行数**: """ + str(total_lines) + """ 行
 
 ### 💡 修复建议
 
-$(if [ "$ERROR_COUNT" -gt 0 ]; then echo "#### 1. 编译错误 ($ERROR_COUNT个)
-- 优先修复所有编译错误，确保构建通过
-- 查看上方错误详情定位问题文件和行号"; fi)
+"""
 
-$(if [ "$UNUSED_VAR" -gt 0 ]; then echo "#### 2. 未使用变量警告 ($UNUSED_VAR个)
+if error_count > 0:
+    report += f"""#### 1. 编译错误 ({error_count}个)
+- 优先修复所有编译错误，确保构建通过
+- 查看上方错误详情定位问题文件和行号
+
+"""
+
+if unused_var:
+    report += f"""#### 2. 未使用变量警告 ({len(unused_var)}个)
 - 删除未使用的变量和函数
 - 检查是否是调试代码遗留
-- 使用Xcode的静态分析工具辅助清理"; fi)
+- 使用Xcode的静态分析工具辅助清理
 
-$(if [ "$DEPRECATED" -gt 0 ]; then echo "#### 3. 弃用API警告 ($DEPRECATED个)
+"""
+
+if deprecated:
+    report += f"""#### 3. 弃用API警告 ({len(deprecated)}个)
 - 替换为最新API
-- 检查最低系统版本兼容性"; fi)
+- 检查最低系统版本兼容性
 
-#### 4. 警告数量管理
+"""
+
+report += """#### 4. 警告数量管理
 - 建议分批次清理警告，优先清理高风险警告
 - 可以在CI中设置警告阈值，超过阈值则构建失败
 - 建立代码审查机制，防止新警告引入
@@ -202,6 +221,12 @@ $(if [ "$DEPRECATED" -gt 0 ]; then echo "#### 3. 弃用API警告 ($DEPRECATED个
 ---
 
 *本报告由 GitHub Actions 自动生成，仅供参考*
-EOF
+"""
 
-echo "✅ 报告已生成: $OUTPUT_DIR/readme.md ($(wc -l < "$OUTPUT_DIR/readme.md") 行)"
+# 写入文件
+output_path = os.path.join(output_dir, "readme.md")
+with open(output_path, "w", encoding="utf-8") as f:
+    f.write(report)
+
+print(f"✅ 报告已生成: {output_path} ({len(report.splitlines())} 行)")
+PYEOF

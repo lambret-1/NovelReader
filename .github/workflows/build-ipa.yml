@@ -293,10 +293,19 @@ jobs:
       # 9.1 生成可视化警告日志报告并提交到仓库
       - name: 生成可视化警告日志报告
         if: always()
+        env:
+          LANG: en_US.UTF-8
+          LC_ALL: en_US.UTF-8
+          LC_CTYPE: en_US.UTF-8
         run: |
           echo "════════════════════════════════════════"
           echo "  生成可视化警告日志报告"
           echo "════════════════════════════════════════"
+          # 强制 UTF-8 编码，避免中文乱码
+          export LANG=en_US.UTF-8
+          export LC_ALL=en_US.UTF-8
+          export LC_CTYPE=en_US.UTF-8
+          locale
           chmod +x scripts/generate_bug_report.sh
           bash scripts/generate_bug_report.sh build.log bug
           git config user.name "github-actions[bot]"
