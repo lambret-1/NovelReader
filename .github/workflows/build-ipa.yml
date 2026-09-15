@@ -23,15 +23,20 @@ jobs:
     timeout-minutes: 25
 
     steps:
+      # 1. 检出代码
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
+      # 2. 选择 Xcode 版本
       - name: Select Xcode
         run: |
-          echo "=== 可用 Xcode 版本 ==="
+          echo "════════════════════════════════════════"
+          echo "  步骤 2/10：选择 Xcode 版本"
+          echo "════════════════════════════════════════"
+          echo "可用 Xcode 版本："
           ls -d /Applications/Xcode*.app 2>/dev/null | sort
           echo ""
           if [ -d "/Applications/Xcode_${{ env.XCODE_VERSION }}.app" ]; then
@@ -40,20 +45,27 @@ jobs:
           else
             echo "⚠️  Xcode ${{ env.XCODE_VERSION }} 不存在，使用默认版本"
           fi
-          echo "=== 当前 Xcode 版本 ==="
+          echo "当前 Xcode 版本："
           xcodebuild -version
           swift --version
 
+      # 3. 版本号自动递增（缝九进一）
       - name: Bump Version (缝九进一)
         id: version
         run: |
+          echo "════════════════════════════════════════"
+          echo "  步骤 3/10：版本号递增"
+          echo "════════════════════════════════════════"
           PLIST="NovelReader/Info.plist"
+
           CURRENT_VERSION=$(/usr/libexec/PlistBuddy -c "Print CFBundleShortVersionString" "$PLIST")
           echo "当前版本: $CURRENT_VERSION"
+
           IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT_VERSION"
           MAJOR=${MAJOR:-0}
           MINOR=${MINOR:-0}
           PATCH=${PATCH:-0}
+
           PATCH=$((PATCH + 1))
           if [ "$PATCH" -gt 9 ]; then
             PATCH=0
@@ -63,33 +75,85 @@ jobs:
               MAJOR=$((MAJOR + 1))
             fi
           fi
+
           NEW_VERSION="$MAJOR.$MINOR.$PATCH"
           echo "新版本: $NEW_VERSION"
+
           /usr/libexec/PlistBuddy -c "Set CFBundleShortVersionString $NEW_VERSION" "$PLIST"
+
           CURRENT_BUILD=$(/usr/libexec/PlistBuddy -c "Print CFBundleVersion" "$PLIST")
           NEW_BUILD=$((CURRENT_BUILD + 1))
           /usr/libexec/PlistBuddy -c "Set CFBundleVersion $NEW_BUILD" "$PLIST"
           echo "Build号: $CURRENT_BUILD -> $NEW_BUILD"
+
           echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
           echo "new_build=$NEW_BUILD" >> $GITHUB_OUTPUT
+          echo "✅ 版本号更新完成: $NEW_VERSION (build $NEW_BUILD)"
 
+      # 4. 提交版本号变更
       - name: Commit Version Bump
         run: |
+          echo "════════════════════════════════════════"
+          echo "  步骤 4/10：提交版本号"
+          echo "════════════════════════════════════════"
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add NovelReader/Info.plist
           git commit -m "chore: 版本号递增至 ${{ steps.version.outputs.new_version }} (build ${{ steps.version.outputs.new_build }}) [skip ci]"
           git push
+          echo "✅ 版本号已提交"
 
+      # 5. 解析 Swift Package 依赖
       - name: Resolve Dependencies
         run: |
+          echo "════════════════════════════════════════"
+          echo "  步骤 5/10：解析 SPM 依赖"
+          echo "════════════════════════════════════════"
+          echo "正在解析 GRDB.swift 等依赖..."
           xcodebuild -resolvePackageDependencies \
             -project "$PROJECT" \
             -scheme "$SCHEME" \
-            -scmProvider system
+            -scmProvider system 2>&1 | tee resolve.log
+          echo "✅ 依赖解析完成"
 
+      # 5.1 依赖解析失败时打印错误
+      - name: 依赖解析错误日志
+        if: failure()
+        run: |
+          echo "❌══════════════════════════════════════❌"
+          echo "  依赖解析失败 - 错误详情"
+          echo "❌══════════════════════════════════════❌"
+          if [ -f resolve.log ]; then
+            echo "📋 完整日志："
+            cat resolve.log
+          fi
+          echo ""
+          echo "📦 已解析的包："
+          ls -la ~/Library/Developer/Xcode/DerivedData/*/SourcePackages/checkouts/ 2>/dev/null || echo "（无）"
+          echo ""
+          echo "🔧 排查建议："
+          echo "  1. 检查 Package.resolved 是否存在"
+          echo "  2. 检查网络连接是否可达 github.com"
+          echo "  3. 检查 SPM 依赖版本兼容性"
+
+      # 6. 构建（无签名 / Release / arm64 only）
       - name: Build (Unsigned Release)
         run: |
+          echo "════════════════════════════════════════"
+          echo "  步骤 6/10：编译构建"
+          echo "════════════════════════════════════════"
+          echo "构建参数："
+          echo "  项目: $PROJECT"
+          echo "  Scheme: $SCHEME"
+          echo "  配置: $CONFIGURATION"
+          echo "  架构: arm64"
+          echo "  最低系统: iOS $DEPLOYMENT_TARGET"
+          echo "  签名: 无签名"
+          echo ""
+          echo "开始编译..."
+
+          # 构建并捕获完整日志
+          set -o pipefail
           xcodebuild \
             -project "$PROJECT" \
             -scheme "$SCHEME" \
@@ -97,7 +161,6 @@ jobs:
             -destination 'generic/platform=iOS' \
             -derivedDataPath build \
             -parallelizeTargets \
-            -quiet \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGN_IDENTITY="" \
@@ -108,39 +171,117 @@ jobs:
             COMPILER_INDEX_STORE_ENABLE=NO \
             SWIFT_COMPILATION_MODE=wholemodule \
             IPHONEOS_DEPLOYMENT_TARGET="$DEPLOYMENT_TARGET" \
-            build
+            build 2>&1 | tee build.log
 
+          BUILD_EXIT=${PIPESTATUS[0]}
+          echo ""
+          echo "════════════════════════════════════════"
+          if [ $BUILD_EXIT -eq 0 ]; then
+            echo "✅ 编译成功"
+          else
+            echo "❌ 编译失败，退出码: $BUILD_EXIT"
+          fi
+          echo "════════════════════════════════════════"
+          exit $BUILD_EXIT
+
+      # 6.1 构建失败时打印详细错误日志
+      - name: 构建错误诊断
+        if: failure()
+        run: |
+          echo "❌══════════════════════════════════════❌"
+          echo "  构建失败 - 错误诊断报告"
+          echo "❌══════════════════════════════════════❌"
+          echo ""
+
+          echo "📋 【1/5】构建日志最后 100 行："
+          echo "─────────────────────────────────────────"
+          if [ -f build.log ]; then
+            tail -100 build.log
+          else
+            echo "（build.log 不存在）"
+          fi
+          echo ""
+
+          echo "🔍 【2/5】错误和警告统计："
+          echo "─────────────────────────────────────────"
+          if [ -f build.log ]; then
+            ERROR_COUNT=$(grep -c "error:" build.log 2>/dev/null || echo 0)
+            WARNING_COUNT=$(grep -c "warning:" build.log 2>/dev/null || echo 0)
+            echo "  错误数: $ERROR_COUNT"
+            echo "  警告数: $WARNING_COUNT"
+          fi
+          echo ""
+
+          echo "🐛 【3/5】所有 error: 行："
+          echo "─────────────────────────────────────────"
+          if [ -f build.log ]; then
+            grep -n "error:" build.log 2>/dev/null | head -30 || echo "（无）"
+          fi
+          echo ""
+
+          echo "📁 【4/5】编译失败的源文件："
+          echo "─────────────────────────────────────────"
+          if [ -f build.log ]; then
+            grep -E "^CompileSwift|error:" build.log 2>/dev/null | grep -B1 "error:" | grep "CompileSwift" | awk '{print $NF}' | sort -u | head -20 || echo "（无法识别）"
+          fi
+          echo ""
+
+          echo "🔧 【5/5】常见原因排查："
+          echo "─────────────────────────────────────────"
+          echo "  1. 语法错误：查看上方 error: 行的文件和行号"
+          echo "  2. 类型不匹配：Swift 强类型检查失败"
+          echo "  3. 缺失导入：检查 import 语句"
+          echo "  4. API 兼容性：最低 iOS $DEPLOYMENT_TARGET，确认 API 可用"
+          echo "  5. 依赖问题：GRDB.swift 等 SPM 包是否正确解析"
+          echo ""
+          echo "📂 DerivedData 路径: $(pwd)/build"
+          echo "❌══════════════════════════════════════❌"
+
+      # 7. 验证构建产物
       - name: Verify Build
         run: |
+          echo "════════════════════════════════════════"
+          echo "  步骤 7/10：验证构建产物"
+          echo "════════════════════════════════════════"
           APP_PATH="build/Build/Products/${CONFIGURATION}-iphoneos/${IPA_NAME}.app"
           if [ ! -d "$APP_PATH" ]; then
             echo "❌ APP 未找到，构建可能失败"
-            ls -la build/Build/Products/
+            echo "Build 目录内容："
+            ls -la build/Build/Products/ 2>/dev/null || echo "（目录不存在）"
             exit 1
           fi
           echo "✅ APP 构建成功"
-          echo "=== APP 信息 ==="
-          /usr/libexec/PlistBuddy -c "Print CFBundleShortVersionString" "$APP_PATH/Info.plist"
-          /usr/libexec/PlistBuddy -c "Print CFBundleVersion" "$APP_PATH/Info.plist"
-          echo "=== 文件大小 ==="
-          du -sh "$APP_PATH"
+          echo "APP 信息："
+          echo "  版本: $(/usr/libexec/PlistBuddy -c "Print CFBundleShortVersionString" "$APP_PATH/Info.plist")"
+          echo "  Build: $(/usr/libexec/PlistBuddy -c "Print CFBundleVersion" "$APP_PATH/Info.plist")"
+          echo "  大小: $(du -sh "$APP_PATH" | cut -f1)"
+          echo "  可执行文件: $(ls -la "$APP_PATH/NovelReader" 2>/dev/null | awk '{print $5}') bytes"
 
+      # 8. 打包成 IPA
       - name: Package IPA
         run: |
+          echo "════════════════════════════════════════"
+          echo "  步骤 8/10：打包 IPA"
+          echo "════════════════════════════════════════"
           APP_PATH="build/Build/Products/${CONFIGURATION}-iphoneos/${IPA_NAME}.app"
           VERSION="${{ steps.version.outputs.new_version }}"
           BUILD="${{ steps.version.outputs.new_build }}"
+
           rm -rf Payload
           mkdir -p Payload
           cp -R "$APP_PATH" Payload/
+
           IPA_FILE="${IPA_NAME}_v${VERSION}_b${BUILD}.ipa"
           zip -qr "$IPA_FILE" Payload
+
           rm -rf Payload build
+
           echo "✅ IPA 打包成功"
-          echo "文件名: $IPA_FILE"
-          ls -lh "$IPA_FILE"
+          echo "  文件名: $IPA_FILE"
+          echo "  大小: $(ls -lh "$IPA_FILE" | awk '{print $5}')"
           echo "ipa_file=$IPA_FILE" >> $GITHUB_ENV
 
+      # 9. 上传 IPA 到 Artifacts
       - name: Upload IPA
         uses: actions/upload-artifact@v4
         with:
@@ -149,8 +290,12 @@ jobs:
           retention-days: 90
           compression-level: 6
 
+      # 10. 构建总结
       - name: Build Summary
         run: |
+          echo "════════════════════════════════════════"
+          echo "  步骤 10/10：构建总结"
+          echo "════════════════════════════════════════"
           echo "## ✅ 构建完成" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| 项目 | 值 |" >> $GITHUB_STEP_SUMMARY
@@ -164,3 +309,20 @@ jobs:
           echo "| 最低系统 | iOS ${{ env.DEPLOYMENT_TARGET }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "IPA 文件已上传至 Artifacts，保留 90 天。" >> $GITHUB_STEP_SUMMARY
+          echo "✅ 全部完成"
+
+      # 最终失败总结
+      - name: 失败总结
+        if: failure()
+        run: |
+          echo "❌══════════════════════════════════════❌"
+          echo "  构建流水线失败"
+          echo "❌══════════════════════════════════════❌"
+          echo ""
+          echo "失败的步骤请查看上方对应步骤的错误诊断输出。"
+          echo "常见失败点："
+          echo "  🔹 步骤5：SPM 依赖解析失败（网络/包版本）"
+          echo "  🔹 步骤6：编译失败（语法/类型/API兼容）"
+          echo "  🔹 步骤7：产物验证失败（构建未生成.app）"
+          echo ""
+          echo "📋 完整日志请下载本 Run 的 logs 排查。"
