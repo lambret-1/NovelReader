@@ -634,6 +634,7 @@
 				3ED57DEDBA3C4AA95ADAC088 /* PaginationEngine.swift in Sources */,
 				30F98EDFD9DCA057D72ACF0B /* ReaderPageViewController.swift in Sources */,				8A0E807FFBF222A475675C82 /* ReaderSettingsManager.swift in Sources */,
 				0A0B30EB2642D328187614F3 /* ReadingStatsManager.swift in Sources */,
+				B7C39D81E70754DA3926E809 /* NaturalSort.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
