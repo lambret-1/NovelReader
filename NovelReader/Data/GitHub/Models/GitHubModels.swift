@@ -38,9 +38,12 @@ struct GitRef: Codable {
     let object: GitObject
 }
 
+/// Git 对象（Blob/Tree/Commit 的引用）
+/// 注意：创建 Blob 接口返回 {sha, url} 不含 type，故 type 必须为可选
 struct GitObject: Codable {
     let sha: String
-    let type: String
+    let type: String?
+    let url: String?
 }
 
 /// Git Tree
