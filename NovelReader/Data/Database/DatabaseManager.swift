@@ -8,6 +8,7 @@ final class DatabaseManager {
     let dbQueue: DatabaseQueue
 
     private init() {
+        let queue: DatabaseQueue
         do {
             let fileManager = FileManager.default
             let docsDir = try fileManager.url(for: .documentDirectory,
@@ -15,15 +16,15 @@ final class DatabaseManager {
                                                 appropriateFor: nil,
                                                 create: true)
             let dbURL = docsDir.appendingPathComponent(AppConfig.databaseFileName)
-            dbQueue = try DatabaseQueue(path: dbURL.path)
-            try migrate()
+            queue = try DatabaseQueue(path: dbURL.path)
             AppLogger.info("数据库初始化成功: \(dbURL.path)")
         } catch {
             AppLogger.error("数据库初始化失败: \(error)")
             // 兜底：内存数据库
-            dbQueue = try! DatabaseQueue()
-            try? migrate()
+            queue = DatabaseQueue()
         }
+        self.dbQueue = queue
+        try? migrate()
     }
 
     /// 数据库迁移
