@@ -1,6 +1,6 @@
 # 🐛 可视化警告日志报告 (Bug Log)
 
-**生成时间**: 2026-09-15 18:17:42 UTC
+**生成时间**: 2026-09-15 18:22:07 UTC
 **源日志文件**: `build.log`
 **构建状态**: ✅ 构建成功
 
@@ -31,41 +31,33 @@
 
 | 排名 | 文件名 | 警告数量 | 严重程度 |
 |------|--------|----------|----------|
-| 1 | `SyncViewController.swift` | 1 个 | 🟢 低 |
-| 2 | `ReaderViewController.swift` | 1 个 | 🟢 低 |
+| 1 | `ReaderViewController.swift` | 1 个 | 🟢 低 |
+| 2 | `SyncViewController.swift` | 1 个 | 🟢 低 |
 | 3 | `2026-09-15 18` | 1 个 | 🟢 低 |
 
 ---
 
 ## 📝 警告详情列表
 
-### 📦 未使用变量警告 (��)
+### 📦 未使用变量警告 (2个)
 
-```
-/Users/runner/work/NovelReader/NovelReader/NovelReader/Presentation/Reader/ReaderViewController.swift:338:17: warning: initialization of immutable value 'chapter' was never used; consider replacing with assignment to '_' or removing it
-/Users/runner/work/NovelReader/NovelReader/NovelReader/Presentation/Sync/SyncViewController.swift:366:16: warning: value 'token' was defined but never used; consider replacing with boolean test
-```
-### ⚠️ 弃用API警告 (��)
 
-```
-无
-```
-### 🔄 类型转换警告 (��)
 
-```
-无
-```
-### 🔍 可空性警告 (��)
+### ⚠️ 弃用API警告 (0个)
 
-```
-无
-```
 
-### 📝 其他警告 (��)
 
-```
-2026-09-15 18:17:37.380 appintentsmetadataprocessor[4509:16949] warning: Metadata extraction skipped. No AppIntents.framework dependency found.
-```
+### 🔄 类型转换警告 (0个)
+
+
+
+### 🔍 可空性警告 (0个)
+
+
+
+### 📝 其他警告 (1个)
+
+
 
 ---
 
@@ -79,14 +71,10 @@
 
 ### 💡 修复建议
 
-
-
-#### 2. 未使用变量警告 (��)
+#### 2. 未使用变量警告 (2个)
 - 删除未使用的变量和函数
 - 检查是否是调试代码遗留
 - 使用Xcode的静态分析工具辅助清理
-
-
 
 #### 4. 警告数量管理
 - 建议分批次清理警告，优先清理高风险警告
