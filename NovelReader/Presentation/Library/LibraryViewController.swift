@@ -308,7 +308,7 @@ final class LibraryViewController: UIViewController {
         }
 
         // 检查 Token
-        guard GitHubAuthService.shared.loadSavedToken() != nil else {
+        guard AppContainer.shared.authService.loadSavedToken() != nil else {
             NRToast.shared.error("请先在设置中登录 GitHub")
             return
         }
