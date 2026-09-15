@@ -73,11 +73,11 @@
 
 /* Begin PBXFileReference section */
 		29CE550132313F1FB52FB33C /* NRReaderProgressView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NRReaderProgressView.swift"; sourceTree = "<group>"; };
-		B1F2C3D4E5F6A7B8C9D0E1F2 /* MainTabBarController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Presentation/Main/MainTabBarController.swift"; sourceTree = "<group>"; };
-		80FD6B229210479DA9B8A9B9 /* LibraryViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Presentation/Library/LibraryViewController.swift"; sourceTree = "<group>"; };
-		81E55BB844C04D879E69A5F7 /* ChapterListViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Presentation/Chapter/ChapterListViewController.swift"; sourceTree = "<group>"; };
-		9DF9B19B73C648EF9E63B7C7 /* SettingsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Presentation/Settings/SettingsViewController.swift"; sourceTree = "<group>"; };
-		D268A326C32F428284A29609 /* SyncViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Presentation/Sync/SyncViewController.swift"; sourceTree = "<group>"; };
+		B1F2C3D4E5F6A7B8C9D0E1F2 /* MainTabBarController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Main/MainTabBarController.swift"; sourceTree = "<group>"; };
+		80FD6B229210479DA9B8A9B9 /* LibraryViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Library/LibraryViewController.swift"; sourceTree = "<group>"; };
+		81E55BB844C04D879E69A5F7 /* ChapterListViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Chapter/ChapterListViewController.swift"; sourceTree = "<group>"; };
+		9DF9B19B73C648EF9E63B7C7 /* SettingsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Settings/SettingsViewController.swift"; sourceTree = "<group>"; };
+		D268A326C32F428284A29609 /* SyncViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Sync/SyncViewController.swift"; sourceTree = "<group>"; };
 		812BD2FF36E3F188AAA83EB0 /* NRReaderTopBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NRReaderTopBar.swift"; sourceTree = "<group>"; };
 		D247452C5A70EDB3542A4E44 /* NRReaderBottomBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NRReaderBottomBar.swift"; sourceTree = "<group>"; };
 		9F44D65A8798892145546C3C /* NRReaderMoreMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NRReaderMoreMenu.swift"; sourceTree = "<group>"; };
@@ -311,7 +311,6 @@
 			isa = PBXGroup;
 			children = (
 				E0049CF20BC5CCB94233CDDA /* ChapterUseCases.swift */,
-81E55BB844C04D879E69A5F7 /* ChapterListViewController.swift */,
 			);
 			path = "Chapter";
 			sourceTree = "<group>";
@@ -320,7 +319,6 @@
 			isa = PBXGroup;
 			children = (
 				1010D582169FF85CCC3BE7DF /* SyncUseCases.swift */,
-D268A326C32F428284A29609 /* SyncViewController.swift */,
 			);
 			path = "Sync";
 			sourceTree = "<group>";
@@ -376,6 +374,11 @@ D268A326C32F428284A29609 /* SyncViewController.swift */,
 				745F7519D11DF4C76D05F18F /* Settings */,
 				4F11E51C07A434D1745851F9 /* Sync */,
 				1618D1EBB426A2391E8B652F /* Update */,
+				B1F2C3D4E5F6A7B8C9D0E1F2 /* Main/MainTabBarController.swift */,
+				80FD6B229210479DA9B8A9B9 /* Library/LibraryViewController.swift */,
+				81E55BB844C04D879E69A5F7 /* Chapter/ChapterListViewController.swift */,
+				9DF9B19B73C648EF9E63B7C7 /* Settings/SettingsViewController.swift */,
+				D268A326C32F428284A29609 /* Sync/SyncViewController.swift */,
 			);
 			path = "Presentation";
 			sourceTree = "<group>";
@@ -390,7 +393,6 @@ D268A326C32F428284A29609 /* SyncViewController.swift */,
 			isa = PBXGroup;
 			children = (
 
-				80FD6B229210479DA9B8A9B9 /* LibraryViewController.swift */,
 
 						);
 			path = "Library";
@@ -413,7 +415,6 @@ D268A326C32F428284A29609 /* SyncViewController.swift */,
 			isa = PBXGroup;
 			children = (
 
-				9DF9B19B73C648EF9E63B7C7 /* SettingsViewController.swift */,
 
 						);
 			path = "Settings";
