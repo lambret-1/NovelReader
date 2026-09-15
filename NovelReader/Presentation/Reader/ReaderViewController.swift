@@ -31,12 +31,9 @@ final class ReaderViewController: UIViewController {
     private lazy var configPanel: UIView = {
         let view = UIView()
         view.translatesAutoresizingMaskIntoConstraints = false
-        view.backgroundColor = .systemBackground
-        view.layer.cornerRadius = 16
-        view.layer.shadowColor = UIColor.black.cgColor
-        view.layer.shadowOpacity = 0.2
-        view.layer.shadowRadius = 12
-        view.layer.shadowOffset = CGSize(width: 0, height: -4)
+        view.backgroundColor = DesignToken.Color.backgroundPrimary
+        view.layer.cornerRadius = DesignToken.Radius.xl // 设置面板圆角16pt，视觉柔和
+        view.applyShadow(DesignToken.Shadow.lg) // 大阴影，悬浮效果
         view.isHidden = true
         return view
     }()
@@ -47,6 +44,8 @@ final class ReaderViewController: UIViewController {
         slider.minimumValue = 12
         slider.maximumValue = 32
         slider.value = Float(AppConfig.defaultFontSize)
+        slider.minimumTrackTintColor = DesignToken.Color.primary // 滑块主色
+        slider.thumbTintColor = DesignToken.Color.primary
         return slider
     }()
 
@@ -56,6 +55,8 @@ final class ReaderViewController: UIViewController {
         slider.minimumValue = 0
         slider.maximumValue = 20
         slider.value = Float(AppConfig.defaultLineSpacing)
+        slider.minimumTrackTintColor = DesignToken.Color.primary
+        slider.thumbTintColor = DesignToken.Color.primary
         return slider
     }()
 
@@ -64,6 +65,8 @@ final class ReaderViewController: UIViewController {
         let sc = UISegmentedControl(items: items)
         sc.translatesAutoresizingMaskIntoConstraints = false
         sc.selectedSegmentIndex = 0
+        sc.selectedSegmentTintColor = DesignToken.Color.primary // 选中段主色
+        sc.setTitleTextAttributes([.foregroundColor: DesignToken.Color.textInverse], for: .selected)
         return sc
     }()
 
@@ -71,7 +74,8 @@ final class ReaderViewController: UIViewController {
         let btn = UIButton(type: .system)
         btn.translatesAutoresizingMaskIntoConstraints = false
         btn.setTitle("字体", for: .normal)
-        btn.titleLabel?.font = .systemFont(ofSize: 14)
+        btn.titleLabel?.font = DesignToken.Font.subhead // 字体按钮15pt
+        btn.tintColor = DesignToken.Color.primary
         return btn
     }()
 
@@ -79,7 +83,7 @@ final class ReaderViewController: UIViewController {
         let btn = UIButton(type: .system)
         btn.translatesAutoresizingMaskIntoConstraints = false
         btn.setImage(UIImage(systemName: "bookmark"), for: .normal)
-        btn.tintColor = .label
+        btn.tintColor = DesignToken.Color.textPrimary
         return btn
     }()
 
@@ -87,7 +91,7 @@ final class ReaderViewController: UIViewController {
         let btn = UIButton(type: .system)
         btn.translatesAutoresizingMaskIntoConstraints = false
         btn.setImage(UIImage(systemName: "magnifyingglass"), for: .normal)
-        btn.tintColor = .label
+        btn.tintColor = DesignToken.Color.textPrimary
         return btn
     }()
 
@@ -95,15 +99,15 @@ final class ReaderViewController: UIViewController {
         let btn = UIButton(type: .system)
         btn.translatesAutoresizingMaskIntoConstraints = false
         btn.setImage(UIImage(systemName: "list.bullet"), for: .normal)
-        btn.tintColor = .label
+        btn.tintColor = DesignToken.Color.textPrimary
         return btn
     }()
 
     private lazy var progressLabel: UILabel = {
         let label = UILabel()
         label.translatesAutoresizingMaskIntoConstraints = false
-        label.font = .systemFont(ofSize: 11)
-        label.textColor = .secondaryLabel
+        label.font = DesignToken.Font.caption2 // 进度字号11pt
+        label.textColor = DesignToken.Color.textSecondary
         label.textAlignment = .center
         return label
     }()
@@ -111,8 +115,8 @@ final class ReaderViewController: UIViewController {
     private lazy var chapterTitleLabel: UILabel = {
         let label = UILabel()
         label.translatesAutoresizingMaskIntoConstraints = false
-        label.font = .systemFont(ofSize: 13, weight: .medium)
-        label.textColor = .secondaryLabel
+        label.font = DesignToken.Font.footnote // 章节标题13pt
+        label.textColor = DesignToken.Color.textSecondary
         label.textAlignment = .left
         return label
     }()
@@ -154,7 +158,7 @@ final class ReaderViewController: UIViewController {
 
     // MARK: - UI 设置
     private func setupUI() {
-        view.backgroundColor = .systemBackground
+        view.backgroundColor = DesignToken.Color.backgroundPrimary
         navigationController?.setNavigationBarHidden(true, animated: false)
 
         addChild(pageViewController)
@@ -186,9 +190,9 @@ final class ReaderViewController: UIViewController {
             progressLabel.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -8),
             progressLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
 
-            configPanel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
-            configPanel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
-            configPanel.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -16),
+            configPanel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: DesignToken.Spacing.lg),
+            configPanel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -DesignToken.Spacing.lg),
+            configPanel.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -DesignToken.Spacing.lg),
             configPanel.heightAnchor.constraint(equalToConstant: 200),
 
             fontSizeSlider.topAnchor.constraint(equalTo: configPanel.topAnchor, constant: 20),
