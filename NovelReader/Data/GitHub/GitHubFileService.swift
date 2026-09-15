@@ -15,8 +15,9 @@ final class GitHubFileService {
 
     /// 读取仓库中指定路径的文件内容（单文件，小文件适用）
     func getFileContent(owner: String, repo: String, path: String, ref: String = "main") -> AnyPublisher<String, Error> {
+        let encodedPath = path.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? path
         let params = ["ref": ref]
-        return apiClient.get("/repos/\(owner)/\(repo)/contents/\(path)", parameters: params)
+        return apiClient.get("/repos/\(owner)/\(repo)/contents/\(encodedPath)", parameters: params)
             .tryMap { (content: GitHubContent) in
                 guard let encoded = content.content,
                       let data = Data(base64Encoded: encoded, options: .ignoreUnknownCharacters),
@@ -30,8 +31,9 @@ final class GitHubFileService {
 
     /// 获取目录下的文件列表
     func getDirectoryContents(owner: String, repo: String, path: String, ref: String = "main") -> AnyPublisher<[GitHubContent], Error> {
+        let encodedPath = path.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? path
         let params = ["ref": ref]
-        return apiClient.get("/repos/\(owner)/\(repo)/contents/\(path)", parameters: params)
+        return apiClient.get("/repos/\(owner)/\(repo)/contents/\(encodedPath)", parameters: params)
     }
 
     /// 获取仓库完整文件树（递归，适合全量同步）

@@ -85,8 +85,7 @@ final class ManifestManager {
                     size: content.utf8.count,
                     lastModified: chapter.updatedAt.timeIntervalSince1970
                 ))
-            }
-        }
+            }        }
 
         return Manifest(entries: entries)
     }
@@ -96,6 +95,10 @@ final class ManifestManager {
         let entries = (tree.tree ?? [])
             .filter { $0.type == "blob" }
             .filter { !$0.path.hasPrefix(".novel-sync/") } // 排除同步元数据目录
+            .filter { !$0.path.hasPrefix(".git") }        // 排除 git 相关文件
+            .filter { $0.path != "README.md" }            // 排除仓库说明文件
+            .filter { $0.path != ".gitignore" }           // 排除 gitignore
+            .filter { isValidNovelFilePath($0.path) }     // 只保留小说文件格式
             .map { item in
                 ManifestEntry(
                     path: item.path,
@@ -105,6 +108,23 @@ final class ManifestManager {
                 )
             }
         return Manifest(entries: entries)
+    }
+
+    /// 验证是否为有效的小说文件路径
+    /// 格式：书名/meta.json 或 书名/序号_标题.md
+    private static func isValidNovelFilePath(_ path: String) -> Bool {
+        let components = path.components(separatedBy: "/")
+        guard components.count == 2 else { return false }
+        let fileName = components[1]
+        if fileName == "meta.json" { return true }
+        if fileName.hasSuffix(".md") {
+            // 序号_标题.md 格式，序号为 3 位数字
+            let namePart = fileName.dropLast(3) // 去掉 .md
+            if namePart.count >= 4, namePart.prefix(3).allSatisfy({ $0.isNumber }), namePart[namePart.index(namePart.startIndex, offsetBy: 3)] == "_" {
+                return true
+            }
+        }
+        return false
     }
 
     /// 对比本地和远端 manifest，返回差异列表

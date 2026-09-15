@@ -29,7 +29,12 @@ struct Book: Identifiable, Codable, Equatable {
         self.createdAt = createdAt
         self.updatedAt = updatedAt
         self.sortOrder = sortOrder
-        self.remotePath = remotePath.isEmpty ? title : remotePath
+        // 安全处理：移除路径中的特殊字符，防止路径层级错误
+        let safePath = remotePath.isEmpty ? title : remotePath
+        self.remotePath = safePath
+            .components(separatedBy: CharacterSet(charactersIn: "/\\?%*|\"<>"))
+            .joined()
+            .trimmingCharacters(in: .whitespacesAndNewlines)
         self.lastSyncedAt = lastSyncedAt
     }
 }

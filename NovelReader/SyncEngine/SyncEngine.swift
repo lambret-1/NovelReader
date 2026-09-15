@@ -163,11 +163,18 @@ final class SyncEngine: SyncEngineProtocol {
                 _ = try awaitPublisher(fileService.writeFiles(owner: owner, repo: repo, files: filesToUpload, message: message))
                 uploadedCount = filesToUpload.count
 
-                // 标记已同步
+                // 标记章节已同步
                 for chapter in allChapters {
                     if chapter.isDirty {
                         _ = try? awaitPublisher(chapterRepository.markChapterSynced(id: chapter.id))
                     }
+                }
+
+                // 更新书籍最后同步时间
+                for book in books {
+                    var updatedBook = book
+                    updatedBook.lastSyncedAt = Date()
+                    _ = try? awaitPublisher(bookRepository.updateBook(updatedBook))
                 }
             } catch {
                 DispatchQueue.main.async { self.currentStatus = .error(message: "上传失败: \(error.localizedDescription)") }
@@ -227,9 +234,9 @@ final class SyncEngine: SyncEngineProtocol {
             // 解析章节
             let parsed = ManifestManager.parseChapterMarkdown(content)
 
-            // 从文件名解析序号
+            // 从文件名解析序号（文件名是 sortOrder+1，所以需要减 1）
             let orderPrefix = String(fileName.prefix(3))
-            let sortOrder = Int(orderPrefix) ?? 0
+            let sortOrder = max(0, (Int(orderPrefix) ?? 1) - 1)
 
             // 检查本地是否已有该章节（通过标题匹配）
             if let chapters = try? awaitPublisher(chapterRepository.fetchChapters(bookId: book.id)),
@@ -272,7 +279,7 @@ final class SyncEngine: SyncEngineProtocol {
             let bookChapters = chapters.filter { $0.bookId == book.id }
             if let chapter = bookChapters.first(where: { $0.remoteFileName() == fileName }) {
                 let content = ManifestManager.chapterMarkdown(chapter: chapter)
-                return (content, ManifestEntry(path: path, sha: chapter.contentHash, size: content.utf8.count, lastModified: chapter.updatedAt.timeIntervalSince1970))
+                return (content, ManifestEntry(path: path, sha: Chapter.hash(content: content), size: content.utf8.count, lastModified: chapter.updatedAt.timeIntervalSince1970))
             }
         }
 
