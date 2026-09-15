@@ -5,8 +5,11 @@ on:
     branches: [main]
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 env:
-  XCODE_VERSION: "15.4"
+  XCODE_VERSION: "26.6"
   SCHEME: "NovelReader"
   CONFIGURATION: "Release"
   PROJECT: "NovelReader.xcodeproj"
