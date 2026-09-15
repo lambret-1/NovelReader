@@ -129,9 +129,9 @@ final class SearchViewController: UIViewController {
             for (index, chapter) in self.chapters.enumerated() {
                 let content = chapter.content
                 let lowerContent = content.lowercased()
-                var searchStart = 0
+                var searchStart = lowerContent.startIndex
 
-                while searchStart < lowerContent.count {
+                while searchStart < lowerContent.endIndex {
                     if let range = lowerContent.range(of: lowercaseQuery, range: searchStart..<lowerContent.endIndex) {
                         let offset = lowerContent.distance(from: lowerContent.startIndex, to: range.lowerBound)
                         let matchedStart = max(0, offset - 20)
@@ -154,7 +154,7 @@ final class SearchViewController: UIViewController {
                         found.append(result)
 
                         if found.count >= 200 { break }
-                        searchStart = lowerContent.distance(from: lowerContent.startIndex, to: range.upperBound)
+                        searchStart = range.upperBound
                     } else {
                         break
                     }

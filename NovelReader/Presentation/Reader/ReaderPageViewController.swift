@@ -2,7 +2,7 @@ import UIKit
 
 /// 单页阅读视图控制器
 final class ReaderPageViewController: UIViewController {
-    private let page: PaginationEngine.Page
+    let page: PaginationEngine.Page
     private let config: ReaderConfig
 
     private lazy var textView: UITextView = {

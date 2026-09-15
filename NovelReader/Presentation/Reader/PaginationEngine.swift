@@ -68,9 +68,7 @@ final class PaginationEngine {
 
         // 清理多余的 container
         while layoutManager.textContainers.count > pages.count {
-            if let last = layoutManager.textContainers.last {
-                layoutManager.removeTextContainer(last)
-            }
+            layoutManager.removeTextContainer(at: layoutManager.textContainers.count - 1)
         }
 
         cachedPages = pages
