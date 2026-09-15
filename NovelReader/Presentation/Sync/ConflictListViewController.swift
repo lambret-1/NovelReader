@@ -128,7 +128,7 @@ final class ConflictListViewController: UIViewController {
             .compactMap { $0 }
             .receive(on: DispatchQueue.main)
             .sink { [weak self] msg in
-                self?.showAlert(title: "操作失败", message: msg)
+                self?.showConflictAlert(title: "操作失败", message: msg)
             }
             .store(in: &cancellables)
 
@@ -136,7 +136,7 @@ final class ConflictListViewController: UIViewController {
             .compactMap { $0 }
             .receive(on: DispatchQueue.main)
             .sink { [weak self] result in
-                self?.showAlert(title: "同步完成", message: result.message) {
+                self?.showConflictAlert(title: "同步完成", message: result.message) {
                     self?.dismiss(animated: true)
                 }
             }
@@ -155,7 +155,7 @@ final class ConflictListViewController: UIViewController {
         present(alert, animated: true)
     }
 
-    private func showAlert(title: String, message: String, completion: (() -> Void)? = nil) {
+    private func showConflictAlert(title: String, message: String, completion: (() -> Void)? = nil) {
         let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "确定", style: .default) { _ in completion?() })
         present(alert, animated: true)
@@ -277,3 +277,4 @@ final class ConflictCell: UITableViewCell {
         viewModel?.resolveConflict(conflictId: conflict.id, resolution: .keepRemote)
     }
 }
+
