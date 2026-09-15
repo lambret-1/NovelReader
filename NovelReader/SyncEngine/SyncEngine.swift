@@ -16,6 +16,7 @@ final class SyncEngine: SyncEngineProtocol {
     private let bookRepository: BookRepositoryProtocol
     private let chapterRepository: ChapterRepositoryProtocol
     private let syncMetadataRepository: SyncMetadataRepositoryProtocol
+    private let conflictRepository: ConflictRepositoryProtocol
     private let readingProgressRepository: ReadingProgressRepositoryProtocol?
     private let fileService: GitHubFileService
     private let gitService: GitHubGitService
@@ -24,11 +25,25 @@ final class SyncEngine: SyncEngineProtocol {
     private var cancellables = Set<AnyCancellable>()
     private let syncQueue = DispatchQueue(label: "com.novelreader.sync", qos: .utility)
 
+    /// 暂停的同步上下文（冲突等待用户解决时保存）
+    private struct PendingSyncContext {
+        let promise: (Result<SyncResult, Error>) -> Void
+        let metadata: SyncMetadata
+        let owner: String
+        let repo: String
+        let books: [Book]
+        let allChapters: [Chapter]
+        let diffs: [ManifestDiff]
+        let downloadedCount: Int
+    }
+    private var pendingContext: PendingSyncContext?
+
     // MARK: - 初始化
 
     init(bookRepository: BookRepositoryProtocol,
          chapterRepository: ChapterRepositoryProtocol,
          syncMetadataRepository: SyncMetadataRepositoryProtocol,
+         conflictRepository: ConflictRepositoryProtocol,
          readingProgressRepository: ReadingProgressRepositoryProtocol? = nil,
          fileService: GitHubFileService = GitHubFileService(),
          gitService: GitHubGitService = GitHubGitService(),
@@ -36,6 +51,7 @@ final class SyncEngine: SyncEngineProtocol {
         self.bookRepository = bookRepository
         self.chapterRepository = chapterRepository
         self.syncMetadataRepository = syncMetadataRepository
+        self.conflictRepository = conflictRepository
         self.readingProgressRepository = readingProgressRepository
         self.fileService = fileService
         self.gitService = gitService
@@ -143,9 +159,41 @@ final class SyncEngine: SyncEngineProtocol {
             }
         }
 
-        // 7. 处理冲突（简化：保留本地版本上传）
+        // 7. 处理冲突：检测到冲突时暂停同步，保存冲突到数据库等待用户解决
         let conflicts = diffs.filter { $0.type == .conflict }
         conflictCount = conflicts.count
+
+        if !conflicts.isEmpty {
+            var conflictItems: [ConflictItem] = []
+            for diff in conflicts {
+                let localContent = self.localContent(for: diff.path, books: books, chapters: allChapters)?.content
+                let remoteContent = try? awaitPublisher(fileService.getFileContent(owner: owner, repo: repo, path: diff.path))
+                conflictItems.append(ConflictItem(
+                    type: .contentModified,
+                    localPath: diff.path,
+                    remotePath: diff.path,
+                    localContent: localContent,
+                    remoteContent: remoteContent
+                ))
+            }
+            _ = try? awaitPublisher(conflictRepository.saveConflicts(conflictItems))
+
+            DispatchQueue.main.async {
+                self.currentStatus = .conflictWaiting(count: conflicts.count)
+                self.pendingContext = PendingSyncContext(
+                    promise: promise,
+                    metadata: metadata,
+                    owner: owner,
+                    repo: repo,
+                    books: books,
+                    allChapters: allChapters,
+                    diffs: diffs,
+                    downloadedCount: downloadedCount
+                )
+            }
+            AppLogger.info("检测到 \(conflicts.count) 个冲突，同步已暂停")
+            return
+        }
 
         // 8. 上传本地修改（只上传 dirty 章节和新增书籍）
         DispatchQueue.main.async { self.currentStatus = .pushing(progress: 0.5) }
@@ -216,7 +264,133 @@ final class SyncEngine: SyncEngineProtocol {
     // MARK: - 冲突解决
 
     func resolveConflict(conflictId: String, resolution: ConflictItem.ConflictResolution) -> AnyPublisher<Void, Error> {
-        return Just(()).setFailureType(to: Error.self).eraseToAnyPublisher()
+        return Future { [weak self] promise in
+            guard let self = self else { promise(.success(())); return }
+            _ = try? awaitPublisher(self.conflictRepository.updateResolution(conflictId: conflictId, resolution: resolution))
+
+            self.syncQueue.async {
+                guard let conflicts = try? awaitPublisher(self.conflictRepository.fetchAllConflicts()),
+                      let conflict = conflicts.first(where: { $0.id == conflictId }) else {
+                    promise(.success(()))
+                    return
+                }
+
+                switch resolution {
+                case .keepLocal:
+                    break
+                case .keepRemote:
+                    if let remoteContent = conflict.remoteContent {
+                        self.applyRemoteContent(path: conflict.remotePath, content: remoteContent, books: self.pendingContext?.books ?? [])
+                    }
+                case .keepBoth:
+                    if let remoteContent = conflict.remoteContent,
+                       let localContent = conflict.localContent {
+                        let merged = localContent + "\n\n--- 远端版本 ---\n\n" + remoteContent
+                        self.applyRemoteContent(path: conflict.localPath, content: merged, books: self.pendingContext?.books ?? [])
+                    }
+                case .manual:
+                    if let localContent = conflict.localContent {
+                        self.applyRemoteContent(path: conflict.localPath, content: localContent, books: self.pendingContext?.books ?? [])
+                    }
+                }
+                promise(.success(()))
+            }
+        }.eraseToAnyPublisher()
+    }
+
+    func continueSyncAfterConflictsResolved() -> AnyPublisher<SyncResult, Error> {
+        return Future { [weak self] promise in
+            guard let self = self, let context = self.pendingContext else {
+                promise(.failure(SyncError.unknown))
+                return
+            }
+            guard let unresolvedCount = try? awaitPublisher(self.conflictRepository.unresolvedCount()),
+                  unresolvedCount == 0 else {
+                promise(.failure(SyncError.conflictNotResolved))
+                return
+            }
+            self.pendingContext = nil
+            self.syncQueue.async {
+                self.continueUploadPhase(
+                    promise: context.promise,
+                    metadata: context.metadata,
+                    owner: context.owner,
+                    repo: context.repo,
+                    books: context.books,
+                    allChapters: context.allChapters,
+                    diffs: context.diffs,
+                    downloadedCount: context.downloadedCount
+                )
+            }
+        }.eraseToAnyPublisher()
+    }
+
+    func abortSync() -> AnyPublisher<Void, Error> {
+        return Future { [weak self] promise in
+            guard let self = self else { promise(.success(())); return }
+            _ = try? awaitPublisher(self.conflictRepository.clearAllConflicts())
+            self.pendingContext = nil
+            DispatchQueue.main.async { self.currentStatus = .idle }
+            promise(.success(()))
+        }.eraseToAnyPublisher()
+    }
+
+    private func continueUploadPhase(promise: @escaping (Result<SyncResult, Error>) -> Void,
+                                     metadata: SyncMetadata,
+                                     owner: String,
+                                     repo: String,
+                                     books: [Book],
+                                     allChapters: [Chapter],
+                                     diffs: [ManifestDiff],
+                                     downloadedCount: Int) {
+        var uploadedCount = 0
+        DispatchQueue.main.async { self.currentStatus = .pushing(progress: 0.5) }
+
+        let localChanges = diffs.filter { $0.type == .localAdded || $0.type == .conflict }
+        var filesToUpload: [String: String] = [:]
+        for diff in localChanges {
+            if let (content, _) = localContent(for: diff.path, books: books, chapters: allChapters) {
+                filesToUpload[diff.path] = content
+            }
+        }
+
+        if !filesToUpload.isEmpty {
+            let dateFormatter = DateFormatter()
+            dateFormatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
+            let message = "Sync: \(filesToUpload.count) files (conflicts resolved) at \(dateFormatter.string(from: Date()))"
+            do {
+                let commit = try awaitPublisher(fileService.writeFiles(owner: owner, repo: repo, files: filesToUpload, message: message))
+                uploadedCount = filesToUpload.count
+                for chapter in allChapters {
+                    if chapter.isDirty {
+                        _ = try? awaitPublisher(chapterRepository.markChapterSynced(id: chapter.id))
+                    }
+                }
+                for book in books {
+                    var updatedBook = book
+                    updatedBook.lastSyncedAt = Date()
+                    _ = try? awaitPublisher(bookRepository.updateBook(updatedBook))
+                }
+                var updatedMetadata = metadata
+                updatedMetadata.lastSyncCommitSHA = commit.sha
+                updatedMetadata.lastSyncAt = Date()
+                updatedMetadata.localManifestVersion += 1
+                _ = try? awaitPublisher(syncMetadataRepository.updateMetadata(updatedMetadata))
+            } catch {
+                DispatchQueue.main.async { self.currentStatus = .error(message: "上传失败: \(error.localizedDescription)") }
+                promise(.failure(SyncError.pushFailed))
+                return
+            }
+        } else {
+            var updatedMetadata = metadata
+            updatedMetadata.lastSyncAt = Date()
+            _ = try? awaitPublisher(syncMetadataRepository.updateMetadata(updatedMetadata))
+        }
+
+        _ = try? awaitPublisher(conflictRepository.clearAllConflicts())
+        DispatchQueue.main.async { self.currentStatus = .idle }
+        let result = SyncResult(success: true, uploadedCount: uploadedCount, downloadedCount: downloadedCount, conflictCount: 0, message: "同步完成（冲突已解决）")
+        promise(.success(result))
     }
 
     // MARK: - 私有工具方法
@@ -446,3 +620,4 @@ enum SyncError: LocalizedError {
         }
     }
 }
+
