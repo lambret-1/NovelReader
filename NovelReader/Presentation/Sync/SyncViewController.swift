@@ -312,6 +312,8 @@ final class SyncViewModel {
     @Published var viewState: SyncViewState = .notLoggedIn
     @Published var syncResult: SyncResult?
     @Published var repoFullName: String?
+    /// 当前登录用户名，用于同步完成后重置 UI 状态
+    private var currentUsername: String?
 
     private let authService: GitHubAuthService
     private let syncEngine: SyncEngineProtocol
@@ -351,7 +353,8 @@ final class SyncViewModel {
 
     func checkLoginStatus() {
         if let token = authService.loadSavedToken() {
-            GitHubAPIClient.shared.setToken(token)
+            // Token 已在 AppDelegate 启动时设置到容器的 apiClient 实例
+            // 此处验证 Token 是否仍然有效
             authService.fetchCurrentUser()
                 .receive(on: DispatchQueue.main)
                 .sink(receiveCompletion: { [weak self] completion in
@@ -368,6 +371,7 @@ final class SyncViewModel {
     }
 
     private func loadMetadata(username: String) {
+        currentUsername = username
         syncMetadataRepository.fetchMetadata()
             .receive(on: DispatchQueue.main)
             .sink(receiveCompletion: { _ in }, receiveValue: { [weak self] metadata in
@@ -400,6 +404,7 @@ final class SyncViewModel {
 
     func logout() {
         authService.logout()
+        currentUsername = nil
         repoFullName = nil
         viewState = .notLoggedIn
     }
@@ -431,10 +436,12 @@ final class SyncViewModel {
                 }
             }, receiveValue: { [weak self] result in
                 self?.syncResult = result
-                if case .idle(let username, _) = self?.viewState {
+                // 同步完成后无论当前状态都重置为 idle，修复进度条卡住问题
+                if let username = self?.currentUsername {
                     self?.viewState = .idle(username: username, lastSync: Date())
                 }
             })
             .store(in: &cancellables)
     }
 }
+
