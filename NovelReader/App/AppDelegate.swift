@@ -105,13 +105,82 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             preferredStyle: .alert
         )
         alert.addAction(UIAlertAction(title: "稍后提醒", style: .cancel))
-        alert.addAction(UIAlertAction(title: "立即更新", style: .default) { _ in
-            if let url = URL(string: release.htmlUrl) {
-                UIApplication.shared.open(url)
-            }
+        alert.addAction(UIAlertAction(title: "立即更新", style: .default) { [weak self] _ in
+            self?.downloadAndShareIPA(release: release)
         })
         rootVC.present(alert, animated: true)
         AppLogger.info("更新提示窗口已弹出")
+    }
+
+    /// 下载 IPA 并弹出分享面板
+    /// - Parameter release: 最新版本信息
+    private func downloadAndShareIPA(release: LatestRelease) {
+        guard let rootVC = topMostViewController() else { return }
+        guard let ipaUrl = AppContainer.shared.updateService.ipaDownloadUrl(from: release) else {
+            NRToast.shared.error("未找到 IPA 下载链接")
+            return
+        }
+
+        // 显示下载进度 HUD
+        let hud = UIAlertController(title: "正在下载...", message: "准备中...", preferredStyle: .alert)
+        rootVC.present(hud, animated: true)
+
+        AppLogger.info("开始下载 IPA: \(ipaUrl.lastPathComponent)")
+
+        AppContainer.shared.updateService.downloadIPA(url: ipaUrl) { progress in
+            DispatchQueue.main.async {
+                hud.title = "正在下载... \(Int(progress * 100))%"
+                hud.message = "下载中，请稍候"
+            }
+        }
+        .receive(on: DispatchQueue.main)
+        .sink(receiveCompletion: { completion in
+            hud.dismiss(animated: true) {
+                if case .failure(let error) = completion {
+                    AppLogger.error("IPA 下载失败: \(error.localizedDescription)")
+                    NRToast.shared.error("下载失败: \(error.localizedDescription)")
+                }
+            }
+        }, receiveValue: { [weak self] localURL in
+            hud.dismiss(animated: true) {
+                AppLogger.info("IPA 下载完成: \(localURL.path)")
+                self?.presentShareSheet(for: localURL, title: release.tagName)
+            }
+        })
+        .store(in: &cancellables)
+    }
+
+    /// 弹出分享面板
+    /// - Parameters:
+    ///   - fileURL: 本地文件 URL
+    ///   - title: 分享标题
+    private func presentShareSheet(for fileURL: URL, title: String) {
+        guard let rootVC = topMostViewController() else { return }
+
+        let activityVC = UIActivityViewController(
+            activityItems: [fileURL],
+            applicationActivities: nil
+        )
+        activityVC.title = "NovelReader \(title)"
+        activityVC.popoverPresentationController?.sourceView = rootVC.view
+        activityVC.popoverPresentationController?.sourceRect = CGRect(
+            x: rootVC.view.bounds.midX,
+            y: rootVC.view.bounds.midY,
+            width: 0,
+            height: 0
+        )
+        activityVC.completionWithItemsHandler = { [weak self] activityType, completed, _, error in
+            if completed {
+                NRToast.shared.success("分享成功")
+            } else if let error = error {
+                NRToast.shared.error("分享失败: \(error.localizedDescription)")
+            }
+            // 分享完成后清理临时文件
+            try? FileManager.default.removeItem(at: fileURL)
+            AppLogger.info("分享面板已关闭，临时文件已清理")
+        }
+        rootVC.present(activityVC, animated: true)
+        FeedbackManager.shared.lightImpact()
     }
 
     // MARK: - UISceneSession Lifecycle
