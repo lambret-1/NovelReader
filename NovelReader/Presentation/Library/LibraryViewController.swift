@@ -4,7 +4,9 @@ import Combine
 /// 书架视图控制器
 final class LibraryViewController: UIViewController {
     private let viewModel: LibraryViewModel
+    private let readingProgressRepository: ReadingProgressRepository?
     private var cancellables = Set<AnyCancellable>()
+    private var progressCache: [String: Double] = [:]
 
     // MARK: - UI 组件
     private lazy var tableView: UITableView = {
@@ -13,7 +15,7 @@ final class LibraryViewController: UIViewController {
         tv.delegate = self
         tv.dataSource = self
         tv.register(BookCell.self, forCellReuseIdentifier: BookCell.reuseID)
-        tv.rowHeight = 80
+        tv.rowHeight = 96
         tv.separatorInset = UIEdgeInsets(top: 0, left: 16, bottom: 0, right: 16)
         return tv
     }()
@@ -38,8 +40,9 @@ final class LibraryViewController: UIViewController {
     }()
 
     // MARK: - 初始化
-    init(viewModel: LibraryViewModel) {
+    init(viewModel: LibraryViewModel, readingProgressRepository: ReadingProgressRepository? = nil) {
         self.viewModel = viewModel
+        self.readingProgressRepository = readingProgressRepository
         super.init(nibName: nil, bundle: nil)
     }
 
@@ -104,6 +107,7 @@ final class LibraryViewController: UIViewController {
             .sink { [weak self] books in
                 self?.tableView.reloadData()
                 self?.emptyStateLabel.isHidden = !books.isEmpty
+                self?.loadReadingProgress(for: books)
             }
             .store(in: &cancellables)
 
@@ -125,6 +129,23 @@ final class LibraryViewController: UIViewController {
                 self?.showAlert(title: "错误", message: message)
             }
             .store(in: &cancellables)
+    }
+
+    // MARK: - 阅读进度
+    private func loadReadingProgress(for books: [Book]) {
+        guard let repo = readingProgressRepository else { return }
+        progressCache.removeAll()
+        for book in books {
+            repo.fetchProgress(bookId: book.id)
+                .receive(on: DispatchQueue.main)
+                .sink(receiveCompletion: { _ in }, receiveValue: { [weak self] progress in
+                    if let progress = progress {
+                        self?.progressCache[book.id] = progress.percent
+                        self?.tableView.reloadData()
+                    }
+                })
+                .store(in: &cancellables)
+        }
     }
 
     // MARK: - 动作
@@ -157,7 +178,8 @@ extension LibraryViewController: UITableViewDataSource, UITableViewDelegate {
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: BookCell.reuseID, for: indexPath) as! BookCell
         if let book = viewModel.book(at: indexPath) {
-            cell.configure(with: book)
+            let progress = progressCache[book.id] ?? 0
+            cell.configure(with: book, progress: progress)
         }
         return cell
     }
@@ -214,6 +236,25 @@ final class BookCell: UITableViewCell {
         return view
     }()
 
+    private let progressBar: UIProgressView = {
+        let pv = UIProgressView(progressViewStyle: .default)
+        pv.translatesAutoresizingMaskIntoConstraints = false
+        pv.progressTintColor = .systemBlue
+        pv.trackTintColor = .systemGray5
+        pv.layer.cornerRadius = 2
+        pv.clipsToBounds = true
+        return pv
+    }()
+
+    private let progressLabel: UILabel = {
+        let label = UILabel()
+        label.translatesAutoresizingMaskIntoConstraints = false
+        label.font = .systemFont(ofSize: 11)
+        label.textColor = .secondaryLabel
+        label.textAlignment = .right
+        return label
+    }()
+
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
         setupUI()
@@ -229,6 +270,8 @@ final class BookCell: UITableViewCell {
         contentView.addSubview(titleLabel)
         contentView.addSubview(authorLabel)
         contentView.addSubview(syncIndicator)
+        contentView.addSubview(progressBar)
+        contentView.addSubview(progressLabel)
 
         NSLayoutConstraint.activate([
             coverView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
@@ -237,11 +280,20 @@ final class BookCell: UITableViewCell {
             coverView.heightAnchor.constraint(equalToConstant: 64),
 
             titleLabel.leadingAnchor.constraint(equalTo: coverView.trailingAnchor, constant: 12),
-            titleLabel.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 18),
+            titleLabel.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 14),
             titleLabel.trailingAnchor.constraint(equalTo: syncIndicator.leadingAnchor, constant: -8),
 
             authorLabel.leadingAnchor.constraint(equalTo: titleLabel.leadingAnchor),
-            authorLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 4),
+            authorLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 3),
+
+            progressBar.leadingAnchor.constraint(equalTo: titleLabel.leadingAnchor),
+            progressBar.topAnchor.constraint(equalTo: authorLabel.bottomAnchor, constant: 8),
+            progressBar.trailingAnchor.constraint(equalTo: progressLabel.leadingAnchor, constant: -8),
+            progressBar.heightAnchor.constraint(equalToConstant: 4),
+
+            progressLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -28),
+            progressLabel.centerYAnchor.constraint(equalTo: progressBar.centerYAnchor),
+            progressLabel.widthAnchor.constraint(equalToConstant: 40),
 
             syncIndicator.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -8),
             syncIndicator.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
@@ -250,10 +302,13 @@ final class BookCell: UITableViewCell {
         ])
     }
 
-    func configure(with book: Book) {
+    func configure(with book: Book, progress: Double) {
         titleLabel.text = book.title
         authorLabel.text = book.author.isEmpty ? "未设置作者" : book.author
-        // 有未同步修改时显示橙色圆点
         syncIndicator.isHidden = book.lastSyncedAt != nil
+        progressBar.progress = Float(progress)
+        progressLabel.text = progress > 0 ? String(format: "%.0f%%", progress * 100) : ""
+        progressBar.isHidden = progress == 0
+        progressLabel.isHidden = progress == 0
     }
 }

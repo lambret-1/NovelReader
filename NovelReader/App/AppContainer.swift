@@ -88,7 +88,7 @@ final class AppContainer {
             createBookUseCase: makeCreateBookUseCase(),
             deleteBookUseCase: makeDeleteBookUseCase()
         )
-        return LibraryViewController(viewModel: viewModel)
+        return LibraryViewController(viewModel: viewModel, readingProgressRepository: readingProgressRepository)
     }
 
     func makeChapterListViewController(book: Book) -> ChapterListViewController {
@@ -102,7 +102,11 @@ final class AppContainer {
     }
 
     func makeReaderViewController(book: Book, chapters: [Chapter], startIndex: Int) -> ReaderViewController {
-        let viewModel = ReaderViewModel(config: .default)
+        let viewModel = ReaderViewModel(
+            config: .default,
+            readingProgressRepository: readingProgressRepository,
+            bookmarkRepository: bookmarkRepository
+        )
         return ReaderViewController(book: book, chapters: chapters, startIndex: startIndex, viewModel: viewModel)
     }
 
