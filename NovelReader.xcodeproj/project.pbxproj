@@ -74,7 +74,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		A26D491CABF5E4DC4B3E00A6 /* NaturalSort.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Utils/NaturalSort.swift"; sourceTree = "<group>"; };
+		A26D491CABF5E4DC4B3E00A6 /* NaturalSort.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NaturalSort.swift; sourceTree = "<group>"; };
 
 		88E7D4561060467E9DAC7B20 /* BaseNavigationController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Navigation/BaseNavigationController.swift"; sourceTree = "<group>"; };
 		29CE550132313F1FB52FB33C /* NRReaderProgressView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NRReaderProgressView.swift"; sourceTree = "<group>"; };
