@@ -4,29 +4,46 @@ import UIKit
 final class SettingsViewController: UIViewController {
     private let tableView = UITableView(frame: .zero, style: .insetGrouped)
 
-    private let sections: [SettingsSection] = [
-        SettingsSection(title: "阅读", items: [
-            SettingsItem(title: "默认字号", subtitle: "18pt", type: .info),
-            SettingsItem(title: "默认主题", subtitle: "日间", type: .info),
-            SettingsItem(title: "翻页方式", subtitle: "左右滑动", type: .info)
-        ]),
-        SettingsSection(title: "同步", items: [
-            SettingsItem(title: "云同步", subtitle: "GitHub", type: .navigation),
-            SettingsItem(title: "自动同步", subtitle: "编辑后 3 秒", type: .info)
-        ]),
-        SettingsSection(title: "数据", items: [
-            SettingsItem(title: "导出全部数据", subtitle: "", type: .action),
-            SettingsItem(title: "清除缓存", subtitle: "", type: .action)
-        ]),
-        SettingsSection(title: "关于", items: [
-            SettingsItem(title: "版本", subtitle: "1.0.0", type: .info),
-            SettingsItem(title: "开发者", subtitle: "NovelReader Team", type: .info)
-        ])
-    ]
+    private var sections: [SettingsSection] = []
 
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
+        reloadSections()
+    }
+
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        reloadSections()
+    }
+
+    private func reloadSections() {
+        let stats = ReadingStatsManager.shared
+        sections = [
+            SettingsSection(title: "阅读统计", items: [
+                SettingsItem(title: "总阅读时长", subtitle: stats.formattedTotalReadingTime, type: .info),
+                SettingsItem(title: "阅读天数", subtitle: "\(stats.readingDays) 天", type: .info),
+                SettingsItem(title: "连续阅读", subtitle: "\(stats.streakDays) 天", type: .info)
+            ]),
+            SettingsSection(title: "阅读", items: [
+                SettingsItem(title: "默认字号", subtitle: "\(Int(AppConfig.defaultFontSize))pt", type: .info),
+                SettingsItem(title: "默认主题", subtitle: "日间", type: .info),
+                SettingsItem(title: "翻页方式", subtitle: "左右滑动", type: .info)
+            ]),
+            SettingsSection(title: "同步", items: [
+                SettingsItem(title: "云同步", subtitle: "GitHub", type: .navigation),
+                SettingsItem(title: "自动同步", subtitle: "编辑后 3 秒", type: .info)
+            ]),
+            SettingsSection(title: "数据", items: [
+                SettingsItem(title: "导出全部数据", subtitle: "", type: .action),
+                SettingsItem(title: "清除缓存", subtitle: "", type: .action)
+            ]),
+            SettingsSection(title: "关于", items: [
+                SettingsItem(title: "版本", subtitle: "1.0.7", type: .info),
+                SettingsItem(title: "开发者", subtitle: "NovelReader Team", type: .info)
+            ])
+        ]
+        tableView.reloadData()
     }
 
     private func setupUI() {

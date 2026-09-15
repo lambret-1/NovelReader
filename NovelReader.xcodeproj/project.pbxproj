@@ -50,6 +50,9 @@
 		3ED57DEDBA3C4AA95ADAC088 /* PaginationEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B7F0FF2D02140ADD2E7A777 /* PaginationEngine.swift */; };
 		30F98EDFD9DCA057D72ACF0B /* ReaderPageViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B5ACA995AAFD71474DAE7CC /* ReaderPageViewController.swift */; };
 		97E2C3EFA805A7D407FBEB54 /* SearchViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0ACF8F45893BD8E340A82BB7 /* SearchViewController.swift */; };
+		7C6A2B08B3278F3E1F7EB554 /* BookmarkListViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 99C2FA7CDFBB611C5BA84543 /* BookmarkListViewController.swift */; };
+		8A0E807FFBF222A475675C82 /* ReaderSettingsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D599426C1A3F07877499F27 /* ReaderSettingsManager.swift */; };
+		0A0B30EB2642D328187614F3 /* ReadingStatsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E62274257B99FC5C9F51F8E /* ReadingStatsManager.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -97,6 +100,9 @@
 		3B7F0FF2D02140ADD2E7A777 /* PaginationEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "PaginationEngine.swift"; sourceTree = "<group>"; };
 		4B5ACA995AAFD71474DAE7CC /* ReaderPageViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ReaderPageViewController.swift"; sourceTree = "<group>"; };
 		0ACF8F45893BD8E340A82BB7 /* SearchViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SearchViewController.swift"; sourceTree = "<group>"; };
+		99C2FA7CDFBB611C5BA84543 /* BookmarkListViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "BookmarkListViewController.swift"; sourceTree = "<group>"; };
+		8D599426C1A3F07877499F27 /* ReaderSettingsManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ReaderSettingsManager.swift"; sourceTree = "<group>"; };
+		8E62274257B99FC5C9F51F8E /* ReadingStatsManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ReadingStatsManager.swift"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -315,6 +321,8 @@
 				A7F84EC32E5D64703BE69011 /* Debounce.swift */,
 				1EF23081B2381FD46D3F03AD /* KeychainManager.swift */,
 				9091E4B6C4287D364F284585 /* NetworkMonitor.swift */,
+				8D599426C1A3F07877499F27 /* ReaderSettingsManager.swift */,
+				8E62274257B99FC5C9F51F8E /* ReadingStatsManager.swift */,
 			);
 			path = "Utilities";
 			sourceTree = "<group>";
@@ -356,6 +364,7 @@
 				3B7F0FF2D02140ADD2E7A777 /* PaginationEngine.swift */,
 				4B5ACA995AAFD71474DAE7CC /* ReaderPageViewController.swift */,
 				0ACF8F45893BD8E340A82BB7 /* SearchViewController.swift */,
+				99C2FA7CDFBB611C5BA84543 /* BookmarkListViewController.swift */,
 			);
 			path = "Reader";
 			sourceTree = "<group>";
@@ -501,6 +510,9 @@
 				3ED57DEDBA3C4AA95ADAC088 /* PaginationEngine.swift in Sources */,
 				30F98EDFD9DCA057D72ACF0B /* ReaderPageViewController.swift in Sources */,
 				97E2C3EFA805A7D407FBEB54 /* SearchViewController.swift in Sources */,
+				7C6A2B08B3278F3E1F7EB554 /* BookmarkListViewController.swift in Sources */,
+				8A0E807FFBF222A475675C82 /* ReaderSettingsManager.swift in Sources */,
+				0A0B30EB2642D328187614F3 /* ReadingStatsManager.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

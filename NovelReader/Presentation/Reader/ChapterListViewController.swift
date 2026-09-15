@@ -5,15 +5,18 @@ import Combine
 final class ChapterListViewController: UIViewController {
     private let book: Book
     private let viewModel: ChapterListViewModel
+    private let readingProgressRepository: ReadingProgressRepository?
     private var cancellables = Set<AnyCancellable>()
+    private var currentChapterId: String?
+    private var currentOffset: Int = 0
 
     private lazy var tableView: UITableView = {
         let tv = UITableView(frame: .zero, style: .plain)
         tv.translatesAutoresizingMaskIntoConstraints = false
         tv.delegate = self
         tv.dataSource = self
-        tv.register(UITableViewCell.self, forCellReuseIdentifier: "ChapterCell")
-        tv.rowHeight = 60
+        tv.register(ChapterCell.self, forCellReuseIdentifier: ChapterCell.reuseID)
+        tv.rowHeight = 72
         return tv
     }()
 
@@ -28,9 +31,10 @@ final class ChapterListViewController: UIViewController {
         return label
     }()
 
-    init(book: Book, viewModel: ChapterListViewModel) {
+    init(book: Book, viewModel: ChapterListViewModel, readingProgressRepository: ReadingProgressRepository? = nil) {
         self.book = book
         self.viewModel = viewModel
+        self.readingProgressRepository = readingProgressRepository
         super.init(nibName: nil, bundle: nil)
     }
 
@@ -74,7 +78,22 @@ final class ChapterListViewController: UIViewController {
             .sink { [weak self] chapters in
                 self?.tableView.reloadData()
                 self?.emptyLabel.isHidden = !chapters.isEmpty
+                self?.loadReadingProgress()
             }
+            .store(in: &cancellables)
+    }
+
+    private func loadReadingProgress() {
+        guard let repo = readingProgressRepository else { return }
+        repo.fetchProgress(bookId: book.id)
+            .receive(on: DispatchQueue.main)
+            .sink(receiveCompletion: { _ in }, receiveValue: { [weak self] progress in
+                if let progress = progress {
+                    self?.currentChapterId = progress.chapterId
+                    self?.currentOffset = progress.offset
+                    self?.tableView.reloadData()
+                }
+            })
             .store(in: &cancellables)
     }
 
@@ -102,16 +121,11 @@ extension ChapterListViewController: UITableViewDataSource, UITableViewDelegate 
     }
 
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "ChapterCell", for: indexPath)
+        let cell = tableView.dequeueReusableCell(withIdentifier: ChapterCell.reuseID, for: indexPath) as! ChapterCell
         let chapter = viewModel.chapters[indexPath.row]
-        cell.textLabel?.text = "\(chapter.sortOrder + 1). \(chapter.title)"
-        cell.detailTextLabel?.text = "\(chapter.wordCount) 字"
-        cell.accessoryType = .disclosureIndicator
-        if chapter.isDirty {
-            cell.textLabel?.textColor = .systemOrange
-        } else {
-            cell.textLabel?.textColor = .label
-        }
+        let isCurrent = currentChapterId == chapter.id
+        let progress = isCurrent ? min(1.0, Double(currentOffset) / Double(max(1, chapter.content.count))) : 0
+        cell.configure(with: chapter, index: indexPath.row, isCurrent: isCurrent, progress: progress)
         return cell
     }
 
@@ -134,6 +148,126 @@ extension ChapterListViewController: UITableViewDataSource, UITableViewDelegate 
         }))
         alert.addAction(UIAlertAction(title: "取消", style: .cancel))
         present(alert, animated: true)
+    }
+}
+
+/// 章节单元格
+final class ChapterCell: UITableViewCell {
+    static let reuseID = "ChapterCell"
+
+    private let indexLabel: UILabel = {
+        let label = UILabel()
+        label.translatesAutoresizingMaskIntoConstraints = false
+        label.font = .systemFont(ofSize: 13, weight: .medium)
+        label.textColor = .secondaryLabel
+        label.textAlignment = .center
+        label.layer.cornerRadius = 4
+        label.layer.masksToBounds = true
+        label.backgroundColor = .systemGray6
+        return label
+    }()
+
+    private let titleLabel: UILabel = {
+        let label = UILabel()
+        label.translatesAutoresizingMaskIntoConstraints = false
+        label.font = .systemFont(ofSize: 16, weight: .medium)
+        return label
+    }()
+
+    private let metaLabel: UILabel = {
+        let label = UILabel()
+        label.translatesAutoresizingMaskIntoConstraints = false
+        label.font = .systemFont(ofSize: 12)
+        label.textColor = .secondaryLabel
+        return label
+    }()
+
+    private let progressBar: UIProgressView = {
+        let pv = UIProgressView(progressViewStyle: .default)
+        pv.translatesAutoresizingMaskIntoConstraints = false
+        pv.progressTintColor = .systemGreen
+        pv.trackTintColor = .systemGray5
+        pv.layer.cornerRadius = 2
+        pv.clipsToBounds = true
+        return pv
+    }()
+
+    private let dirtyIndicator: UIView = {
+        let view = UIView()
+        view.translatesAutoresizingMaskIntoConstraints = false
+        view.backgroundColor = .systemOrange
+        view.layer.cornerRadius = 4
+        return view
+    }()
+
+    private let currentIndicator: UIView = {
+        let view = UIView()
+        view.translatesAutoresizingMaskIntoConstraints = false
+        view.backgroundColor = .systemGreen
+        view.layer.cornerRadius = 3
+        return view
+    }()
+
+    override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
+        super.init(style: style, reuseIdentifier: reuseIdentifier)
+        setupUI()
+    }
+
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
+    private func setupUI() {
+        accessoryType = .disclosureIndicator
+        contentView.addSubview(indexLabel)
+        contentView.addSubview(titleLabel)
+        contentView.addSubview(metaLabel)
+        contentView.addSubview(progressBar)
+        contentView.addSubview(dirtyIndicator)
+        contentView.addSubview(currentIndicator)
+
+        NSLayoutConstraint.activate([
+            indexLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
+            indexLabel.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
+            indexLabel.widthAnchor.constraint(equalToConstant: 32),
+            indexLabel.heightAnchor.constraint(equalToConstant: 24),
+
+            titleLabel.leadingAnchor.constraint(equalTo: indexLabel.trailingAnchor, constant: 12),
+            titleLabel.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 10),
+            titleLabel.trailingAnchor.constraint(equalTo: dirtyIndicator.leadingAnchor, constant: -8),
+
+            metaLabel.leadingAnchor.constraint(equalTo: titleLabel.leadingAnchor),
+            metaLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 3),
+
+            progressBar.leadingAnchor.constraint(equalTo: titleLabel.leadingAnchor),
+            progressBar.topAnchor.constraint(equalTo: metaLabel.bottomAnchor, constant: 6),
+            progressBar.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -28),
+            progressBar.heightAnchor.constraint(equalToConstant: 3),
+            progressBar.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -10),
+
+            dirtyIndicator.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -8),
+            dirtyIndicator.centerYAnchor.constraint(equalTo: titleLabel.centerYAnchor),
+            dirtyIndicator.widthAnchor.constraint(equalToConstant: 8),
+            dirtyIndicator.heightAnchor.constraint(equalToConstant: 8),
+
+            currentIndicator.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 4),
+            currentIndicator.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
+            currentIndicator.widthAnchor.constraint(equalToConstant: 4),
+            currentIndicator.heightAnchor.constraint(equalToConstant: 20)
+        ])
+    }
+
+    func configure(with chapter: Chapter, index: Int, isCurrent: Bool, progress: Double) {
+        indexLabel.text = "\(index + 1)"
+        titleLabel.text = chapter.title
+        metaLabel.text = "\(chapter.wordCount) 字"
+        titleLabel.textColor = chapter.isDirty ? .systemOrange : .label
+        dirtyIndicator.isHidden = !chapter.isDirty
+        currentIndicator.isHidden = !isCurrent
+        progressBar.isHidden = !isCurrent || progress == 0
+        progressBar.progress = Float(progress)
+        indexLabel.backgroundColor = isCurrent ? .systemGreen.withAlphaComponent(0.2) : .systemGray6
+        indexLabel.textColor = isCurrent ? .systemGreen : .secondaryLabel
     }
 }
 

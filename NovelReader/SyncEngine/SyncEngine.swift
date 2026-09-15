@@ -16,6 +16,7 @@ final class SyncEngine: SyncEngineProtocol {
     private let bookRepository: BookRepositoryProtocol
     private let chapterRepository: ChapterRepositoryProtocol
     private let syncMetadataRepository: SyncMetadataRepositoryProtocol
+    private let readingProgressRepository: ReadingProgressRepositoryProtocol?
     private let fileService: GitHubFileService
     private let gitService: GitHubGitService
     private let apiClient: GitHubAPIClient
@@ -28,12 +29,14 @@ final class SyncEngine: SyncEngineProtocol {
     init(bookRepository: BookRepositoryProtocol,
          chapterRepository: ChapterRepositoryProtocol,
          syncMetadataRepository: SyncMetadataRepositoryProtocol,
+         readingProgressRepository: ReadingProgressRepositoryProtocol? = nil,
          fileService: GitHubFileService = GitHubFileService(),
          gitService: GitHubGitService = GitHubGitService(),
          apiClient: GitHubAPIClient = .shared) {
         self.bookRepository = bookRepository
         self.chapterRepository = chapterRepository
         self.syncMetadataRepository = syncMetadataRepository
+        self.readingProgressRepository = readingProgressRepository
         self.fileService = fileService
         self.gitService = gitService
         self.apiClient = apiClient
@@ -318,6 +321,72 @@ final class SyncEngine: SyncEngineProtocol {
             return value
         case .failure(let error):
             throw error
+        }
+    }
+
+    // MARK: - 阅读进度同步
+
+    /// 同步阅读进度（上传本地进度 + 下载远端进度）
+    func syncReadingProgress(repoFullName: String) {
+        guard let progressRepo = readingProgressRepository else { return }
+
+        // 获取所有书籍
+        guard let books = try? awaitPublisher(bookRepository.fetchAllBooks()) else { return }
+
+        // 上传本地阅读进度
+        var progressList: [[String: Any]] = []
+        for book in books {
+            if let progress = try? awaitPublisher(progressRepo.fetchProgress(bookId: book.id)) {
+                progressList.append([
+                    "book_id": progress.bookId,
+                    "chapter_id": progress.chapterId,
+                    "offset": progress.offset,
+                    "percent": progress.percent,
+                    "updated_at": ISO8601DateFormatter().string(from: progress.updatedAt)
+                ])
+            }
+        }
+
+        if !progressList.isEmpty {
+            let dict: [String: Any] = ["progresses": progressList]
+            if let data = try? JSONSerialization.data(withJSONObject: dict, options: .prettyPrinted),
+               let json = String(data: data, encoding: .utf8) {
+                _ = try? awaitPublisher(fileService.uploadFile(
+                    repoFullName: repoFullName,
+                    path: ".novel-sync/progress.json",
+                    content: json,
+                    message: "更新阅读进度"
+                ))
+            }
+        }
+
+        // 下载远端阅读进度（如果本地没有）
+        if let remoteContent = try? awaitPublisher(fileService.fetchFileContent(
+            repoFullName: repoFullName,
+            path: ".novel-sync/progress.json"
+        )) {
+            if let data = remoteContent.data(using: .utf8),
+               let dict = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+               let progresses = dict["progresses"] as? [[String: Any]] {
+                for item in progresses {
+                    guard let bookId = item["book_id"] as? String,
+                          let chapterId = item["chapter_id"] as? String,
+                          let offset = item["offset"] as? Int,
+                          let percent = item["percent"] as? Double else { continue }
+
+                    // 只在本地没有进度时导入
+                    if (try? awaitPublisher(progressRepo.fetchProgress(bookId: bookId))) == nil {
+                        let progress = ReadingProgress(
+                            bookId: bookId,
+                            chapterId: chapterId,
+                            offset: offset,
+                            percent: percent,
+                            updatedAt: Date()
+                        )
+                        _ = try? awaitPublisher(progressRepo.saveProgress(progress))
+                    }
+                }
+            }
         }
     }
 }

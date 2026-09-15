@@ -40,6 +40,7 @@ final class AppContainer {
             bookRepository: bookRepository,
             chapterRepository: chapterRepository,
             syncMetadataRepository: syncMetadataRepository,
+            readingProgressRepository: readingProgressRepository,
             fileService: fileService,
             gitService: gitService,
             apiClient: apiClient
@@ -98,12 +99,13 @@ final class AppContainer {
             createChapterUseCase: makeCreateChapterUseCase(),
             deleteChapterUseCase: makeDeleteChapterUseCase()
         )
-        return ChapterListViewController(book: book, viewModel: viewModel)
+        return ChapterListViewController(book: book, viewModel: viewModel, readingProgressRepository: readingProgressRepository)
     }
 
     func makeReaderViewController(book: Book, chapters: [Chapter], startIndex: Int) -> ReaderViewController {
+        let config = ReaderSettingsManager.shared.loadConfig()
         let viewModel = ReaderViewModel(
-            config: .default,
+            config: config,
             readingProgressRepository: readingProgressRepository,
             bookmarkRepository: bookmarkRepository
         )

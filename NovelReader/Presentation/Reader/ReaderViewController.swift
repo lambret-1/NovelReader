@@ -91,6 +91,14 @@ final class ReaderViewController: UIViewController {
         return btn
     }()
 
+    private lazy var bookmarkListButton: UIButton = {
+        let btn = UIButton(type: .system)
+        btn.translatesAutoresizingMaskIntoConstraints = false
+        btn.setImage(UIImage(systemName: "list.bullet"), for: .normal)
+        btn.tintColor = .label
+        return btn
+    }()
+
     private lazy var progressLabel: UILabel = {
         let label = UILabel()
         label.translatesAutoresizingMaskIntoConstraints = false
@@ -131,8 +139,14 @@ final class ReaderViewController: UIViewController {
         loadChapter(at: currentChapterIndex, restorePage: true)
     }
 
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        ReadingStatsManager.shared.startSession()
+    }
+
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
+        ReadingStatsManager.shared.endSession()
         saveReadingProgress()
     }
 
@@ -157,6 +171,7 @@ final class ReaderViewController: UIViewController {
         configPanel.addSubview(fontButton)
         configPanel.addSubview(bookmarkButton)
         configPanel.addSubview(searchButton)
+        configPanel.addSubview(bookmarkListButton)
 
         NSLayoutConstraint.activate([
             pageViewController.view.topAnchor.constraint(equalTo: view.topAnchor),
@@ -192,10 +207,13 @@ final class ReaderViewController: UIViewController {
             fontButton.trailingAnchor.constraint(equalTo: configPanel.trailingAnchor, constant: -24),
 
             bookmarkButton.topAnchor.constraint(equalTo: themeSegmented.bottomAnchor, constant: 16),
-            bookmarkButton.trailingAnchor.constraint(equalTo: configPanel.centerXAnchor, constant: -20),
+            bookmarkButton.trailingAnchor.constraint(equalTo: configPanel.centerXAnchor, constant: -40),
 
             searchButton.topAnchor.constraint(equalTo: themeSegmented.bottomAnchor, constant: 16),
-            searchButton.leadingAnchor.constraint(equalTo: configPanel.centerXAnchor, constant: 20)
+            searchButton.centerXAnchor.constraint(equalTo: configPanel.centerXAnchor),
+
+            bookmarkListButton.topAnchor.constraint(equalTo: themeSegmented.bottomAnchor, constant: 16),
+            bookmarkListButton.leadingAnchor.constraint(equalTo: configPanel.centerXAnchor, constant: 40)
         ])
 
         // 点击中间区域显示/隐藏菜单
@@ -209,6 +227,7 @@ final class ReaderViewController: UIViewController {
         fontButton.addTarget(self, action: #selector(showFontPicker), for: .touchUpInside)
         bookmarkButton.addTarget(self, action: #selector(toggleBookmark), for: .touchUpInside)
         searchButton.addTarget(self, action: #selector(showSearch), for: .touchUpInside)
+        bookmarkListButton.addTarget(self, action: #selector(showBookmarkList), for: .touchUpInside)
     }
 
     private func bindViewModel() {
@@ -216,6 +235,7 @@ final class ReaderViewController: UIViewController {
             .receive(on: DispatchQueue.main)
             .sink { [weak self] config in
                 self?.applyConfig(config)
+                ReaderSettingsManager.shared.saveConfig(config)
             }
             .store(in: &cancellables)
     }
@@ -347,6 +367,27 @@ final class ReaderViewController: UIViewController {
         viewModel.saveReadingProgress(progress)
     }
 
+    // MARK: - 书签列表
+    @objc private func showBookmarkList() {
+        let bookmarkListVC = BookmarkListViewController(
+            book: book,
+            chapters: chapters,
+            bookmarkRepository: viewModel.bookmarkRepository
+        ) { [weak self] chapterIndex, offset in
+            guard let self = self else { return }
+            self.loadChapter(at: chapterIndex, restorePage: false)
+            let targetPage = self.paginationEngine.pageIndex(for: offset, in: self.currentPages)
+            self.currentPageIndex = targetPage
+            if let vc = self.makePageViewController(at: targetPage) {
+                self.pageViewController.setViewControllers([vc], direction: .forward, animated: false)
+            }
+            self.updateProgressLabel()
+        }
+        let nav = UINavigationController(rootViewController: bookmarkListVC)
+        nav.modalPresentationStyle = .fullScreen
+        present(nav, animated: true)
+    }
+
     // MARK: - 搜索
     @objc private func showSearch() {
         let searchVC = SearchViewController(book: book, chapters: chapters) { [weak self] chapterIndex, offset in
@@ -475,8 +516,8 @@ extension ReaderViewController: UIGestureRecognizerDelegate {
 /// 阅读器 ViewModel
 final class ReaderViewModel {
     @Published var config: ReaderConfig
-    private let readingProgressRepository: ReadingProgressRepository?
-    private let bookmarkRepository: BookmarkRepository?
+    let readingProgressRepository: ReadingProgressRepository?
+    let bookmarkRepository: BookmarkRepository?
     private var cancellables = Set<AnyCancellable>()
     private var cachedBookmarks: [Bookmark] = []
 
