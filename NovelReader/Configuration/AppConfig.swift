@@ -36,7 +36,7 @@ enum AppConfig {
     /// 默认行间距
     static let defaultLineSpacing: CGFloat = 8
     /// 默认字体名
-    static let defaultFontName = "Georgia"
+    static let defaultFontName = "" // 空字符串表示使用系统默认字体
 }
 
 // MARK: - 统一设计令牌（DesignToken）

@@ -1,11 +1,10 @@
 import UIKit
 
-/// 阅读器上工具栏 - 返回按钮 + 章节标题 + 更多菜单
+/// 阅读器上工具栏 - 返回按钮 + 章节标题
 final class NRReaderTopBar: UIView {
 
     // MARK: - 回调
     var onBackButtonTapped: (() -> Void)?
-    var onMoreButtonTapped: (() -> Void)?
 
     // MARK: - UI 组件
     private let blurView = UIVisualEffectView(effect: UIBlurEffect(style: .systemMaterial))
@@ -31,17 +30,6 @@ final class NRReaderTopBar: UIView {
         label.lineBreakMode = .byTruncatingTail // 超长截断
         label.numberOfLines = 1
         return label
-    }()
-
-    private lazy var moreButton: UIButton = {
-        let btn = UIButton(type: .system)
-        btn.translatesAutoresizingMaskIntoConstraints = false
-        btn.setImage(UIImage(systemName: "ellipsis"), for: .normal) // 三个竖点图标
-        btn.tintColor = DesignToken.Color.textPrimary
-        btn.addTarget(self, action: #selector(moreButtonTapped), for: .touchUpInside)
-        btn.accessibilityLabel = "更多菜单"
-        btn.accessibilityHint = "双击打开更多选项"
-        return btn
     }()
 
     // MARK: - 初始化
@@ -72,8 +60,6 @@ final class NRReaderTopBar: UIView {
         addSubview(backButton)
         // 章节标题
         addSubview(titleLabel)
-        // 更多按钮
-        addSubview(moreButton)
 
         NSLayoutConstraint.activate([
             // 毛玻璃铺满
@@ -94,15 +80,9 @@ final class NRReaderTopBar: UIView {
             backButton.widthAnchor.constraint(equalToConstant: 40), // 按钮触控区域40pt
             backButton.heightAnchor.constraint(equalToConstant: 40),
 
-            // 更多按钮 - 右侧
-            moreButton.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -DesignToken.Spacing.md), // 右边距12pt
-            moreButton.centerYAnchor.constraint(equalTo: centerYAnchor),
-            moreButton.widthAnchor.constraint(equalToConstant: 40), // 按钮触控区域40pt
-            moreButton.heightAnchor.constraint(equalToConstant: 40),
-
-            // 章节标题 - 中间，不超过按钮区域
+            // 章节标题 - 居中，左右留边距
             titleLabel.leadingAnchor.constraint(equalTo: backButton.trailingAnchor, constant: DesignToken.Spacing.sm), // 左边距8pt
-            titleLabel.trailingAnchor.constraint(equalTo: moreButton.leadingAnchor, constant: -DesignToken.Spacing.sm), // 右边距8pt
+            titleLabel.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -DesignToken.Spacing.lg), // 右边距16pt
             titleLabel.centerYAnchor.constraint(equalTo: centerYAnchor)
         ])
     }
@@ -111,11 +91,6 @@ final class NRReaderTopBar: UIView {
     @objc private func backButtonTapped() {
         FeedbackManager.shared.lightImpact()
         onBackButtonTapped?()
-    }
-
-    @objc private func moreButtonTapped() {
-        FeedbackManager.shared.lightImpact()
-        onMoreButtonTapped?()
     }
 
     // MARK: - 公共方法
@@ -129,13 +104,11 @@ final class NRReaderTopBar: UIView {
         if isNight {
             blurView.effect = UIBlurEffect(style: .dark)
             backButton.tintColor = DesignToken.Color.textInverse
-            moreButton.tintColor = DesignToken.Color.textInverse
             titleLabel.textColor = DesignToken.Color.textInverse
             separatorView.backgroundColor = UIColor.white.withAlphaComponent(0.1)
         } else {
             blurView.effect = UIBlurEffect(style: .systemMaterial)
             backButton.tintColor = DesignToken.Color.textPrimary
-            moreButton.tintColor = DesignToken.Color.textPrimary
             titleLabel.textColor = DesignToken.Color.textPrimary
             separatorView.backgroundColor = DesignToken.Color.separator
         }

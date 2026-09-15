@@ -127,9 +127,6 @@ final class ReaderViewController: UIViewController {
         bar.onBackButtonTapped = { [weak self] in
             self?.navigationController?.popViewController(animated: true)
         }
-        bar.onMoreButtonTapped = { [weak self] in
-            self?.showMoreMenu()
-        }
         return bar
     }()
 
@@ -147,7 +144,6 @@ final class ReaderViewController: UIViewController {
         return bar
     }()
 
-    private var moreMenu: NRReaderMoreMenu?
     private var catalogView: NRReaderCatalogView?
     private var areBarsHidden = false
     private var autoHideTimer: Timer?
@@ -225,16 +221,16 @@ final class ReaderViewController: UIViewController {
             pageViewController.view.bottomAnchor.constraint(equalTo: bottomBar.topAnchor), // 阅读区域到下工具栏上方结束，不顶着工具栏
 
             // 上工具栏
-            topBar.topAnchor.constraint(equalTo: view.topAnchor),
+            topBar.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor), // 上工具栏从安全区顶部开始，避免刘海遮挡
             topBar.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             topBar.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            topBar.heightAnchor.constraint(equalToConstant: 88),
+            topBar.heightAnchor.constraint(equalToConstant: 44), // 上工具栏高度44pt，标准导航栏高度
 
             // 下工具栏
             bottomBar.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             bottomBar.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            bottomBar.bottomAnchor.constraint(equalTo: view.bottomAnchor),
-            bottomBar.heightAnchor.constraint(equalToConstant: 88),
+            bottomBar.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor), // 下工具栏到安全区底部，避免Home Indicator遮挡
+            bottomBar.heightAnchor.constraint(equalToConstant: 44), // 下工具栏高度44pt，标准工具栏高度
 
             chapterTitleLabel.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 8),
             chapterTitleLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
@@ -361,7 +357,7 @@ final class ReaderViewController: UIViewController {
         return NSAttributedString(
             string: text,
             attributes: [
-                .font: UIFont(name: config.fontName, size: config.fontSize) ?? .systemFont(ofSize: config.fontSize),
+                .font: (config.fontName.isEmpty ? UIFont.systemFont(ofSize: config.fontSize) : UIFont(name: config.fontName, size: config.fontSize) ?? .systemFont(ofSize: config.fontSize)), // fontName为空时使用系统默认字体
                 .foregroundColor: config.currentTheme.textColor,
                 .paragraphStyle: paragraphStyle
             ]
@@ -497,49 +493,6 @@ final class ReaderViewController: UIViewController {
         }
     }
 
-    // MARK: - 更多菜单
-    private func showMoreMenu() {
-        guard moreMenu == nil else { return }
-        let menu = NRReaderMoreMenu()
-        menu.onMenuItemSelected = { [weak self] item in
-            self?.handleMenuSelection(item)
-        }
-        menu.onMenuDismissed = { [weak self] in
-            self?.moreMenu = nil
-        }
-        moreMenu = menu
-        menu.show(in: view)
-        FeedbackManager.shared.lightImpact()
-    }
-
-    private func handleMenuSelection(_ item: NRReaderMoreMenu.MenuItemType) {
-        switch item {
-        case .fontSize:
-            configPanel.isHidden = false // 字号调节面板
-        case .typography:
-            configPanel.isHidden = false // 排版设置（行间距/主题/字体都在面板中）
-        case .bookmark:
-            toggleBookmark() // 添加/移除书签
-        case .search:
-            showSearch() // 搜索
-        case .share:
-            shareCurrentBook() // 分享当前书籍
-        case .info:
-            showReadingInfo() // 阅读信息
-        }
-    }
-
-    // MARK: - 分享当前书籍
-    private func shareCurrentBook() {
-        let chapter = chapters[currentChapterIndex]
-        let shareText = "我正在读《\(book.title)》 - \(chapter.title)"
-        let activityVC = UIActivityViewController(activityItems: [shareText], applicationActivities: nil)
-        activityVC.popoverPresentationController?.sourceView = view
-        activityVC.popoverPresentationController?.sourceRect = CGRect(x: view.bounds.midX, y: view.bounds.midY, width: 0, height: 0)
-        present(activityVC, animated: true)
-        FeedbackManager.shared.lightImpact()
-    }
-
     // MARK: - 目录
     private func showCatalog() {
         guard catalogView == nil else { return }
@@ -588,13 +541,6 @@ final class ReaderViewController: UIViewController {
         let chapterProgress = Double(currentPageIndex + 1) / Double(max(1, currentPages.count))
         let overallProgress = (Double(currentChapterIndex) + chapterProgress) / Double(max(1, chapters.count))
         let message = "第\(currentChapterIndex + 1)章 \(chapter.title) - 全书\(Int(overallProgress * 100))%"
-        NRToast.shared.info(message)
-    }
-
-    // MARK: - 阅读信息
-    private func showReadingInfo() {
-        let chapter = chapters[currentChapterIndex]
-        let message = "\(chapter.title) - \(chapter.content.count)字 - 第\(currentChapterIndex + 1)/\(chapters.count)章"
         NRToast.shared.info(message)
     }
 
