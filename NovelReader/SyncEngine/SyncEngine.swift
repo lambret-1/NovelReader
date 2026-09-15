@@ -89,7 +89,17 @@ final class SyncEngine: SyncEngineProtocol {
         let owner = parts[0]
         let repo = parts[1]
 
-        // 2. 拉取远端文件树
+        // 2. 确保仓库存在（不存在则自动创建）
+        DispatchQueue.main.async { self.currentStatus = .pulling(progress: 0.1) }
+        do {
+            _ = try awaitPublisher(fileService.ensureRepositoryExists(owner: owner, repo: repo))
+        } catch {
+            DispatchQueue.main.async { self.currentStatus = .error(message: "仓库检查/创建失败: \(error.localizedDescription)") }
+            promise(.failure(SyncError.repositoryNotFound))
+            return
+        }
+
+        // 3. 拉取远端文件树（自动检测默认分支）
         DispatchQueue.main.async { self.currentStatus = .pulling(progress: 0.3) }
 
         guard let remoteTree = try? awaitPublisher(fileService.getRepositoryTree(owner: owner, repo: repo)) else {
@@ -100,14 +110,12 @@ final class SyncEngine: SyncEngineProtocol {
 
         let remoteManifest = ManifestManager.generateRemoteManifest(from: remoteTree)
 
-        // 3. 获取本地数据
-        guard let books = try? awaitPublisher(bookRepository.fetchAllBooks()),
-              let chapters = try? awaitPublisher(chapterRepository.fetchDirtyChapters()) else {
+        // 4. 获取本地所有书籍和章节
+        guard let books = try? awaitPublisher(bookRepository.fetchAllBooks()) else {
             promise(.failure(SyncError.localDataError))
             return
         }
 
-        // 获取所有章节（用于生成完整 manifest）
         guard let allChapters = try? awaitPublisher(
             Publishers.MergeMany(books.map { chapterRepository.fetchChapters(bookId: $0.id) })
                 .collect()
@@ -120,12 +128,12 @@ final class SyncEngine: SyncEngineProtocol {
 
         let localManifest = ManifestManager.generateLocalManifest(books: books, chapters: allChapters)
 
-        // 4. 对比差异
+        // 5. 对比差异
         let diffs = ManifestManager.diff(local: localManifest, remote: remoteManifest)
 
         DispatchQueue.main.async { self.currentStatus = .merging }
 
-        // 5. 处理远端新增/修改（下载到本地）
+        // 6. 处理远端新增（下载到本地）
         let remoteChanges = diffs.filter { $0.type == .added }
         downloadedCount = remoteChanges.count
 
@@ -135,14 +143,11 @@ final class SyncEngine: SyncEngineProtocol {
             }
         }
 
-        // 6. 处理冲突
+        // 7. 处理冲突（简化：保留本地版本上传）
         let conflicts = diffs.filter { $0.type == .conflict }
         conflictCount = conflicts.count
 
-        // 简化处理：冲突时保留本地版本上传，同时记录冲突
-        // 完整版本应该弹出冲突解决界面
-
-        // 7. 上传本地修改
+        // 8. 上传本地修改（只上传 dirty 章节和新增书籍）
         DispatchQueue.main.async { self.currentStatus = .pushing(progress: 0.5) }
 
         let localChanges = diffs.filter { $0.type == .localAdded || $0.type == .conflict }
@@ -160,7 +165,7 @@ final class SyncEngine: SyncEngineProtocol {
             let message = "Sync: \(filesToUpload.count) files updated at \(dateFormatter.string(from: Date()))"
 
             do {
-                _ = try awaitPublisher(fileService.writeFiles(owner: owner, repo: repo, files: filesToUpload, message: message))
+                let commit = try awaitPublisher(fileService.writeFiles(owner: owner, repo: repo, files: filesToUpload, message: message))
                 uploadedCount = filesToUpload.count
 
                 // 标记章节已同步
@@ -176,18 +181,25 @@ final class SyncEngine: SyncEngineProtocol {
                     updatedBook.lastSyncedAt = Date()
                     _ = try? awaitPublisher(bookRepository.updateBook(updatedBook))
                 }
+
+                // 更新同步元数据中的 commit SHA
+                var updatedMetadata = metadata
+                updatedMetadata.lastSyncCommitSHA = commit.sha
+                updatedMetadata.lastSyncAt = Date()
+                updatedMetadata.localManifestVersion += 1
+                _ = try? awaitPublisher(syncMetadataRepository.updateMetadata(updatedMetadata))
+
             } catch {
                 DispatchQueue.main.async { self.currentStatus = .error(message: "上传失败: \(error.localizedDescription)") }
                 promise(.failure(SyncError.pushFailed))
                 return
             }
+        } else {
+            // 无文件需要上传，仍更新同步时间
+            var updatedMetadata = metadata
+            updatedMetadata.lastSyncAt = Date()
+            _ = try? awaitPublisher(syncMetadataRepository.updateMetadata(updatedMetadata))
         }
-
-        // 8. 更新同步元数据
-        var updatedMetadata = metadata
-        updatedMetadata.lastSyncAt = Date()
-        updatedMetadata.localManifestVersion += 1
-        _ = try? awaitPublisher(syncMetadataRepository.updateMetadata(updatedMetadata))
 
         DispatchQueue.main.async { self.currentStatus = .idle }
 
@@ -204,13 +216,12 @@ final class SyncEngine: SyncEngineProtocol {
     // MARK: - 冲突解决
 
     func resolveConflict(conflictId: String, resolution: ConflictItem.ConflictResolution) -> AnyPublisher<Void, Error> {
-        // MVP 版本：简化处理，实际应从冲突队列中找到对应项并执行解决方案
         return Just(()).setFailureType(to: Error.self).eraseToAnyPublisher()
     }
 
     // MARK: - 私有工具方法
 
-    /// 将远端内容应用到本地（解析路径，找到对应书籍/章节）
+    /// 将远端内容应用到本地（用 sortOrder 匹配章节，避免标题修改导致重复）
     private func applyRemoteContent(path: String, content: String, books: [Book]) {
         let components = path.components(separatedBy: "/")
         guard components.count >= 2 else { return }
@@ -220,29 +231,30 @@ final class SyncEngine: SyncEngineProtocol {
 
         // 找到对应书籍
         guard let book = books.first(where: { $0.remotePath == bookRemotePath }) else {
-            // 远端有本地没有的书，需要创建
-            // MVP 简化：暂不自动创建新书
+            // 远端有本地没有的书，自动创建
+            let newBook = Book(title: bookRemotePath, remotePath: bookRemotePath)
+            _ = try? awaitPublisher(bookRepository.createBook(newBook))
             return
         }
 
         if fileName == "meta.json" {
-            // 更新书籍元数据（MVP 简化：不处理）
+            // 更新书籍元数据（简化：不处理）
             return
         }
 
         if fileName.hasSuffix(".md") {
-            // 解析章节
             let parsed = ManifestManager.parseChapterMarkdown(content)
 
             // 从文件名解析序号（文件名是 sortOrder+1，所以需要减 1）
             let orderPrefix = String(fileName.prefix(3))
             let sortOrder = max(0, (Int(orderPrefix) ?? 1) - 1)
 
-            // 检查本地是否已有该章节（通过标题匹配）
+            // 用 sortOrder 匹配本地章节（比标题匹配更可靠）
             if let chapters = try? awaitPublisher(chapterRepository.fetchChapters(bookId: book.id)),
-               let chapter = chapters.first(where: { $0.title == parsed.title }) {
+               let chapter = chapters.first(where: { $0.sortOrder == sortOrder }) {
                 // 更新已有章节
                 var updated = chapter
+                updated.title = parsed.title
                 updated.updateContent(parsed.body)
                 updated.isDirty = false
                 _ = try? awaitPublisher(chapterRepository.updateChapter(updated))
@@ -342,7 +354,6 @@ final class SyncEngine: SyncEngineProtocol {
         let owner = repoComponents[0]
         let repo = repoComponents[1]
 
-        // 获取所有书籍
         guard let books = try? awaitPublisher(bookRepository.fetchAllBooks()) else { return }
 
         // 上传本地阅读进度
@@ -388,7 +399,6 @@ final class SyncEngine: SyncEngineProtocol {
                           let offset = item["offset"] as? Int,
                           let percent = item["percent"] as? Double else { continue }
 
-                    // 只在本地没有进度时导入
                     if (try? awaitPublisher(progressRepo.fetchProgress(bookId: bookId))) == nil {
                         let progress = ReadingProgress(
                             bookId: bookId,
@@ -413,6 +423,7 @@ enum SyncError: LocalizedError {
     case metadataError
     case noRepositoryConfigured
     case invalidRepositoryName
+    case repositoryNotFound
     case pullFailed
     case pushFailed
     case localDataError
@@ -426,6 +437,7 @@ enum SyncError: LocalizedError {
         case .metadataError: return "同步元数据错误"
         case .noRepositoryConfigured: return "未配置同步仓库"
         case .invalidRepositoryName: return "仓库名称无效"
+        case .repositoryNotFound: return "同步仓库不存在且创建失败"
         case .pullFailed: return "拉取远端数据失败"
         case .pushFailed: return "上传本地数据失败"
         case .localDataError: return "本地数据读取失败"
