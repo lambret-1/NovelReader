@@ -290,6 +290,32 @@ jobs:
           retention-days: 90
           compression-level: 6
 
+      # 9.1 自动发布 GitHub Release
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.version.outputs.new_version }}
+          name: "NovelReader v${{ steps.version.outputs.new_version }}"
+          body: |
+            ## NovelReader v${{ steps.version.outputs.new_version }}
+
+            **构建号**: ${{ steps.version.outputs.new_build }}
+            **提交**: ${{ github.sha }}
+
+            ### 安装说明
+            1. 下载下方的 .ipa 文件
+            2. 使用 AltStore / TrollStore / Sideloadly 等工具侧载安装
+            3. 或通过 iOS 分享面板选择安装方式
+
+            ### 本次更新
+            ${{ github.event.head_commit.message || '自动构建发布' }}
+          files: |
+            *.ipa
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       # 10. 构建总结
       - name: Build Summary
         run: |
@@ -326,3 +352,4 @@ jobs:
           echo "  🔹 步骤7：产物验证失败（构建未生成.app）"
           echo ""
           echo "📋 完整日志请下载本 Run 的 logs 排查。"
+

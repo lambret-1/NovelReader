@@ -12,6 +12,7 @@ final class AppContainer {
     let authService: GitHubAuthService
     let fileService: GitHubFileService
     let gitService: GitHubGitService
+    let updateService: UpdateCheckService
 
     // MARK: - Repository
     let bookRepository: BookRepository
@@ -39,6 +40,7 @@ final class AppContainer {
         self.authService = GitHubAuthService(apiClient: apiClient)
         self.fileService = GitHubFileService(apiClient: apiClient)
         self.gitService = GitHubGitService(apiClient: apiClient)
+        self.updateService = UpdateCheckService(apiClient: apiClient)
 
         // Repository
         self.bookRepository = BookRepository(dbQueue: databaseManager.dbQueue)
@@ -154,5 +156,10 @@ final class AppContainer {
     func makeSettingsViewController() -> SettingsViewController {
         SettingsViewController()
     }
+
+    func makeUpdateViewController(release: LatestRelease) -> UpdateViewController {
+        UpdateViewController(release: release, updateService: updateService)
+    }
 }
+
 
