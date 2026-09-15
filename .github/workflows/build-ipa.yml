@@ -9,7 +9,7 @@ permissions:
   contents: write
 
 env:
-  XCODE_VERSION: "26.6"
+  XCODE_VERSION: "15.4"
   SCHEME: "NovelReader"
   CONFIGURATION: "Release"
   PROJECT: "NovelReader.xcodeproj"
@@ -23,20 +23,17 @@ jobs:
     timeout-minutes: 25
 
     steps:
-      # 1. 检出代码
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      # 2. 选择 Xcode 版本（优先 15.4，不存在则用默认最新版，保证编译速度）
       - name: Select Xcode
         run: |
           echo "=== 可用 Xcode 版本 ==="
           ls -d /Applications/Xcode*.app 2>/dev/null | sort
           echo ""
-          # 尝试选择指定版本，失败则用默认
           if [ -d "/Applications/Xcode_${{ env.XCODE_VERSION }}.app" ]; then
             sudo xcode-select -s "/Applications/Xcode_${{ env.XCODE_VERSION }}.app/Contents/Developer"
             echo "✅ 已切换到 Xcode ${{ env.XCODE_VERSION }}"
@@ -47,23 +44,16 @@ jobs:
           xcodebuild -version
           swift --version
 
-      # 3. 版本号自动递增（缝九进一）
       - name: Bump Version (缝九进一)
         id: version
         run: |
           PLIST="NovelReader/Info.plist"
-
-          # 读取当前版本号
           CURRENT_VERSION=$(/usr/libexec/PlistBuddy -c "Print CFBundleShortVersionString" "$PLIST")
           echo "当前版本: $CURRENT_VERSION"
-
-          # 解析 MAJOR.MINOR.PATCH
           IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT_VERSION"
           MAJOR=${MAJOR:-0}
           MINOR=${MINOR:-0}
           PATCH=${PATCH:-0}
-
-          # 缝九进一：PATCH+1，满9进位
           PATCH=$((PATCH + 1))
           if [ "$PATCH" -gt 9 ]; then
             PATCH=0
@@ -73,24 +63,16 @@ jobs:
               MAJOR=$((MAJOR + 1))
             fi
           fi
-
           NEW_VERSION="$MAJOR.$MINOR.$PATCH"
           echo "新版本: $NEW_VERSION"
-
-          # 写回版本号
           /usr/libexec/PlistBuddy -c "Set CFBundleShortVersionString $NEW_VERSION" "$PLIST"
-
-          # Build号 +1
           CURRENT_BUILD=$(/usr/libexec/PlistBuddy -c "Print CFBundleVersion" "$PLIST")
           NEW_BUILD=$((CURRENT_BUILD + 1))
           /usr/libexec/PlistBuddy -c "Set CFBundleVersion $NEW_BUILD" "$PLIST"
           echo "Build号: $CURRENT_BUILD -> $NEW_BUILD"
-
-          # 输出到后续步骤
           echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
           echo "new_build=$NEW_BUILD" >> $GITHUB_OUTPUT
 
-      # 4. 提交版本号变更（[skip ci] 避免循环触发）
       - name: Commit Version Bump
         run: |
           git config user.name "github-actions[bot]"
@@ -99,7 +81,6 @@ jobs:
           git commit -m "chore: 版本号递增至 ${{ steps.version.outputs.new_version }} (build ${{ steps.version.outputs.new_build }}) [skip ci]"
           git push
 
-      # 5. 解析 Swift Package 依赖（GRDB.swift）
       - name: Resolve Dependencies
         run: |
           xcodebuild -resolvePackageDependencies \
@@ -107,7 +88,6 @@ jobs:
             -scheme "$SCHEME" \
             -scmProvider system
 
-      # 6. 构建（无签名 / Release / arm64 only / 速度优先）
       - name: Build (Unsigned Release)
         run: |
           xcodebuild \
@@ -130,7 +110,6 @@ jobs:
             IPHONEOS_DEPLOYMENT_TARGET="$DEPLOYMENT_TARGET" \
             build
 
-      # 7. 验证构建产物
       - name: Verify Build
         run: |
           APP_PATH="build/Build/Products/${CONFIGURATION}-iphoneos/${IPA_NAME}.app"
@@ -146,33 +125,22 @@ jobs:
           echo "=== 文件大小 ==="
           du -sh "$APP_PATH"
 
-      # 8. 打包成 IPA（Payload/xxx.app 结构）
       - name: Package IPA
         run: |
           APP_PATH="build/Build/Products/${CONFIGURATION}-iphoneos/${IPA_NAME}.app"
           VERSION="${{ steps.version.outputs.new_version }}"
           BUILD="${{ steps.version.outputs.new_build }}"
-
-          # 创建 Payload 目录
           rm -rf Payload
           mkdir -p Payload
           cp -R "$APP_PATH" Payload/
-
-          # 打包（zip 格式，改名为 ipa）
           IPA_FILE="${IPA_NAME}_v${VERSION}_b${BUILD}.ipa"
           zip -qr "$IPA_FILE" Payload
-
-          # 清理
           rm -rf Payload build
-
           echo "✅ IPA 打包成功"
           echo "文件名: $IPA_FILE"
           ls -lh "$IPA_FILE"
-
-          # 保存文件名到环境
           echo "ipa_file=$IPA_FILE" >> $GITHUB_ENV
 
-      # 9. 上传 IPA 到 Artifacts
       - name: Upload IPA
         uses: actions/upload-artifact@v4
         with:
@@ -181,7 +149,6 @@ jobs:
           retention-days: 90
           compression-level: 6
 
-      # 10. 构建总结
       - name: Build Summary
         run: |
           echo "## ✅ 构建完成" >> $GITHUB_STEP_SUMMARY
