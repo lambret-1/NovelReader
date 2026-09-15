@@ -6,9 +6,11 @@ final class GitHubFileService {
     private let apiClient: GitHubAPIClient
     private let gitService: GitHubGitService
 
-    init(apiClient: GitHubAPIClient = .shared, gitService: GitHubGitService = GitHubGitService()) {
+    init(apiClient: GitHubAPIClient = .shared, gitService: GitHubGitService? = nil) {
         self.apiClient = apiClient
-        self.gitService = gitService
+        // 关键修复：如果外部未传入 gitService，则使用同一个 apiClient 创建，
+        // 避免 gitService 内部使用 .shared 单例导致 Token 丢失
+        self.gitService = gitService ?? GitHubGitService(apiClient: apiClient)
     }
 
     // MARK: - 读取

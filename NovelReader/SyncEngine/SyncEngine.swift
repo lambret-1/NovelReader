@@ -118,8 +118,19 @@ final class SyncEngine: SyncEngineProtocol {
         // 3. 拉取远端文件树（自动检测默认分支）
         DispatchQueue.main.async { self.currentStatus = .pulling(progress: 0.3) }
 
-        guard let remoteTree = try? awaitPublisher(fileService.getRepositoryTree(owner: owner, repo: repo)) else {
-            DispatchQueue.main.async { self.currentStatus = .error(message: "拉取远端文件失败") }
+        // 拉取远端文件树（使用 do-catch 捕获具体错误，避免静默失败）
+        let remoteTree: GitTree
+        do {
+            remoteTree = try awaitPublisher(fileService.getRepositoryTree(owner: owner, repo: repo))
+        } catch {
+            // 打印详细错误信息，方便定位问题
+            AppLogger.error("拉取远端文件树失败: \(error.localizedDescription)")
+            if let githubError = error as? GitHubError {
+                AppLogger.error("GitHub错误类型: \(githubError)")
+            }
+            DispatchQueue.main.async {
+                self.currentStatus = .error(message: "拉取远端文件失败: \(error.localizedDescription)")
+            }
             promise(.failure(SyncError.pullFailed))
             return
         }
