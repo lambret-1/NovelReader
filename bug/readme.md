@@ -1,6 +1,6 @@
 # 🐛 可视化警告日志报告 (Bug Log)
 
-**生成时间**: 2026-09-15 21:11:31 UTC
+**生成时间**: 2026-09-15 21:15:32 UTC
 **源日志文件**: `build.log`
 **构建状态**: ❌ 构建失败
 
@@ -11,7 +11,7 @@
 | 类型 | 数量 | 状态 |
 |------|------|------|
 | 🔴 错误 | **01** 个 | 需修复 |
-| 🟡 警告 | **04** 个 | 建议清理 |
+| 🟡 警告 | **08** 个 | 建议清理 |
 
 ---
 
@@ -20,10 +20,10 @@
 | 警告类型 | 数量 | 占比 |
 |----------|------|------|
 | ⚠️ 弃用API警告 | 00 个 | 0% |
-| 📦 未使用变量警告 | 02 个 | 50% |
+| 📦 未使用变量警告 | 06 个 | 75% |
 | 🔄 类型转换警告 | 00 个 | 0% |
 | 🔍 可空性警告 | 00 个 | 0% |
-| 📝 其他警告 | 02 个 | 50% |
+| 📝 其他警告 | 02 个 | 25% |
 
 ---
 
@@ -31,20 +31,25 @@
 
 | 排名 | 文件名 | 警告数量 | 严重程度 |
 |------|--------|----------|----------|
-| 1 | `TransitionManager.swift` | 1 个 | 🟢 低 |
-| 2 | `LibraryViewController.swift` | 1 个 | 🟢 低 |
-| 3 | `ReaderViewController.swift` | 1 个 | 🟢 低 |
-| 4 | `SyncViewController.swift` | 1 个 | 🟢 低 |
+| 1 | `SyncEngine.swift` | 4 个 | 🟡 中 |
+| 2 | `TransitionManager.swift` | 1 个 | 🟢 低 |
+| 3 | `LibraryViewController.swift` | 1 个 | 🟢 低 |
+| 4 | `ReaderViewController.swift` | 1 个 | 🟢 低 |
+| 5 | `SyncViewController.swift` | 1 个 | 🟢 低 |
 
 ---
 
 ## 📝 警告详情列表
 
-### 📦 未使用变量警告 (2个)
+### 📦 未使用变量警告 (6个)
 
 ```
 /Users/runner/work/NovelReader/NovelReader/NovelReader/Presentation/Reader/ReaderViewController.swift:392:17: warning: initialization of immutable value 'chapter' was never used; consider replacing with assignment to '_' or removing it
 /Users/runner/work/NovelReader/NovelReader/NovelReader/Presentation/Sync/SyncViewController.swift:366:16: warning: value 'token' was defined but never used; consider replacing with boolean test
+/Users/runner/work/NovelReader/NovelReader/NovelReader/SyncEngine/SyncEngine.swift:83:13: warning: initialization of variable 'uploadedCount' was never used; consider replacing with assignment to '_' or removing it
+/Users/runner/work/NovelReader/NovelReader/NovelReader/SyncEngine/SyncEngine.swift:84:13: warning: initialization of variable 'downloadedCount' was never used; consider replacing with assignment to '_' or removing it
+/Users/runner/work/NovelReader/NovelReader/NovelReader/SyncEngine/SyncEngine.swift:85:13: warning: initialization of variable 'conflictCount' was never used; consider replacing with assignment to '_' or removing it
+/Users/runner/work/NovelReader/NovelReader/NovelReader/SyncEngine/SyncEngine.swift:144:21: warning: initialization of immutable value 'remoteManifest' was never used; consider replacing with assignment to '_' or removing it
 ```
 
 ### ⚠️ 弃用API警告 (0个)
@@ -88,7 +93,7 @@
 - 优先修复所有编译错误，确保构建通过
 - 查看上方错误详情定位问题文件和行号
 
-#### 2. 未使用变量警告 (2个)
+#### 2. 未使用变量警告 (6个)
 - 删除未使用的变量和函数
 - 检查是否是调试代码遗留
 - 使用Xcode的静态分析工具辅助清理
