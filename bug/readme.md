@@ -1,6 +1,6 @@
 # 🐛 可视化警告日志报告 (Bug Log)
 
-**生成时间**: 2026-09-15 18:22:07 UTC
+**生成时间**: 2026-09-15 18:33:29 UTC
 **源日志文件**: `build.log`
 **构建状态**: ✅ 构建成功
 
@@ -11,7 +11,7 @@
 | 类型 | 数量 | 状态 |
 |------|------|------|
 | 🔴 错误 | **00** 个 | 无错误 |
-| 🟡 警告 | **03** 个 | 建议清理 |
+| 🟡 警告 | **02** 个 | 建议清理 |
 
 ---
 
@@ -20,10 +20,10 @@
 | 警告类型 | 数量 | 占比 |
 |----------|------|------|
 | ⚠️ 弃用API警告 | 00 个 | 0% |
-| 📦 未使用变量警告 | 02 个 | 66% |
+| 📦 未使用变量警告 | 02 个 | 100% |
 | 🔄 类型转换警告 | 00 个 | 0% |
 | 🔍 可空性警告 | 00 个 | 0% |
-| 📝 其他警告 | 01 个 | 33% |
+| 📝 其他警告 | 00 个 | 0% |
 
 ---
 
@@ -33,7 +33,6 @@
 |------|--------|----------|----------|
 | 1 | `ReaderViewController.swift` | 1 个 | 🟢 低 |
 | 2 | `SyncViewController.swift` | 1 个 | 🟢 低 |
-| 3 | `2026-09-15 18` | 1 个 | 🟢 低 |
 
 ---
 
@@ -41,23 +40,34 @@
 
 ### 📦 未使用变量警告 (2个)
 
-
+```
+/Users/runner/work/NovelReader/NovelReader/NovelReader/Presentation/Reader/ReaderViewController.swift:338:17: warning: initialization of immutable value 'chapter' was never used; consider replacing with assignment to '_' or removing it
+/Users/runner/work/NovelReader/NovelReader/NovelReader/Presentation/Sync/SyncViewController.swift:366:16: warning: value 'token' was defined but never used; consider replacing with boolean test
+```
 
 ### ⚠️ 弃用API警告 (0个)
 
-
+```
+无
+```
 
 ### 🔄 类型转换警告 (0个)
 
-
+```
+无
+```
 
 ### 🔍 可空性警告 (0个)
 
+```
+无
+```
 
+### 📝 其他警告 (0个)
 
-### 📝 其他警告 (1个)
-
-
+```
+无
+```
 
 ---
 
