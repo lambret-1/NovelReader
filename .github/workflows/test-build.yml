@@ -1,0 +1,31 @@
+name: Test Build Workflow
+
+on:
+  workflow_dispatch:
+
+env:
+  XCODE_VERSION: "15.4"
+  SCHEME: "NovelReader"
+  CONFIGURATION: "Release"
+  PROJECT: "NovelReader.xcodeproj"
+  IPA_NAME: "NovelReader"
+
+jobs:
+  build:
+    name: Test Build
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Test env
+        run: |
+          echo "Scheme: $SCHEME"
+          echo "Project: $PROJECT"
+          echo "Config: $CONFIGURATION"
+
+      - name: Xcode version
+        run: xcodebuild -version
+
+      - name: List files
+        run: ls -la
