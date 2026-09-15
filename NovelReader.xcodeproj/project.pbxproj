@@ -5,7 +5,6 @@
 	};
 	objectVersion = 56;
 	objects = {
-
 /* Begin PBXBuildFile section */
 		A1B2C3D4E5F6A7B8C9D0E1F2 /* BaseNavigationController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2C3D4E5F6A7B8C9D0E1F2A3 /* BaseNavigationController.swift */; };
 		A3902F04F2B2452EB6987376 /* MainTabBarController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1F2C3D4E5F6A7B8C9D0E1F2 /* MainTabBarController.swift */; };
@@ -72,7 +71,6 @@
 		30F98EDFD9DCA057D72ACF0B /* ReaderPageViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B5ACA995AAFD71474DAE7CC /* ReaderPageViewController.swift */; };		8A0E807FFBF222A475675C82 /* ReaderSettingsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D599426C1A3F07877499F27 /* ReaderSettingsManager.swift */; };
 		0A0B30EB2642D328187614F3 /* ReadingStatsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E62274257B99FC5C9F51F8E /* ReadingStatsManager.swift */; };
 /* End PBXBuildFile section */
-
 /* Begin PBXFileReference section */
 		29CE550132313F1FB52FB33C /* NRReaderProgressView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NRReaderProgressView.swift"; sourceTree = "<group>"; };
 		B2C3D4E5F6A7B8C9D0E1F2A3 /* BaseNavigationController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Navigation/BaseNavigationController.swift"; sourceTree = "<group>"; };
