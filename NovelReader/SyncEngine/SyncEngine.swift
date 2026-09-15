@@ -301,7 +301,6 @@ final class SyncEngine: SyncEngineProtocol {
         promise(.success(result))
     }
 
-    }
 
     // MARK: - 冲突解决
 
@@ -631,8 +630,8 @@ final class SyncEngine: SyncEngineProtocol {
             }
         }
     }
-}
 
+}
 // MARK: - 同步错误
 
 enum SyncError: LocalizedError {
