@@ -140,17 +140,10 @@ final class SyncEngine: SyncEngineProtocol {
             
             if isEmptyRepo {
                 AppLogger.info("检测到空仓库，视为远端无文件，继续同步流程")
-                // 空仓库：直接跳到上传本地文件步骤
+                // 空仓库：设置空的remoteManifest，继续执行同步流程
                 let remoteManifest = Manifest(version: 1, files: [])
-                self.processSyncAfterPull(
-                    remoteManifest: remoteManifest,
-                    metadata: metadata,
-                    owner: owner,
-                    repo: repo,
-                    promise: promise
-                )
-                return
-            }
+                // 继续执行下面的同步流程
+            } else {
             
             DispatchQueue.main.async {
                 self.currentStatus = .error(message: "拉取远端文件失败: \(error.localizedDescription)")
@@ -159,25 +152,6 @@ final class SyncEngine: SyncEngineProtocol {
             return
         }
 
-        // 拉取成功后处理同步（提取为独立方法，支持空仓库复用）
-        processSyncAfterPull(
-            remoteManifest: remoteManifest,
-            metadata: metadata,
-            owner: owner,
-            repo: repo,
-            promise: promise
-        )
-    }
-
-
-    // MARK: - 拉取成功后同步处理（独立方法，支持空仓库复用）
-    private func processSyncAfterPull(
-        remoteManifest: Manifest,
-        metadata: SyncMetadata,
-        owner: String,
-        repo: String,
-        promise: @escaping (Result<SyncResult, Error>) -> Void
-    ) {
         var uploadedCount = 0
         var downloadedCount = 0
         var conflictCount = 0
@@ -302,6 +276,7 @@ final class SyncEngine: SyncEngineProtocol {
     }
 
 
+    }
     // MARK: - 冲突解决
 
     func resolveConflict(conflictId: String, resolution: ConflictItem.ConflictResolution) -> AnyPublisher<Void, Error> {
