@@ -18,7 +18,7 @@ final class SyncViewController: UIViewController {
     private lazy var statusLabel: UILabel = {
         let label = UILabel()
         label.translatesAutoresizingMaskIntoConstraints = false
-        label.font = .systemFont(ofSize: 18, weight: .medium)
+        label.font = .systemFont(ofSize: 18, weight: .medium) // 状态标题字号18pt，清晰醒目
         label.textAlignment = .center
         return label
     }()
@@ -26,11 +26,30 @@ final class SyncViewController: UIViewController {
     private lazy var detailLabel: UILabel = {
         let label = UILabel()
         label.translatesAutoresizingMaskIntoConstraints = false
-        label.font = .systemFont(ofSize: 14)
+        label.font = .systemFont(ofSize: 14) // 详情文字14pt，辅助信息
         label.textColor = .secondaryLabel
         label.textAlignment = .center
         label.numberOfLines = 0
         return label
+    }()
+
+    private lazy var repoInfoLabel: UILabel = {
+        let label = UILabel()
+        label.translatesAutoresizingMaskIntoConstraints = false
+        label.font = .systemFont(ofSize: 13, weight: .medium) // 仓库信息13pt，紧凑展示
+        label.textColor = .secondaryLabel
+        label.textAlignment = .center
+        label.numberOfLines = 0
+        return label
+    }()
+
+    private lazy var changeRepoButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.translatesAutoresizingMaskIntoConstraints = false
+        button.setTitle("修改仓库", for: .normal)
+        button.titleLabel?.font = .systemFont(ofSize: 14) // 按钮文字14pt
+        button.addTarget(self, action: #selector(changeRepoTapped), for: .touchUpInside)
+        return button
     }()
 
     private lazy var progressView: UIProgressView = {
@@ -44,10 +63,10 @@ final class SyncViewController: UIViewController {
         let button = UIButton(type: .system)
         button.translatesAutoresizingMaskIntoConstraints = false
         button.setTitle("立即同步", for: .normal)
-        button.titleLabel?.font = .systemFont(ofSize: 17, weight: .semibold)
+        button.titleLabel?.font = .systemFont(ofSize: 17, weight: .semibold) // 主按钮17pt加粗
         button.backgroundColor = .systemBlue
         button.setTitleColor(.white, for: .normal)
-        button.layer.cornerRadius = 12
+        button.layer.cornerRadius = 12 // 圆角12pt，标准卡片圆角
         button.addTarget(self, action: #selector(syncTapped), for: .touchUpInside)
         return button
     }()
@@ -55,7 +74,7 @@ final class SyncViewController: UIViewController {
     private lazy var accountInfoLabel: UILabel = {
         let label = UILabel()
         label.translatesAutoresizingMaskIntoConstraints = false
-        label.font = .systemFont(ofSize: 14)
+        label.font = .systemFont(ofSize: 14) // 账号信息14pt
         label.textColor = .secondaryLabel
         label.textAlignment = .center
         return label
@@ -96,33 +115,42 @@ final class SyncViewController: UIViewController {
         view.addSubview(statusIcon)
         view.addSubview(statusLabel)
         view.addSubview(detailLabel)
+        view.addSubview(repoInfoLabel)
+        view.addSubview(changeRepoButton)
         view.addSubview(progressView)
         view.addSubview(syncButton)
         view.addSubview(accountInfoLabel)
         view.addSubview(logoutButton)
 
         NSLayoutConstraint.activate([
-            statusIcon.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 60),
+            statusIcon.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 48), // 顶部间距48pt，留出呼吸空间
             statusIcon.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            statusIcon.widthAnchor.constraint(equalToConstant: 60),
+            statusIcon.widthAnchor.constraint(equalToConstant: 60), // 图标60pt，视觉焦点
             statusIcon.heightAnchor.constraint(equalToConstant: 60),
 
-            statusLabel.topAnchor.constraint(equalTo: statusIcon.bottomAnchor, constant: 20),
+            statusLabel.topAnchor.constraint(equalTo: statusIcon.bottomAnchor, constant: 16), // 图标与标题间距16pt
             statusLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
             statusLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
 
-            detailLabel.topAnchor.constraint(equalTo: statusLabel.bottomAnchor, constant: 12),
+            detailLabel.topAnchor.constraint(equalTo: statusLabel.bottomAnchor, constant: 8), // 标题与详情间距8pt
             detailLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 30),
             detailLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -30),
 
-            progressView.topAnchor.constraint(equalTo: detailLabel.bottomAnchor, constant: 20),
+            repoInfoLabel.topAnchor.constraint(equalTo: detailLabel.bottomAnchor, constant: 12), // 详情与仓库信息间距12pt
+            repoInfoLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 30),
+            repoInfoLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -30),
+
+            changeRepoButton.topAnchor.constraint(equalTo: repoInfoLabel.bottomAnchor, constant: 4), // 仓库信息与按钮间距4pt
+            changeRepoButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+
+            progressView.topAnchor.constraint(equalTo: changeRepoButton.bottomAnchor, constant: 16),
             progressView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 40),
             progressView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -40),
 
-            syncButton.topAnchor.constraint(equalTo: progressView.bottomAnchor, constant: 40),
+            syncButton.topAnchor.constraint(equalTo: progressView.bottomAnchor, constant: 32), // 进度条与按钮间距32pt，突出主操作
             syncButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            syncButton.widthAnchor.constraint(equalToConstant: 200),
-            syncButton.heightAnchor.constraint(equalToConstant: 50),
+            syncButton.widthAnchor.constraint(equalToConstant: 200), // 按钮宽度200pt，足够点击
+            syncButton.heightAnchor.constraint(equalToConstant: 50), // 按钮高度50pt，符合触控标准
 
             accountInfoLabel.bottomAnchor.constraint(equalTo: logoutButton.topAnchor, constant: -16),
             accountInfoLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
@@ -147,6 +175,19 @@ final class SyncViewController: UIViewController {
                 self?.showSyncResult(result)
             }
             .store(in: &cancellables)
+
+        viewModel.$repoFullName
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] repo in
+                if let repo = repo, !repo.isEmpty {
+                    self?.repoInfoLabel.text = "同步仓库：\(repo)"
+                    self?.changeRepoButton.isHidden = false
+                } else {
+                    self?.repoInfoLabel.text = nil
+                    self?.changeRepoButton.isHidden = true
+                }
+            }
+            .store(in: &cancellables)
     }
 
     private func updateUI(with state: SyncViewState) {
@@ -160,6 +201,7 @@ final class SyncViewController: UIViewController {
             syncButton.setTitle("登录 GitHub", for: .normal)
             accountInfoLabel.isHidden = true
             logoutButton.isHidden = true
+            changeRepoButton.isHidden = true
 
         case .idle(let username, let lastSync):
             statusIcon.image = UIImage(systemName: "checkmark.icloud")
@@ -223,6 +265,24 @@ final class SyncViewController: UIViewController {
         present(alert, animated: true)
     }
 
+    @objc private func changeRepoTapped() {
+        let alert = UIAlertController(title: "修改同步仓库", message: "请输入仓库全名，格式：用户名/仓库名\n例如：lambret-1/MyNovels", preferredStyle: .alert)
+        alert.addTextField { [weak self] textField in
+            textField.placeholder = "用户名/仓库名"
+            textField.text = self?.viewModel.repoFullName
+            textField.autocapitalizationType = .none
+            textField.autocorrectionType = .no
+        }
+        alert.addAction(UIAlertAction(title: "取消", style: .cancel))
+        alert.addAction(UIAlertAction(title: "保存", style: .default, handler: { [weak self] _ in
+            if let repo = alert.textFields?.first?.text?.trimmingCharacters(in: .whitespacesAndNewlines),
+               !repo.isEmpty {
+                self?.viewModel.updateRepository(repoFullName: repo)
+            }
+        }))
+        present(alert, animated: true)
+    }
+
     private func showLoginAlert() {
         let alert = UIAlertController(title: "GitHub 登录", message: "请输入 Personal Access Token\n\n在 GitHub → Settings → Developer settings → Personal access tokens 生成，勾选 repo 权限", preferredStyle: .alert)
         alert.addTextField { textField in
@@ -251,6 +311,7 @@ enum SyncViewState: Equatable {
 final class SyncViewModel {
     @Published var viewState: SyncViewState = .notLoggedIn
     @Published var syncResult: SyncResult?
+    @Published var repoFullName: String?
 
     private let authService: GitHubAuthService
     private let syncEngine: SyncEngineProtocol
@@ -310,13 +371,14 @@ final class SyncViewModel {
         syncMetadataRepository.fetchMetadata()
             .receive(on: DispatchQueue.main)
             .sink(receiveCompletion: { _ in }, receiveValue: { [weak self] metadata in
-                // 如果未配置仓库，自动设置为 username/MyNovels（独立小说数据仓库）
+                // 如果未配置仓库，自动设置为 username/MyNovels
                 var meta = metadata
                 if meta.repoFullName == nil {
                     meta.repoFullName = "\(username)/MyNovels"
                     meta.githubUsername = username
                     _ = self?.syncMetadataRepository.updateMetadata(meta)
                 }
+                self?.repoFullName = meta.repoFullName
                 self?.viewState = .idle(username: username, lastSync: meta.lastSyncAt)
             })
             .store(in: &cancellables)
@@ -338,7 +400,26 @@ final class SyncViewModel {
 
     func logout() {
         authService.logout()
+        repoFullName = nil
         viewState = .notLoggedIn
+    }
+
+    func updateRepository(repoFullName: String) {
+        syncMetadataRepository.fetchMetadata()
+            .flatMap { metadata -> AnyPublisher<SyncMetadata, Error> in
+                var meta = metadata
+                meta.repoFullName = repoFullName
+                return self.syncMetadataRepository.updateMetadata(meta)
+            }
+            .receive(on: DispatchQueue.main)
+            .sink(receiveCompletion: { completion in
+                if case .failure(let error) = completion {
+                    AppLogger.error("更新仓库配置失败: \(error)")
+                }
+            }, receiveValue: { [weak self] meta in
+                self?.repoFullName = meta.repoFullName
+            })
+            .store(in: &cancellables)
     }
 
     func startSync() {
@@ -350,7 +431,6 @@ final class SyncViewModel {
                 }
             }, receiveValue: { [weak self] result in
                 self?.syncResult = result
-                // 刷新状态
                 if case .idle(let username, _) = self?.viewState {
                     self?.viewState = .idle(username: username, lastSync: Date())
                 }
