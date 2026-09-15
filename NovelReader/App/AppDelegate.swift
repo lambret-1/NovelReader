@@ -106,7 +106,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         )
         alert.addAction(UIAlertAction(title: "稍后提醒", style: .cancel))
         alert.addAction(UIAlertAction(title: "立即更新", style: .default) { _ in
-            if let url = URL(string: release.htmlURL) {
+            if let url = URL(string: release.htmlUrl) {
                 UIApplication.shared.open(url)
             }
         })

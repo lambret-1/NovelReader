@@ -62,7 +62,7 @@ final class SyncViewController: UIViewController {
     }()
 
     private lazy var syncButton: NRButton = {
-        let btn = NRButton(style: .primary)
+        let btn = NRButton(type: .primary)
         btn.translatesAutoresizingMaskIntoConstraints = false
         btn.setTitle("开始同步", for: .normal)
         btn.addTarget(self, action: #selector(startSync), for: .touchUpInside)
@@ -219,6 +219,8 @@ final class SyncViewController: UIViewController {
             syncButton.isEnabled = true
             syncButton.setTitle("重试", for: .normal)
             NRToast.shared.error(message)
+        case .merging, .conflictWaiting:
+            break
         }
     }
 

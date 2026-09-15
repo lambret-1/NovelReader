@@ -126,7 +126,7 @@ final class LibraryViewController: UIViewController {
         present(alert, animated: true)
     }
 
-    @objc private func apiRefreshTapped() {
+    @objc func apiRefreshTapped() {
         guard AppContainer.shared.authService.loadSavedToken() != nil else {
             NRToast.shared.error("请先在我的页面登录 GitHub")
             return

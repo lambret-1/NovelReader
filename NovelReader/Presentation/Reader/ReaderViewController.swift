@@ -435,19 +435,7 @@ final class ReaderViewController: UIViewController {
 
     // MARK: - 搜索
     @objc private func showSearch() {
-        let searchVC = SearchViewController(book: book, chapters: chapters) { [weak self] chapterIndex, offset in
-            guard let self = self else { return }
-            self.loadChapter(at: chapterIndex, restorePage: false)
-            let targetPage = self.paginationEngine.pageIndex(for: offset, in: self.currentPages)
-            self.currentPageIndex = targetPage
-            if let vc = self.makePageViewController(at: targetPage) {
-                self.pageViewController.setViewControllers([vc], direction: .forward, animated: false)
-            }
-            self.updateProgressLabel()
-        }
-        let nav = UINavigationController(rootViewController: searchVC)
-        nav.modalPresentationStyle = .fullScreen
-        present(nav, animated: true)
+        NRToast.shared.info("搜索功能开发中")
     }
 
     // MARK: - 书签
