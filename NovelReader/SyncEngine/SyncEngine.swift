@@ -91,6 +91,10 @@ final class SyncEngine: SyncEngineProtocol {
             return
         }
 
+        // 1.5 清除所有未解决的冲突（强制以GitHub远端为准，不再等待用户解决）
+        _ = try? awaitPublisher(conflictRepository.clearAllConflicts())
+        pendingContext = nil
+
         guard let repoFullName = metadata.repoFullName else {
             DispatchQueue.main.async { self.currentStatus = .error(message: "未配置同步仓库") }
             promise(.failure(SyncError.noRepositoryConfigured))
@@ -125,15 +129,57 @@ final class SyncEngine: SyncEngineProtocol {
         } catch {
             // 打印详细错误信息，方便定位问题
             AppLogger.error("拉取远端文件树失败: \(error.localizedDescription)")
-            if let githubError = error as? GitHubError {
-                AppLogger.error("GitHub错误类型: \(githubError)")
+            
+            // 判断是否为空仓库（无分支/无commit），空仓库时视为远端无文件，继续同步流程
+            let errorMsg = error.localizedDescription.lowercased()
+            let isEmptyRepo = errorMsg.contains("not found") || 
+                              errorMsg.contains("no commit") || 
+                              errorMsg.contains("empty") ||
+                              errorMsg.contains("409") ||
+                              errorMsg.contains("git/refs")
+            
+            if isEmptyRepo {
+                AppLogger.info("检测到空仓库，视为远端无文件，继续同步流程")
+                // 空仓库：直接跳到上传本地文件步骤
+                let remoteManifest = Manifest(version: 1, files: [])
+                self.processSyncAfterPull(
+                    remoteManifest: remoteManifest,
+                    metadata: metadata,
+                    owner: owner,
+                    repo: repo,
+                    promise: promise
+                )
+                return
             }
+            
             DispatchQueue.main.async {
                 self.currentStatus = .error(message: "拉取远端文件失败: \(error.localizedDescription)")
             }
             promise(.failure(SyncError.pullFailed))
             return
         }
+
+        // 拉取成功后处理同步（提取为独立方法，支持空仓库复用）
+        processSyncAfterPull(
+            remoteManifest: remoteManifest,
+            metadata: metadata,
+            owner: owner,
+            repo: repo,
+            promise: promise
+        )
+
+
+    // MARK: - 拉取成功后同步处理（独立方法，支持空仓库复用）
+    private func processSyncAfterPull(
+        remoteManifest: Manifest,
+        metadata: SyncMetadata,
+        owner: String,
+        repo: String,
+        promise: @escaping (Result<SyncResult, Error>) -> Void
+    ) {
+        var uploadedCount = 0
+        var downloadedCount = 0
+        var conflictCount = 0
 
         let remoteManifest = ManifestManager.generateRemoteManifest(from: remoteTree)
 
@@ -170,48 +216,28 @@ final class SyncEngine: SyncEngineProtocol {
             }
         }
 
-        // 7. 处理冲突：检测到冲突时暂停同步，保存冲突到数据库等待用户解决
+        // 7. 处理冲突：强制以GitHub远端为准，直接下载远端内容覆盖本地，不暂停同步
         let conflicts = diffs.filter { $0.type == .conflict }
         conflictCount = conflicts.count
 
         if !conflicts.isEmpty {
-            var conflictItems: [ConflictItem] = []
+            AppLogger.info("检测到 \(conflicts.count) 个冲突，强制以远端版本覆盖本地")
             for diff in conflicts {
-                let localContent = self.localContent(for: diff.path, books: books, chapters: allChapters)?.content
-                let remoteContent = try? awaitPublisher(fileService.getFileContent(owner: owner, repo: repo, path: diff.path))
-                conflictItems.append(ConflictItem(
-                    type: .contentModified,
-                    localPath: diff.path,
-                    remotePath: diff.path,
-                    localContent: localContent,
-                    remoteContent: remoteContent
-                ))
+                if let remoteContent = try? awaitPublisher(fileService.getFileContent(owner: owner, repo: repo, path: diff.path)) {
+                    applyRemoteContent(path: diff.path, content: remoteContent, books: books)
+                    downloadedCount += 1
+                }
             }
-            _ = try? awaitPublisher(conflictRepository.saveConflicts(conflictItems))
-
-            DispatchQueue.main.async {
-                self.currentStatus = .conflictWaiting(count: conflicts.count)
-                self.pendingContext = PendingSyncContext(
-                    promise: promise,
-                    metadata: metadata,
-                    owner: owner,
-                    repo: repo,
-                    books: books,
-                    allChapters: allChapters,
-                    diffs: diffs,
-                    downloadedCount: downloadedCount
-                )
-            }
-            AppLogger.info("检测到 \(conflicts.count) 个冲突，同步已暂停")
-            return
+            // 冲突已用远端版本解决，清除冲突记录
+            _ = try? awaitPublisher(conflictRepository.clearAllConflicts())
         }
 
         // 8. 上传本地修改（只上传 dirty 章节和新增书籍）
         DispatchQueue.main.async { self.currentStatus = .pushing(progress: 0.5) }
 
         let localAdded = diffs.filter { $0.type == .localAdded }
-        let conflictChanges = diffs.filter { $0.type == .conflict }
-        let localChanges = localAdded + conflictChanges
+        // 冲突文件已用远端版本覆盖本地，不再上传
+        let localChanges = localAdded
         var filesToUpload: [String: String] = [:]
 
         for diff in localChanges {
@@ -272,6 +298,8 @@ final class SyncEngine: SyncEngineProtocol {
             message: conflictCount > 0 ? "同步完成，有 \(conflictCount) 个冲突" : "同步完成"
         )
         promise(.success(result))
+    }
+
     }
 
     // MARK: - 冲突解决
@@ -360,8 +388,8 @@ final class SyncEngine: SyncEngineProtocol {
         DispatchQueue.main.async { self.currentStatus = .pushing(progress: 0.5) }
 
         let localAdded = diffs.filter { $0.type == .localAdded }
-        let conflictChanges = diffs.filter { $0.type == .conflict }
-        let localChanges = localAdded + conflictChanges
+        // 冲突文件已用远端版本覆盖本地，不再上传
+        let localChanges = localAdded
         var filesToUpload: [String: String] = [:]
         for diff in localChanges {
             if let (content, _) = localContent(for: diff.path, books: books, chapters: allChapters) {
