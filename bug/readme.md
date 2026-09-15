@@ -1,6 +1,6 @@
 # 🐛 可视化警告日志报告 (Bug Log)
 
-**生成时间**: 2026-09-15 22:22:14 UTC
+**生成时间**: 2026-09-15 22:26:48 UTC
 **源日志文件**: `build.log`
 **构建状态**: ❌ 构建失败
 
@@ -10,8 +10,8 @@
 
 | 类型 | 数量 | 状态 |
 |------|------|------|
-| 🔴 错误 | **27** 个 | 需修复 |
-| 🟡 警告 | **07** 个 | 建议清理 |
+| 🔴 错误 | **08** 个 | 需修复 |
+| 🟡 警告 | **08** 个 | 建议清理 |
 
 ---
 
@@ -20,10 +20,10 @@
 | 警告类型 | 数量 | 占比 |
 |----------|------|------|
 | ⚠️ 弃用API警告 | 00 个 | 0% |
-| 📦 未使用变量警告 | 05 个 | 71% |
+| 📦 未使用变量警告 | 05 个 | 62% |
 | 🔄 类型转换警告 | 00 个 | 0% |
 | 🔍 可空性警告 | 00 个 | 0% |
-| 📝 其他警告 | 02 个 | 28% |
+| 📝 其他警告 | 03 个 | 37% |
 
 ---
 
@@ -32,10 +32,11 @@
 | 排名 | 文件名 | 警告数量 | 严重程度 |
 |------|--------|----------|----------|
 | 1 | `SyncEngine.swift` | 3 个 | 🟡 中 |
-| 2 | `LibraryViewController.swift` | 1 个 | 🟢 低 |
-| 3 | `TransitionManager.swift` | 1 个 | 🟢 低 |
-| 4 | `ReaderViewController.swift` | 1 个 | 🟢 低 |
-| 5 | `NovelRefreshService.swift` | 1 个 | 🟢 低 |
+| 2 | `SyncViewController.swift` | 1 个 | 🟢 低 |
+| 3 | `LibraryViewController.swift` | 1 个 | 🟢 低 |
+| 4 | `TransitionManager.swift` | 1 个 | 🟢 低 |
+| 5 | `ReaderViewController.swift` | 1 个 | 🟢 低 |
+| 6 | `NovelRefreshService.swift` | 1 个 | 🟢 低 |
 
 ---
 
@@ -69,9 +70,10 @@
 无
 ```
 
-### 📝 其他警告 (2个)
+### 📝 其他警告 (3个)
 
 ```
+/Users/runner/work/NovelReader/NovelReader/NovelReader/Presentation/Sync/SyncViewController.swift:205:14: warning: case is already handled by previous patterns; consider removing it
 /Users/runner/work/NovelReader/NovelReader/NovelReader/Presentation/Library/LibraryViewController.swift:159:46: warning: variable 'self' was written to, but never read
 /Users/runner/work/NovelReader/NovelReader/NovelReader/Presentation/Animation/TransitionManager.swift:122:1: warning: extension declares a conformance of imported type 'UIViewController' to imported protocol 'UIViewControllerTransitioningDelegate'; this will not behave correctly if the owners of 'UIKit' introduce this conformance in the future
 ```
@@ -84,11 +86,11 @@
 
 - **质量评级**: **F级（构建失败）**
 - **警告密度**: 每千行约 0 个警告
-- **代码总行数**: 8978 行
+- **代码总行数**: 8939 行
 
 ### 💡 修复建议
 
-#### 1. 编译错误 (27个)
+#### 1. 编译错误 (8个)
 - 优先修复所有编译错误，确保构建通过
 - 查看上方错误详情定位问题文件和行号
 
