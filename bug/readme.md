@@ -1,6 +1,6 @@
 # 🐛 可视化警告日志报告 (Bug Log)
 
-**生成时间**: 2026-09-15 19:25:01 UTC
+**生成时间**: 2026-09-15 19:32:42 UTC
 **源日志文件**: `build.log`
 **构建状态**: ✅ 构建成功
 
@@ -42,7 +42,7 @@
 ### 📦 未使用变量警告 (2个)
 
 ```
-/Users/runner/work/NovelReader/NovelReader/NovelReader/Presentation/Reader/ReaderViewController.swift:338:17: warning: initialization of immutable value 'chapter' was never used; consider replacing with assignment to '_' or removing it
+/Users/runner/work/NovelReader/NovelReader/NovelReader/Presentation/Reader/ReaderViewController.swift:342:17: warning: initialization of immutable value 'chapter' was never used; consider replacing with assignment to '_' or removing it
 /Users/runner/work/NovelReader/NovelReader/NovelReader/Presentation/Sync/SyncViewController.swift:366:16: warning: value 'token' was defined but never used; consider replacing with boolean test
 ```
 
@@ -78,7 +78,7 @@
 
 - **质量评级**: **B级（良好，警告较少）**
 - **警告密度**: 每千行约 0 个警告
-- **代码总行数**: 9450 行
+- **代码总行数**: 9651 行
 
 ### 💡 修复建议
 
