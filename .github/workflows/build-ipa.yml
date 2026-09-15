@@ -290,7 +290,27 @@ jobs:
           retention-days: 90
           compression-level: 6
 
-      # 9.1 自动发布 GitHub Release
+      # 9.1 生成可视化警告日志报告并提交到仓库
+      - name: 生成可视化警告日志报告
+        if: always()
+        run: |
+          echo "════════════════════════════════════════"
+          echo "  生成可视化警告日志报告"
+          echo "════════════════════════════════════════"
+          chmod +x scripts/generate_bug_report.sh
+          bash scripts/generate_bug_report.sh build.log bug
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add bug/readme.md
+          if git diff --cached --quiet; then
+            echo "报告无变化，跳过提交"
+          else
+            git commit -m "chore: CI自动生成可视化警告日志报告 [skip ci]"
+            git push
+            echo "✅ 报告已提交到仓库"
+          fi
+
+      # 9.2 自动发布 GitHub Release      # 9.2 自动发布 GitHub Release
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
