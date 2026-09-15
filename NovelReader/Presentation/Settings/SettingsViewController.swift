@@ -63,7 +63,6 @@ final class SettingsViewController: UIViewController {
         tableView.translatesAutoresizingMaskIntoConstraints = false
         tableView.delegate = self
         tableView.dataSource = self
-        tableView.register(UITableViewCell.self, forCellReuseIdentifier: "SettingsCell")
         view.addSubview(tableView)
 
         NSLayoutConstraint.activate([
@@ -124,7 +123,8 @@ extension SettingsViewController: UITableViewDataSource, UITableViewDelegate {
     }
 
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "SettingsCell", for: indexPath)
+        let cell = tableView.dequeueReusableCell(withIdentifier: "SettingsCell")
+            ?? UITableViewCell(style: .value1, reuseIdentifier: "SettingsCell") // value1样式，副标题显示在右侧
         let item = sections[indexPath.section].items[indexPath.row]
         cell.textLabel?.text = item.title
         cell.detailTextLabel?.text = item.subtitle
