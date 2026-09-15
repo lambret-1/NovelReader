@@ -83,7 +83,7 @@ final class NREmptyState: UIView {
     }
 
     // MARK: - 配置
-    private func configure(icon: UIImage?, title: String, subtitle: String?, actionTitle: String?) {
+    func configure(icon: UIImage?, title: String, subtitle: String?, actionTitle: String?) {
         iconImageView.image = icon
         iconImageView.isHidden = icon == nil
         titleLabel.text = title

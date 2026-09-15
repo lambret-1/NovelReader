@@ -64,6 +64,11 @@ final class NRToast {
         show(message: message, type: .warning)
     }
 
+    /// 便捷方法：信息提示
+    func info(_ message: String) {
+        show(message: message, type: .info)
+    }
+
     // MARK: - 私有方法
     private func presentToast(message: String, type: NRToastType, duration: TimeInterval) {
         // 移除已存在的 Toast
