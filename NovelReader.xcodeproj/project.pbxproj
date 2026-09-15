@@ -7,6 +7,16 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		6D095F9F323F25E02A6F0ECA /* DesignTokens.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19D8F3ABA0317C1A2463304B /* DesignTokens.swift */; };
+		2615DBE0D4D965368334C92D /* ThemeManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = D503DF1920872A934E523951 /* ThemeManager.swift */; };
+		4CDEFCADF9591BAC17D08C55 /* NRButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77EE1189EBFB7A4DC5729CA7 /* NRButton.swift */; };
+		3CF52612540D9F11144B8EC0 /* NRCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F5A35B4B2704322031BA447 /* NRCard.swift */; };
+		E535E09F4F05E6AED6AE44E1 /* NRTextField.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00A6E39466F9635895D607E6 /* NRTextField.swift */; };
+		4222AB02659CF413B5DA5BF7 /* NRBadge.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8A1FF54AE9B864B10B0AF5F /* NRBadge.swift */; };
+		CE5F0FA4CA1A0B40C4B5A5DF /* NREmptyState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 17AC6B9615806CDA05655D45 /* NREmptyState.swift */; };
+		C3E179BF06D48CC4AA0A0266 /* NRToast.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A6B68C58F5565E25E725FA8 /* NRToast.swift */; };
+		7E7571C90CC6A68554DEC3E3 /* NRSkeletonView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2067C05AAAA0BD2DE2D553F0 /* NRSkeletonView.swift */; };
+		8B9666B1802CA3549BE767A5 /* NRTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDC6A36E0F4D5AA594C3BEA7 /* NRTableViewCell.swift */; };
 		0794D9EB505A52131A0E2518 /* AppContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A07CF57CE8709F3D2BA38D46 /* AppContainer.swift */; };
 		8E009A4E11C2D83DC4FC9437 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = D97AB48676A1736B16E6F272 /* AppDelegate.swift */; };
 		B2DA626AFD12613526965C41 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB5ABECA147C18163C61D593 /* SceneDelegate.swift */; };
@@ -62,6 +72,16 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		19D8F3ABA0317C1A2463304B /* DesignTokens.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DesignTokens.swift"; sourceTree = "<group>"; };
+		D503DF1920872A934E523951 /* ThemeManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ThemeManager.swift"; sourceTree = "<group>"; };
+		77EE1189EBFB7A4DC5729CA7 /* NRButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NRButton.swift"; sourceTree = "<group>"; };
+		0F5A35B4B2704322031BA447 /* NRCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NRCard.swift"; sourceTree = "<group>"; };
+		00A6E39466F9635895D607E6 /* NRTextField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NRTextField.swift"; sourceTree = "<group>"; };
+		C8A1FF54AE9B864B10B0AF5F /* NRBadge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NRBadge.swift"; sourceTree = "<group>"; };
+		17AC6B9615806CDA05655D45 /* NREmptyState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NREmptyState.swift"; sourceTree = "<group>"; };
+		4A6B68C58F5565E25E725FA8 /* NRToast.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NRToast.swift"; sourceTree = "<group>"; };
+		2067C05AAAA0BD2DE2D553F0 /* NRSkeletonView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NRSkeletonView.swift"; sourceTree = "<group>"; };
+		DDC6A36E0F4D5AA594C3BEA7 /* NRTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NRTableViewCell.swift"; sourceTree = "<group>"; };
 		2678F494CC29BA8E2F0C4643 /* NovelReader.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = NovelReader.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A07CF57CE8709F3D2BA38D46 /* AppContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AppContainer.swift"; sourceTree = "<group>"; };
 		D97AB48676A1736B16E6F272 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AppDelegate.swift"; sourceTree = "<group>"; };
@@ -344,6 +364,8 @@
 		0DF5A2541E11C3DB2A171E93 /* Presentation */ = {
 			isa = PBXGroup;
 			children = (
+				47DFE92D5ECF2D1B6E4BA239 /* Theme */,
+				35D391D4657DD81FCA64C5B9 /* Components */,
 				849874CC0D9E61FAFFE6A4C1 /* Editor */,
 				06279BD0A4CA6BB28AE377C2 /* Library */,
 				5DC021304939A9BBD265F2FE /* Reader */,
@@ -418,6 +440,31 @@
 				4B4BE8936B90FD942E9402A3 /* UpdateViewController.swift */,
 			);
 			path = "Update";
+			sourceTree = "<group>";
+		};
+
+		47DFE92D5ECF2D1B6E4BA239 /* Theme */ = {
+			isa = PBXGroup;
+			children = (
+				19D8F3ABA0317C1A2463304B /* DesignTokens.swift */,
+				D503DF1920872A934E523951 /* ThemeManager.swift */,
+			);
+			path = Theme;
+			sourceTree = "<group>";
+		};
+		35D391D4657DD81FCA64C5B9 /* Components */ = {
+			isa = PBXGroup;
+			children = (
+				77EE1189EBFB7A4DC5729CA7 /* NRButton.swift */,
+				0F5A35B4B2704322031BA447 /* NRCard.swift */,
+				00A6E39466F9635895D607E6 /* NRTextField.swift */,
+				C8A1FF54AE9B864B10B0AF5F /* NRBadge.swift */,
+				17AC6B9615806CDA05655D45 /* NREmptyState.swift */,
+				4A6B68C58F5565E25E725FA8 /* NRToast.swift */,
+				2067C05AAAA0BD2DE2D553F0 /* NRSkeletonView.swift */,
+				DDC6A36E0F4D5AA594C3BEA7 /* NRTableViewCell.swift */,
+			);
+			path = Components;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -496,6 +543,16 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				6D095F9F323F25E02A6F0ECA /* DesignTokens.swift in Sources */,
+				2615DBE0D4D965368334C92D /* ThemeManager.swift in Sources */,
+				4CDEFCADF9591BAC17D08C55 /* NRButton.swift in Sources */,
+				3CF52612540D9F11144B8EC0 /* NRCard.swift in Sources */,
+				E535E09F4F05E6AED6AE44E1 /* NRTextField.swift in Sources */,
+				4222AB02659CF413B5DA5BF7 /* NRBadge.swift in Sources */,
+				CE5F0FA4CA1A0B40C4B5A5DF /* NREmptyState.swift in Sources */,
+				C3E179BF06D48CC4AA0A0266 /* NRToast.swift in Sources */,
+				7E7571C90CC6A68554DEC3E3 /* NRSkeletonView.swift in Sources */,
+				8B9666B1802CA3549BE767A5 /* NRTableViewCell.swift in Sources */,
 				0794D9EB505A52131A0E2518 /* AppContainer.swift in Sources */,
 				8E009A4E11C2D83DC4FC9437 /* AppDelegate.swift in Sources */,
 				B2DA626AFD12613526965C41 /* SceneDelegate.swift in Sources */,
