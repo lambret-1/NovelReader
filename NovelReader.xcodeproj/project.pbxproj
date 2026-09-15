@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		B7C39D81E70754DA3926E809 /* NaturalSort.swift in Sources */ = {isa = PBXBuildFile; fileRef = A26D491CABF5E4DC4B3E00A6 /* NaturalSort.swift */; };
+
 		4A02809012EB453E9B3FB7BF /* BaseNavigationController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88E7D4561060467E9DAC7B20 /* BaseNavigationController.swift */; };
 		A3902F04F2B2452EB6987376 /* MainTabBarController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1F2C3D4E5F6A7B8C9D0E1F2 /* MainTabBarController.swift */; };
 		A56DE617F5FB404E8D515825 /* LibraryViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 80FD6B229210479DA9B8A9B9 /* LibraryViewController.swift */; };
@@ -72,6 +74,8 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		A26D491CABF5E4DC4B3E00A6 /* NaturalSort.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Utils/NaturalSort.swift"; sourceTree = "<group>"; };
+
 		88E7D4561060467E9DAC7B20 /* BaseNavigationController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Navigation/BaseNavigationController.swift"; sourceTree = "<group>"; };
 		29CE550132313F1FB52FB33C /* NRReaderProgressView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NRReaderProgressView.swift"; sourceTree = "<group>"; };
 		B1F2C3D4E5F6A7B8C9D0E1F2 /* MainTabBarController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Main/MainTabBarController.swift"; sourceTree = "<group>"; };
@@ -171,6 +175,7 @@
 				32E7A2607F6029EDCFC9DAFF /* App */,
 				816120DCB40F76FE42E4CDB7 /* Base.lproj */,
 				5DAFD3CD8AD5D6EEBFB0CCB2 /* Configuration */,
+				C11111111111111111111111 /* Utils */,
 				F0940197CE878AABEBE0B314 /* Data */,
 				3319EFFF3EF54147679B0189 /* Domain */,
 				15426A2942F987A8CF74E5C0 /* Foundation */,
@@ -209,6 +214,14 @@
 			path = "Configuration";
 			sourceTree = "<group>";
 		};
+		{utils_group_id} /* Utils */ = {{
+			isa = PBXGroup;
+			children = (
+				A26D491CABF5E4DC4B3E00A6 /* NaturalSort.swift */,
+			);
+			path = Utils;
+			sourceTree = "<group>";
+		}};
 		F0940197CE878AABEBE0B314 /* Data */ = {
 			isa = PBXGroup;
 			children = (

@@ -95,7 +95,7 @@ final class NovelRefreshService {
         let folders = items
             .filter { $0.type == "tree" && !$0.path.contains("/") }
             .map { $0.path }
-            .sorted() // 按名称排序
+            .naturalSorted() // 自然排序，智能识别书名中的数字
         return folders
     }
 
@@ -110,7 +110,7 @@ final class NovelRefreshService {
                 item.path.hasPrefix(prefix) &&
                 !item.path.hasPrefix("\(prefix).") // 排除隐藏文件
             }
-            .sorted { $0.path < $1.path } // 按路径排序（文件名通常带序号）
+            .sorted { NaturalSort.compare($0.path, $1.path) } // 自然排序，智能识别"第X章"数字，避免第10章排在第2章前面
     }
 
     /// 处理所有书籍
