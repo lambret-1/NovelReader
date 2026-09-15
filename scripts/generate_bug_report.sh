@@ -1,6 +1,10 @@
 #!/bin/bash
 # ============================================
 # 可视化警告日志报告生成器
+# 强制使用 UTF-8 编码，避免中文乱码
+export LANG=en_US.UTF-8
+export LC_ALL=en_US.UTF-8
+export LC_CTYPE=en_US.UTF-8
 # 分析 build.log，生成 bug/readme.md
 # ============================================
 
