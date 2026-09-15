@@ -330,6 +330,11 @@ final class SyncEngine: SyncEngineProtocol {
     func syncReadingProgress(repoFullName: String) {
         guard let progressRepo = readingProgressRepository else { return }
 
+        let repoComponents = repoFullName.components(separatedBy: "/")
+        guard repoComponents.count == 2 else { return }
+        let owner = repoComponents[0]
+        let repo = repoComponents[1]
+
         // 获取所有书籍
         guard let books = try? awaitPublisher(bookRepository.fetchAllBooks()) else { return }
 
@@ -351,8 +356,9 @@ final class SyncEngine: SyncEngineProtocol {
             let dict: [String: Any] = ["progresses": progressList]
             if let data = try? JSONSerialization.data(withJSONObject: dict, options: .prettyPrinted),
                let json = String(data: data, encoding: .utf8) {
-                _ = try? awaitPublisher(fileService.uploadFile(
-                    repoFullName: repoFullName,
+                _ = try? awaitPublisher(fileService.writeFile(
+                    owner: owner,
+                    repo: repo,
                     path: ".novel-sync/progress.json",
                     content: json,
                     message: "更新阅读进度"
@@ -361,11 +367,12 @@ final class SyncEngine: SyncEngineProtocol {
         }
 
         // 下载远端阅读进度（如果本地没有）
-        if let remoteContent = try? awaitPublisher(fileService.fetchFileContent(
-            repoFullName: repoFullName,
+        if let remoteContent = try? awaitPublisher(fileService.getFileContent(
+            owner: owner,
+            repo: repo,
             path: ".novel-sync/progress.json"
         )) {
-            if let data = remoteContent.data(using: .utf8),
+            if let data = remoteContent.data(using: String.Encoding.utf8),
                let dict = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
                let progresses = dict["progresses"] as? [[String: Any]] {
                 for item in progresses {
