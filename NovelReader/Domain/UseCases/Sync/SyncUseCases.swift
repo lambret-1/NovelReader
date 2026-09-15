@@ -72,4 +72,7 @@ protocol SyncEngineProtocol {
     var statusPublisher: AnyPublisher<SyncStatus, Never> { get }
     func startSync() -> AnyPublisher<SyncResult, Error>
     func resolveConflict(conflictId: String, resolution: ConflictItem.ConflictResolution) -> AnyPublisher<Void, Error>
+    func continueSyncAfterConflictsResolved() -> AnyPublisher<SyncResult, Error>
+    func abortSync() -> AnyPublisher<Void, Error>
 }
+
