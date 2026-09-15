@@ -141,7 +141,7 @@ final class SyncEngine: SyncEngineProtocol {
             if isEmptyRepo {
                 AppLogger.info("检测到空仓库，视为远端无文件，继续同步流程")
                 // 空仓库：设置空的remoteManifest，继续执行同步流程
-                let remoteManifest = Manifest(version: 1, files: [])
+                let remoteManifest = Manifest(version: 1, entries: [])
                 // 继续执行下面的同步流程
             } else {
             
