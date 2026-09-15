@@ -124,6 +124,9 @@ final class ReaderViewController: UIViewController {
     // MARK: - 新 UI 组件
     private lazy var topBar: NRReaderTopBar = {
         let bar = NRReaderTopBar()
+        bar.onBackButtonTapped = { [weak self] in
+            self?.navigationController?.popViewController(animated: true)
+        }
         bar.onMoreButtonTapped = { [weak self] in
             self?.showMoreMenu()
         }
@@ -216,10 +219,10 @@ final class ReaderViewController: UIViewController {
         configPanel.addSubview(bookmarkListButton)
 
         NSLayoutConstraint.activate([
-            pageViewController.view.topAnchor.constraint(equalTo: view.topAnchor),
+            pageViewController.view.topAnchor.constraint(equalTo: topBar.bottomAnchor), // 阅读区域从上工具栏下方开始，不顶着工具栏
             pageViewController.view.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             pageViewController.view.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            pageViewController.view.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            pageViewController.view.bottomAnchor.constraint(equalTo: bottomBar.topAnchor), // 阅读区域到下工具栏上方结束，不顶着工具栏
 
             // 上工具栏
             topBar.topAnchor.constraint(equalTo: view.topAnchor),
@@ -301,6 +304,7 @@ final class ReaderViewController: UIViewController {
         currentChapterIndex = index
         let chapter = chapters[index]
         chapterTitleLabel.text = chapter.title
+        topBar.setTitle(chapter.title) // 上工具栏显示章节标题
 
         if let cachedPages = chapterCache[index] {
             currentPages = cachedPages
@@ -539,18 +543,29 @@ final class ReaderViewController: UIViewController {
     private func handleMenuSelection(_ item: NRReaderMoreMenu.MenuItemType) {
         switch item {
         case .fontSize:
-            configPanel.isHidden = false
+            configPanel.isHidden = false // 字号调节面板
         case .typography:
-            NRToast.shared.info("排版设置开发中")
+            configPanel.isHidden = false // 排版设置（行间距/主题/字体都在面板中）
         case .bookmark:
-            toggleBookmark()
+            toggleBookmark() // 添加/移除书签
         case .search:
-            showSearch()
+            showSearch() // 搜索
         case .share:
-            NRToast.shared.info("分享功能开发中")
+            shareCurrentBook() // 分享当前书籍
         case .info:
-            showReadingInfo()
+            showReadingInfo() // 阅读信息
         }
+    }
+
+    // MARK: - 分享当前书籍
+    private func shareCurrentBook() {
+        let chapter = chapters[currentChapterIndex]
+        let shareText = "我正在读《\(book.title)》 - \(chapter.title)"
+        let activityVC = UIActivityViewController(activityItems: [shareText], applicationActivities: nil)
+        activityVC.popoverPresentationController?.sourceView = view
+        activityVC.popoverPresentationController?.sourceRect = CGRect(x: view.bounds.midX, y: view.bounds.midY, width: 0, height: 0)
+        present(activityVC, animated: true)
+        FeedbackManager.shared.lightImpact()
     }
 
     // MARK: - 目录
