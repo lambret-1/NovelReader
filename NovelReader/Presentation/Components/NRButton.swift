@@ -20,7 +20,7 @@ enum NRButtonType {
 final class NRButton: UIButton {
 
     // MARK: - 属性
-    private let buttonType: NRButtonType
+    private let style: NRButtonType
     private var originalTitle: String?
     private let activityIndicator = UIActivityIndicatorView(style: .medium)
 
@@ -31,7 +31,7 @@ final class NRButton: UIButton {
 
     // MARK: - 初始化
     init(type: NRButtonType = .primary, title: String? = nil) {
-        self.buttonType = type
+        self.style = type
         super.init(frame: .zero)
         self.originalTitle = title
         setupUI(title: title)
@@ -65,7 +65,7 @@ final class NRButton: UIButton {
 
     // MARK: - 样式应用
     private func applyStyle(for state: UIControl.State) {
-        switch buttonType {
+        switch style {
         case .primary:
             backgroundColor = state == .highlighted ? DesignToken.Color.primaryPressed : DesignToken.Color.primary
             setTitleColor(DesignToken.Color.textInverse, for: .normal)

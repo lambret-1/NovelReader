@@ -66,9 +66,9 @@ enum DesignToken {
         /// 28pt Bold - 模态页标题
         static let title1 = UIFont.preferredFont(forTextStyle: .title1).bold()
         /// 22pt Semibold - 卡片标题
-        static let title2 = UIFont.preferredFont(forTextStyle: .title2).semibold()
+        static let title2 = UIFont.systemFont(ofSize: 22, weight: .semibold) // 22pt半粗，卡片标题
         /// 20pt Semibold - 小节标题
-        static let title3 = UIFont.preferredFont(forTextStyle: .title3).semibold()
+        static let title3 = UIFont.systemFont(ofSize: 20, weight: .semibold) // 20pt半粗，小节标题
         /// 17pt Semibold - 列表主标题/按钮文字
         static let headline = UIFont.preferredFont(forTextStyle: .headline)
         /// 17pt Regular - 正文
@@ -173,15 +173,11 @@ enum DesignToken {
     }
 }
 
-// MARK: - UIFont 扩展（粗体/半粗体便捷方法）
+// MARK: - UIFont 扩展（粗体便捷方法）
 extension UIFont {
     /// 返回粗体版本
     func bold() -> UIFont {
         return UIFont(descriptor: fontDescriptor.withSymbolicTraits(.traitBold) ?? fontDescriptor, size: pointSize)
-    }
-    /// 返回半粗体版本
-    func semibold() -> UIFont {
-        return UIFont(descriptor: fontDescriptor.withSymbolicTraits(.traitSemibold) ?? fontDescriptor, size: pointSize)
     }
 }
 
