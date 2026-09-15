@@ -7,6 +7,10 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		A65B8E727923A7D9D87D0A6E /* FeedbackManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7A312C6C29F4FCB4C707942 /* FeedbackManager.swift */; };
+		23631A78256B41CEF385EE7D /* TransitionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 28EF41B65551DA3E07B3DDB3 /* TransitionManager.swift */; };
+		5B8DD34A281D72931F4AE80E /* MicroInteraction.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A865B9A8875B0BE48E56577 /* MicroInteraction.swift */; };
+		4E5E76CAE4B8E4305CB524D7 /* AccessibilityHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDAC8DB233638684FC4FCC5E /* AccessibilityHelper.swift */; };
 		6D095F9F323F25E02A6F0ECA /* DesignTokens.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19D8F3ABA0317C1A2463304B /* DesignTokens.swift */; };
 		2615DBE0D4D965368334C92D /* ThemeManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = D503DF1920872A934E523951 /* ThemeManager.swift */; };
 		4CDEFCADF9591BAC17D08C55 /* NRButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77EE1189EBFB7A4DC5729CA7 /* NRButton.swift */; };
@@ -72,6 +76,10 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		C7A312C6C29F4FCB4C707942 /* FeedbackManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "FeedbackManager.swift"; sourceTree = "<group>"; };
+		28EF41B65551DA3E07B3DDB3 /* TransitionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TransitionManager.swift"; sourceTree = "<group>"; };
+		9A865B9A8875B0BE48E56577 /* MicroInteraction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "MicroInteraction.swift"; sourceTree = "<group>"; };
+		DDAC8DB233638684FC4FCC5E /* AccessibilityHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AccessibilityHelper.swift"; sourceTree = "<group>"; };
 		19D8F3ABA0317C1A2463304B /* DesignTokens.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DesignTokens.swift"; sourceTree = "<group>"; };
 		D503DF1920872A934E523951 /* ThemeManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ThemeManager.swift"; sourceTree = "<group>"; };
 		77EE1189EBFB7A4DC5729CA7 /* NRButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NRButton.swift"; sourceTree = "<group>"; };
@@ -364,6 +372,8 @@
 		0DF5A2541E11C3DB2A171E93 /* Presentation */ = {
 			isa = PBXGroup;
 			children = (
+				5C11829A7786D7C5A164E79F /* Animation */,
+				CF151FC617B52C92EC8FB512 /* Accessibility */,
 				47DFE92D5ECF2D1B6E4BA239 /* Theme */,
 				35D391D4657DD81FCA64C5B9 /* Components */,
 				849874CC0D9E61FAFFE6A4C1 /* Editor */,
@@ -467,6 +477,25 @@
 			path = Components;
 			sourceTree = "<group>";
 		};
+
+		5C11829A7786D7C5A164E79F /* Animation */ = {
+			isa = PBXGroup;
+			children = (
+				C7A312C6C29F4FCB4C707942 /* FeedbackManager.swift */,
+				28EF41B65551DA3E07B3DDB3 /* TransitionManager.swift */,
+				9A865B9A8875B0BE48E56577 /* MicroInteraction.swift */,
+			);
+			path = Animation;
+			sourceTree = "<group>";
+		};
+		CF151FC617B52C92EC8FB512 /* Accessibility */ = {
+			isa = PBXGroup;
+			children = (
+				DDAC8DB233638684FC4FCC5E /* AccessibilityHelper.swift */,
+			);
+			path = Accessibility;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -543,6 +572,10 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A65B8E727923A7D9D87D0A6E /* FeedbackManager.swift in Sources */,
+				23631A78256B41CEF385EE7D /* TransitionManager.swift in Sources */,
+				5B8DD34A281D72931F4AE80E /* MicroInteraction.swift in Sources */,
+				4E5E76CAE4B8E4305CB524D7 /* AccessibilityHelper.swift in Sources */,
 				6D095F9F323F25E02A6F0ECA /* DesignTokens.swift in Sources */,
 				2615DBE0D4D965368334C92D /* ThemeManager.swift in Sources */,
 				4CDEFCADF9591BAC17D08C55 /* NRButton.swift in Sources */,
