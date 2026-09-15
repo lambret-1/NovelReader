@@ -1,10 +1,12 @@
 import UIKit
+import Combine
 
 /// 设置视图控制器
 final class SettingsViewController: UIViewController {
     private let tableView = UITableView(frame: .zero, style: .insetGrouped)
 
     private var sections: [SettingsSection] = []
+    private var cancellables = Set<AnyCancellable>()
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -15,6 +17,13 @@ final class SettingsViewController: UIViewController {
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         reloadSections()
+    }
+
+    /// 获取当前应用版本号
+    private var appVersion: String {
+        let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "0.0.0"
+        let build = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "0"
+        return "\(version) (build \(build))"
     }
 
     private func reloadSections() {
@@ -39,7 +48,8 @@ final class SettingsViewController: UIViewController {
                 SettingsItem(title: "清除缓存", subtitle: "", type: .action)
             ]),
             SettingsSection(title: "关于", items: [
-                SettingsItem(title: "版本", subtitle: "1.0.7", type: .info),
+                SettingsItem(title: "版本", subtitle: appVersion, type: .info),
+                SettingsItem(title: "检查更新", subtitle: "", type: .action),
                 SettingsItem(title: "开发者", subtitle: "NovelReader Team", type: .info)
             ])
         ]
@@ -62,6 +72,41 @@ final class SettingsViewController: UIViewController {
             tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
         ])
+    }
+
+    // MARK: - 检查更新
+
+    /// 手动检查更新
+    private func checkForUpdates() {
+        let updateService = AppContainer.shared.updateService
+
+        // 显示加载提示
+        let alert = UIAlertController(title: "检查更新", message: "正在检查最新版本...", preferredStyle: .alert)
+        present(alert, animated: true)
+
+        updateService.checkForUpdates()
+            .receive(on: DispatchQueue.main)
+            .sink(receiveCompletion: { [weak self] completion in
+                alert.dismiss(animated: true) {
+                    if case .failure(let error) = completion {
+                        self?.showAlert(title: "检查失败", message: error.localizedDescription)
+                    }
+                }
+            }, receiveValue: { [weak self] latestRelease in
+                alert.dismiss(animated: true) {
+                    guard let self = self else { return }
+                    let currentVersion = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "0.0.0"
+
+                    if updateService.hasUpdate(latest: latestRelease, currentVersion: currentVersion) {
+                        // 有新版本，弹出更新窗口
+                        let updateVC = AppContainer.shared.makeUpdateViewController(release: latestRelease)
+                        self.present(updateVC, animated: true)
+                    } else {
+                        self.showAlert(title: "已是最新版本", message: "当前版本 \(currentVersion) 已是最新版本")
+                    }
+                }
+            })
+            .store(in: &cancellables)
     }
 }
 
@@ -107,6 +152,8 @@ extension SettingsViewController: UITableViewDataSource, UITableViewDelegate {
             showAlert(title: "清除缓存", message: "缓存已清除")
         } else if item.title == "导出全部数据" {
             showAlert(title: "导出", message: "导出功能开发中")
+        } else if item.title == "检查更新" {
+            checkForUpdates()
         }
     }
 }
