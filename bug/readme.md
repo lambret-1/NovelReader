@@ -1,8 +1,8 @@
 # 🐛 可视化警告日志报告 (Bug Log)
 
-**生成时间**: 2026-09-15 19:44:30 UTC
+**生成时间**: 2026-09-15 19:55:31 UTC
 **源日志文件**: `build.log`
-**构建状态**: ✅ 构建成功
+**构建状态**: ❌ 构建失败
 
 ---
 
@@ -10,8 +10,8 @@
 
 | 类型 | 数量 | 状态 |
 |------|------|------|
-| 🔴 错误 | **00** 个 | 无错误 |
-| 🟡 警告 | **03** 个 | 建议清理 |
+| 🔴 错误 | **03** 个 | 需修复 |
+| 🟡 警告 | **04** 个 | 建议清理 |
 
 ---
 
@@ -20,10 +20,10 @@
 | 警告类型 | 数量 | 占比 |
 |----------|------|------|
 | ⚠️ 弃用API警告 | 00 个 | 0% |
-| 📦 未使用变量警告 | 02 个 | 66% |
+| 📦 未使用变量警告 | 02 个 | 50% |
 | 🔄 类型转换警告 | 00 个 | 0% |
 | 🔍 可空性警告 | 00 个 | 0% |
-| 📝 其他警告 | 01 个 | 33% |
+| 📝 其他警告 | 02 个 | 50% |
 
 ---
 
@@ -31,9 +31,10 @@
 
 | 排名 | 文件名 | 警告数量 | 严重程度 |
 |------|--------|----------|----------|
-| 1 | `LibraryViewController.swift` | 1 个 | 🟢 低 |
-| 2 | `ReaderViewController.swift` | 1 个 | 🟢 低 |
-| 3 | `SyncViewController.swift` | 1 个 | 🟢 低 |
+| 1 | `TransitionManager.swift` | 1 个 | 🟢 低 |
+| 2 | `LibraryViewController.swift` | 1 个 | 🟢 低 |
+| 3 | `ReaderViewController.swift` | 1 个 | 🟢 低 |
+| 4 | `SyncViewController.swift` | 1 个 | 🟢 低 |
 
 ---
 
@@ -64,9 +65,10 @@
 无
 ```
 
-### 📝 其他警告 (1个)
+### 📝 其他警告 (2个)
 
 ```
+/Users/runner/work/NovelReader/NovelReader/NovelReader/Presentation/Animation/TransitionManager.swift:122:1: warning: extension declares a conformance of imported type 'UIViewController' to imported protocol 'UIViewControllerTransitioningDelegate'; this will not behave correctly if the owners of 'UIKit' introduce this conformance in the future
 /Users/runner/work/NovelReader/NovelReader/NovelReader/Presentation/Library/LibraryViewController.swift:201:27: warning: variable 'self' was written to, but never read
 ```
 
@@ -76,11 +78,15 @@
 
 ### 📊 质量评级
 
-- **质量评级**: **B级（良好，警告较少）**
+- **质量评级**: **F级（构建失败）**
 - **警告密度**: 每千行约 0 个警告
-- **代码总行数**: 9681 行
+- **代码总行数**: 10224 行
 
 ### 💡 修复建议
+
+#### 1. 编译错误 (3个)
+- 优先修复所有编译错误，确保构建通过
+- 查看上方错误详情定位问题文件和行号
 
 #### 2. 未使用变量警告 (2个)
 - 删除未使用的变量和函数
