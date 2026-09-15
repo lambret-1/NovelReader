@@ -11,14 +11,14 @@ final class SyncViewController: UIViewController {
         let iv = UIImageView()
         iv.translatesAutoresizingMaskIntoConstraints = false
         iv.contentMode = .scaleAspectFit
-        iv.tintColor = .systemBlue
+        iv.tintColor = DesignToken.Color.primary
         return iv
     }()
 
     private lazy var statusLabel: UILabel = {
         let label = UILabel()
         label.translatesAutoresizingMaskIntoConstraints = false
-        label.font = .systemFont(ofSize: 18, weight: .medium) // 状态标题字号18pt，清晰醒目
+        label.font = DesignToken.Font.title3 // 状态标题字号18pt，清晰醒目
         label.textAlignment = .center
         return label
     }()
@@ -26,8 +26,8 @@ final class SyncViewController: UIViewController {
     private lazy var detailLabel: UILabel = {
         let label = UILabel()
         label.translatesAutoresizingMaskIntoConstraints = false
-        label.font = .systemFont(ofSize: 14) // 详情文字14pt，辅助信息
-        label.textColor = .secondaryLabel
+        label.font = DesignToken.Font.footnote // 详情文字14pt，辅助信息
+        label.textColor = DesignToken.Color.textSecondary
         label.textAlignment = .center
         label.numberOfLines = 0
         return label
@@ -36,8 +36,8 @@ final class SyncViewController: UIViewController {
     private lazy var repoInfoLabel: UILabel = {
         let label = UILabel()
         label.translatesAutoresizingMaskIntoConstraints = false
-        label.font = .systemFont(ofSize: 13, weight: .medium) // 仓库信息13pt，紧凑展示
-        label.textColor = .secondaryLabel
+        label.font = DesignToken.Font.footnote // 仓库信息13pt，紧凑展示
+        label.textColor = DesignToken.Color.textSecondary
         label.textAlignment = .center
         label.numberOfLines = 0
         return label
@@ -47,7 +47,7 @@ final class SyncViewController: UIViewController {
         let button = UIButton(type: .system)
         button.translatesAutoresizingMaskIntoConstraints = false
         button.setTitle("修改仓库", for: .normal)
-        button.titleLabel?.font = .systemFont(ofSize: 14) // 按钮文字14pt
+        button.titleLabel?.font = DesignToken.Font.footnote // 按钮文字14pt
         button.addTarget(self, action: #selector(changeRepoTapped), for: .touchUpInside)
         return button
     }()
@@ -63,8 +63,8 @@ final class SyncViewController: UIViewController {
         let button = UIButton(type: .system)
         button.translatesAutoresizingMaskIntoConstraints = false
         button.setTitle("立即同步", for: .normal)
-        button.titleLabel?.font = .systemFont(ofSize: 17, weight: .semibold) // 主按钮17pt加粗
-        button.backgroundColor = .systemBlue
+        button.titleLabel?.font = DesignToken.Font.headline // 主按钮17pt加粗
+        button.backgroundColor = DesignToken.Color.primary
         button.setTitleColor(.white, for: .normal)
         button.layer.cornerRadius = 12 // 圆角12pt，标准卡片圆角
         button.addTarget(self, action: #selector(syncTapped), for: .touchUpInside)
@@ -74,8 +74,8 @@ final class SyncViewController: UIViewController {
     private lazy var accountInfoLabel: UILabel = {
         let label = UILabel()
         label.translatesAutoresizingMaskIntoConstraints = false
-        label.font = .systemFont(ofSize: 14) // 账号信息14pt
-        label.textColor = .secondaryLabel
+        label.font = DesignToken.Font.footnote // 账号信息14pt
+        label.textColor = DesignToken.Color.textSecondary
         label.textAlignment = .center
         return label
     }()
@@ -84,7 +84,7 @@ final class SyncViewController: UIViewController {
         let button = UIButton(type: .system)
         button.translatesAutoresizingMaskIntoConstraints = false
         button.setTitle("退出登录", for: .normal)
-        button.setTitleColor(.systemRed, for: .normal)
+        button.setTitleColor(DesignToken.Color.error, for: .normal)
         button.addTarget(self, action: #selector(logoutTapped), for: .touchUpInside)
         return button
     }()
@@ -109,7 +109,7 @@ final class SyncViewController: UIViewController {
 
     // MARK: - UI 设置
     private func setupUI() {
-        view.backgroundColor = .systemBackground
+        view.backgroundColor = DesignToken.Color.backgroundPrimary
         title = "云同步"
 
         view.addSubview(statusIcon)
@@ -205,7 +205,7 @@ final class SyncViewController: UIViewController {
 
         case .idle(let username, let lastSync):
             statusIcon.image = UIImage(systemName: "checkmark.icloud")
-            statusIcon.tintColor = .systemGreen
+            statusIcon.tintColor = DesignToken.Color.success
             statusLabel.text = "同步就绪"
             if let lastSync = lastSync {
                 let formatter = RelativeDateTimeFormatter()
@@ -222,7 +222,7 @@ final class SyncViewController: UIViewController {
 
         case .syncing(let progress, let message):
             statusIcon.image = UIImage(systemName: "arrow.triangle.2.circlepath.icloud")
-            statusIcon.tintColor = .systemBlue
+            statusIcon.tintColor = DesignToken.Color.primary
             statusLabel.text = message
             detailLabel.text = "正在同步，请稍候..."
             progressView.isHidden = false
@@ -232,7 +232,7 @@ final class SyncViewController: UIViewController {
 
         case .error(let message):
             statusIcon.image = UIImage(systemName: "exclamationmark.icloud")
-            statusIcon.tintColor = .systemRed
+            statusIcon.tintColor = DesignToken.Color.error
             statusLabel.text = "同步失败"
             detailLabel.text = message
             progressView.isHidden = true

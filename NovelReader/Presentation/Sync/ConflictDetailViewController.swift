@@ -25,9 +25,9 @@ final class ConflictDetailViewController: UIViewController {
     private lazy var localTextView: UITextView = {
         let tv = UITextView()
         tv.translatesAutoresizingMaskIntoConstraints = false
-        tv.font = .systemFont(ofSize: 14) // 正文14pt
+        tv.font = DesignToken.Font.footnote // 正文14pt
         tv.textColor = .label
-        tv.backgroundColor = .secondarySystemGroupedBackground
+        tv.backgroundColor = DesignToken.Color.backgroundSecondary
         tv.isEditable = false
         tv.isScrollEnabled = false
         tv.layer.cornerRadius = 12 // 圆角12pt
@@ -38,9 +38,9 @@ final class ConflictDetailViewController: UIViewController {
     private lazy var remoteTextView: UITextView = {
         let tv = UITextView()
         tv.translatesAutoresizingMaskIntoConstraints = false
-        tv.font = .systemFont(ofSize: 14)
+        tv.font = DesignToken.Font.footnote
         tv.textColor = .label
-        tv.backgroundColor = .secondarySystemGroupedBackground
+        tv.backgroundColor = DesignToken.Color.backgroundSecondary
         tv.isEditable = false
         tv.isScrollEnabled = false
         tv.layer.cornerRadius = 12
@@ -51,16 +51,16 @@ final class ConflictDetailViewController: UIViewController {
     private lazy var localHeader: UILabel = {
         let label = UILabel()
         label.text = "📱 本地版本"
-        label.font = .systemFont(ofSize: 16, weight: .bold) // 标题16pt加粗
-        label.textColor = .systemBlue
+        label.font = DesignToken.Font.title3 // 标题16pt加粗
+        label.textColor = DesignToken.Color.primary
         return label
     }()
 
     private lazy var remoteHeader: UILabel = {
         let label = UILabel()
         label.text = "☁️ 远端版本"
-        label.font = .systemFont(ofSize: 16, weight: .bold)
-        label.textColor = .systemGreen
+        label.font = DesignToken.Font.title3
+        label.textColor = DesignToken.Color.success
         return label
     }()
 
@@ -69,7 +69,7 @@ final class ConflictDetailViewController: UIViewController {
         btn.translatesAutoresizingMaskIntoConstraints = false
         btn.setTitle("保留本地", for: .normal)
         btn.titleLabel?.font = .systemFont(ofSize: 16, weight: .semibold) // 按钮16pt
-        btn.backgroundColor = .systemBlue
+        btn.backgroundColor = DesignToken.Color.primary
         btn.setTitleColor(.white, for: .normal)
         btn.layer.cornerRadius = 12 // 圆角12pt
         btn.addTarget(self, action: #selector(keepLocalTapped), for: .touchUpInside)
@@ -81,7 +81,7 @@ final class ConflictDetailViewController: UIViewController {
         btn.translatesAutoresizingMaskIntoConstraints = false
         btn.setTitle("保留远端", for: .normal)
         btn.titleLabel?.font = .systemFont(ofSize: 16, weight: .semibold)
-        btn.backgroundColor = .systemGreen
+        btn.backgroundColor = DesignToken.Color.success
         btn.setTitleColor(.white, for: .normal)
         btn.layer.cornerRadius = 12
         btn.addTarget(self, action: #selector(keepRemoteTapped), for: .touchUpInside)
@@ -93,8 +93,8 @@ final class ConflictDetailViewController: UIViewController {
         btn.translatesAutoresizingMaskIntoConstraints = false
         btn.setTitle("保留双方（合并）", for: .normal)
         btn.titleLabel?.font = .systemFont(ofSize: 15, weight: .medium) // 次要按钮15pt
-        btn.backgroundColor = .systemOrange.withAlphaComponent(0.15)
-        btn.setTitleColor(.systemOrange, for: .normal)
+        btn.backgroundColor = DesignToken.Color.warning.withAlphaComponent(0.15)
+        btn.setTitleColor(DesignToken.Color.warning, for: .normal)
         btn.layer.cornerRadius = 12
         btn.addTarget(self, action: #selector(keepBothTapped), for: .touchUpInside)
         return btn
@@ -117,7 +117,7 @@ final class ConflictDetailViewController: UIViewController {
     }
 
     private func setupUI() {
-        view.backgroundColor = .systemGroupedBackground
+        view.backgroundColor = DesignToken.Color.backgroundGrouped
         view.addSubview(scrollView)
         scrollView.addSubview(contentStack)
 

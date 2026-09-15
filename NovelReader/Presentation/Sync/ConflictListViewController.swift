@@ -14,20 +14,20 @@ final class ConflictListViewController: UIViewController {
         table.register(ConflictCell.self, forCellReuseIdentifier: ConflictCell.reuseID)
         table.rowHeight = UITableView.automaticDimension
         table.estimatedRowHeight = 120 // 预估行高120pt，确保内容完整展示
-        table.backgroundColor = .systemGroupedBackground
+        table.backgroundColor = DesignToken.Color.backgroundGrouped
         return table
     }()
 
     private lazy var bottomBar: UIView = {
         let bar = UIView()
         bar.translatesAutoresizingMaskIntoConstraints = false
-        bar.backgroundColor = .secondarySystemGroupedBackground
+        bar.backgroundColor = DesignToken.Color.backgroundSecondary
 
         let continueButton = UIButton(type: .system)
         continueButton.translatesAutoresizingMaskIntoConstraints = false
         continueButton.setTitle("继续同步", for: .normal)
-        continueButton.titleLabel?.font = .systemFont(ofSize: 17, weight: .semibold) // 按钮字号17pt
-        continueButton.backgroundColor = .systemBlue
+        continueButton.titleLabel?.font = DesignToken.Font.headline // 按钮字号17pt
+        continueButton.backgroundColor = DesignToken.Color.primary
         continueButton.setTitleColor(.white, for: .normal)
         continueButton.layer.cornerRadius = 12 // 按钮圆角12pt
         continueButton.addTarget(self, action: #selector(continueSyncTapped), for: .touchUpInside)
@@ -35,8 +35,8 @@ final class ConflictListViewController: UIViewController {
         let abortButton = UIButton(type: .system)
         abortButton.translatesAutoresizingMaskIntoConstraints = false
         abortButton.setTitle("放弃同步", for: .normal)
-        abortButton.titleLabel?.font = .systemFont(ofSize: 15) // 次要按钮15pt
-        abortButton.setTitleColor(.systemRed, for: .normal)
+        abortButton.titleLabel?.font = DesignToken.Font.subhead // 次要按钮15pt
+        abortButton.setTitleColor(DesignToken.Color.error, for: .normal)
         abortButton.addTarget(self, action: #selector(abortSyncTapped), for: .touchUpInside)
 
         bar.addSubview(continueButton)
@@ -60,8 +60,8 @@ final class ConflictListViewController: UIViewController {
         label.text = "✅ 所有冲突已解决\n点击\"继续同步\"完成同步"
         label.numberOfLines = 0
         label.textAlignment = .center
-        label.font = .systemFont(ofSize: 18, weight: .medium) // 空态文字18pt
-        label.textColor = .secondaryLabel
+        label.font = DesignToken.Font.title3 // 空态文字18pt
+        label.textColor = DesignToken.Color.textSecondary
         label.isHidden = true
         return label
     }()
@@ -82,7 +82,7 @@ final class ConflictListViewController: UIViewController {
     }
 
     private func setupUI() {
-        view.backgroundColor = .systemGroupedBackground
+        view.backgroundColor = DesignToken.Color.backgroundGrouped
         view.addSubview(tableView)
         view.addSubview(bottomBar)
         view.addSubview(emptyLabel)
@@ -203,30 +203,30 @@ final class ConflictCell: UITableViewCell {
 
         let card = UIView()
         card.translatesAutoresizingMaskIntoConstraints = false
-        card.backgroundColor = .secondarySystemGroupedBackground
+        card.backgroundColor = DesignToken.Color.backgroundSecondary
         card.layer.cornerRadius = 12 // 卡片圆角12pt
 
         fileNameLabel.translatesAutoresizingMaskIntoConstraints = false
-        fileNameLabel.font = .systemFont(ofSize: 16, weight: .medium) // 文件名16pt
+        fileNameLabel.font = DesignToken.Font.headline // 文件名16pt
         fileNameLabel.textColor = .label
 
         bookNameLabel.translatesAutoresizingMaskIntoConstraints = false
-        bookNameLabel.font = .systemFont(ofSize: 13) // 书名13pt
-        bookNameLabel.textColor = .secondaryLabel
+        bookNameLabel.font = DesignToken.Font.caption1 // 书名13pt
+        bookNameLabel.textColor = DesignToken.Color.textSecondary
 
         localButton.translatesAutoresizingMaskIntoConstraints = false
         localButton.setTitle("保留本地", for: .normal)
         localButton.titleLabel?.font = .systemFont(ofSize: 14, weight: .medium) // 按钮14pt
-        localButton.backgroundColor = .systemBlue.withAlphaComponent(0.1)
-        localButton.setTitleColor(.systemBlue, for: .normal)
+        localButton.backgroundColor = DesignToken.Color.primary.withAlphaComponent(0.1)
+        localButton.setTitleColor(DesignToken.Color.primary, for: .normal)
         localButton.layer.cornerRadius = 8 // 小按钮圆角8pt
         localButton.addTarget(self, action: #selector(keepLocal), for: .touchUpInside)
 
         remoteButton.translatesAutoresizingMaskIntoConstraints = false
         remoteButton.setTitle("保留远端", for: .normal)
         remoteButton.titleLabel?.font = .systemFont(ofSize: 14, weight: .medium)
-        remoteButton.backgroundColor = .systemGreen.withAlphaComponent(0.1)
-        remoteButton.setTitleColor(.systemGreen, for: .normal)
+        remoteButton.backgroundColor = DesignToken.Color.success.withAlphaComponent(0.1)
+        remoteButton.setTitleColor(DesignToken.Color.success, for: .normal)
         remoteButton.layer.cornerRadius = 8
         remoteButton.addTarget(self, action: #selector(keepRemote), for: .touchUpInside)
 

@@ -34,9 +34,9 @@ final class SettingsViewController: UIViewController {
                 SettingsItem(title: "阅读天数", subtitle: "\(stats.readingDays) 天", type: .info),
                 SettingsItem(title: "连续阅读", subtitle: "\(stats.streakDays) 天", type: .info)
             ]),
-            SettingsSection(title: "阅读", items: [
+            SettingsSection(title: "外观", items: [
+                SettingsItem(title: "主题模式", subtitle: ThemeManager.shared.currentMode.displayName, type: .navigation),
                 SettingsItem(title: "默认字号", subtitle: "\(Int(AppConfig.defaultFontSize))pt", type: .info),
-                SettingsItem(title: "默认主题", subtitle: "日间", type: .info),
                 SettingsItem(title: "翻页方式", subtitle: "左右滑动", type: .info)
             ]),
             SettingsSection(title: "同步", items: [
@@ -57,7 +57,7 @@ final class SettingsViewController: UIViewController {
     }
 
     private func setupUI() {
-        view.backgroundColor = .systemGroupedBackground
+        view.backgroundColor = DesignToken.Color.backgroundGrouped
         title = "设置"
 
         tableView.translatesAutoresizingMaskIntoConstraints = false
@@ -71,6 +71,34 @@ final class SettingsViewController: UIViewController {
             tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
         ])
+    }
+
+    // MARK: - 主题切换
+
+    /// 显示主题模式选择器
+    private func showThemePicker() {
+        let alert = UIAlertController(title: "主题模式", message: "选择应用主题", preferredStyle: .actionSheet)
+
+        for mode in AppThemeMode.allCases {
+            let action = UIAlertAction(title: mode.displayName, style: .default) { [weak self] _ in
+                ThemeManager.shared.setTheme(mode)
+                NRToast.shared.success("已切换到\(mode.displayName)模式")
+                self?.reloadSections()
+            }
+            if mode == ThemeManager.shared.currentMode {
+                action.setValue(true, forKey: "checked")
+            }
+            alert.addAction(action)
+        }
+
+        alert.addAction(UIAlertAction(title: "取消", style: .cancel))
+
+        // iPad 适配
+        if let popover = alert.popoverPresentationController {
+            popover.sourceView = view
+            popover.sourceRect = CGRect(x: view.bounds.midX, y: view.bounds.midY, width: 0, height: 0)
+        }
+        present(alert, animated: true)
     }
 
     // MARK: - 检查更新
@@ -133,7 +161,7 @@ extension SettingsViewController: UITableViewDataSource, UITableViewDelegate {
         case .navigation:
             cell.accessoryType = .disclosureIndicator
         case .action:
-            cell.textLabel?.textColor = .systemBlue
+            cell.textLabel?.textColor = DesignToken.Color.primary
             cell.accessoryType = .none
         case .info:
             cell.accessoryType = .none
@@ -148,6 +176,8 @@ extension SettingsViewController: UITableViewDataSource, UITableViewDelegate {
         if item.title == "云同步" {
             let syncVC = AppContainer.shared.makeSyncViewController()
             navigationController?.pushViewController(syncVC, animated: true)
+        } else if item.title == "主题模式" {
+            showThemePicker()
         } else if item.title == "清除缓存" {
             showAlert(title: "清除缓存", message: "缓存已清除")
         } else if item.title == "导出全部数据" {
