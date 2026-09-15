@@ -3,11 +3,12 @@ import Combine
 
 /// 依赖注入容器 - 统一管理所有对象的创建和依赖关系
 final class AppContainer {
+    /// 共享单例（向后兼容，新代码优先通过 init 注入）
     static let shared = AppContainer()
 
-    // MARK: - 单例服务
-    let databaseManager = DatabaseManager.shared
-    let apiClient = GitHubAPIClient.shared
+    // MARK: - 核心服务
+    let databaseManager: DatabaseManager
+    let apiClient: GitHubAPIClient
     let authService: GitHubAuthService
     let fileService: GitHubFileService
     let gitService: GitHubGitService
@@ -22,7 +23,17 @@ final class AppContainer {
     // MARK: - SyncEngine
     let syncEngine: SyncEngine
 
-    private init() {
+    // MARK: - 初始化
+
+    /// 公开初始化方法，支持依赖注入和测试
+    /// - Parameters:
+    ///   - databaseManager: 数据库管理器，默认创建新实例
+    ///   - apiClient: GitHub API 客户端，默认创建新实例
+    init(databaseManager: DatabaseManager = DatabaseManager(),
+         apiClient: GitHubAPIClient = GitHubAPIClient()) {
+        self.databaseManager = databaseManager
+        self.apiClient = apiClient
+
         // 服务
         self.authService = GitHubAuthService(apiClient: apiClient)
         self.fileService = GitHubFileService(apiClient: apiClient)
