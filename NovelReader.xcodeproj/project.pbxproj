@@ -15,6 +15,8 @@
 		E21D1B7DEF1BCAA4A7834D6A /* DatabaseManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19CBBFC764348C7026B648B4 /* DatabaseManager.swift */; };
 		0CA8D8073FF994CA2063FC1B /* GitHubAPIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 40EF56442D5CFF639D025436 /* GitHubAPIClient.swift */; };
 		7796C46412050129273E93A1 /* GitHubAuthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDCC11FDCE0997B6D0ED11C4 /* GitHubAuthService.swift */; };
+		11C7E002ED3171ACBADE436E /* UpdateCheckService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7342A1A236806DB53A4785F9 /* UpdateCheckService.swift */; };
+		BE50884310DE9C1EEBBEC900 /* UpdateViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B4BE8936B90FD942E9402A3 /* UpdateViewController.swift */; };
 		9622117E341D78152F101C07 /* GitHubFileService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2A494CF00BE74FB0921170D /* GitHubFileService.swift */; };
 		58523FC24DBA77016AF30E27 /* GitHubGitService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E880D221396BDE107CB603A /* GitHubGitService.swift */; };
 		2B90A7CCB0F9536E625F1F8B /* GitHubModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE9C63E9D0F7BFC8157D9A58 /* GitHubModels.swift */; };
@@ -69,6 +71,8 @@
 		19CBBFC764348C7026B648B4 /* DatabaseManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DatabaseManager.swift"; sourceTree = "<group>"; };
 		40EF56442D5CFF639D025436 /* GitHubAPIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "GitHubAPIClient.swift"; sourceTree = "<group>"; };
 		DDCC11FDCE0997B6D0ED11C4 /* GitHubAuthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "GitHubAuthService.swift"; sourceTree = "<group>"; };
+		7342A1A236806DB53A4785F9 /* UpdateCheckService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UpdateCheckService.swift"; sourceTree = "<group>"; };
+		4B4BE8936B90FD942E9402A3 /* UpdateViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UpdateViewController.swift"; sourceTree = "<group>"; };
 		F2A494CF00BE74FB0921170D /* GitHubFileService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "GitHubFileService.swift"; sourceTree = "<group>"; };
 		5E880D221396BDE107CB603A /* GitHubGitService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "GitHubGitService.swift"; sourceTree = "<group>"; };
 		BE9C63E9D0F7BFC8157D9A58 /* GitHubModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "GitHubModels.swift"; sourceTree = "<group>"; };
@@ -211,6 +215,7 @@
 				DDCC11FDCE0997B6D0ED11C4 /* GitHubAuthService.swift */,
 				F2A494CF00BE74FB0921170D /* GitHubFileService.swift */,
 				5E880D221396BDE107CB603A /* GitHubGitService.swift */,
+				7342A1A236806DB53A4785F9 /* UpdateCheckService.swift */,
 			);
 			path = "GitHub";
 			sourceTree = "<group>";
@@ -344,6 +349,7 @@
 				5DC021304939A9BBD265F2FE /* Reader */,
 				745F7519D11DF4C76D05F18F /* Settings */,
 				4F11E51C07A434D1745851F9 /* Sync */,
+				1618D1EBB426A2391E8B652F /* Update */,
 			);
 			path = "Presentation";
 			sourceTree = "<group>";
@@ -404,6 +410,14 @@
 				0727A06B22AD1BBA37C36C6C /* SyncEngine.swift */,
 			);
 			path = "SyncEngine";
+			sourceTree = "<group>";
+		};
+		1618D1EBB426A2391E8B652F /* Update */ = {
+			isa = PBXGroup;
+			children = (
+				4B4BE8936B90FD942E9402A3 /* UpdateViewController.swift */,
+			);
+			path = "Update";
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -490,6 +504,8 @@
 				E21D1B7DEF1BCAA4A7834D6A /* DatabaseManager.swift in Sources */,
 				0CA8D8073FF994CA2063FC1B /* GitHubAPIClient.swift in Sources */,
 				7796C46412050129273E93A1 /* GitHubAuthService.swift in Sources */,
+				11C7E002ED3171ACBADE436E /* UpdateCheckService.swift in Sources */,
+				BE50884310DE9C1EEBBEC900 /* UpdateViewController.swift in Sources */,
 				9622117E341D78152F101C07 /* GitHubFileService.swift in Sources */,
 				58523FC24DBA77016AF30E27 /* GitHubGitService.swift in Sources */,
 				2B90A7CCB0F9536E625F1F8B /* GitHubModels.swift in Sources */,
