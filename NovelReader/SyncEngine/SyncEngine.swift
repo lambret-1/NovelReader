@@ -442,9 +442,9 @@ final class SyncEngine: SyncEngineProtocol {
         if fileName.hasSuffix(".md") {
             let parsed = ManifestManager.parseChapterMarkdown(content)
 
-            // 从文件名解析序号（文件名是 sortOrder+1，所以需要减 1）
-            let orderPrefix = String(fileName.prefix(3))
-            let sortOrder = max(0, (Int(orderPrefix) ?? 1) - 1)
+            // 使用自然排序从文件名提取章节序号（支持"第X章"格式）
+            let chapterNum = NaturalSort.extractChapterNumber(from: fileName)
+            let sortOrder = chapterNum == Int.max ? 0 : max(0, chapterNum - 1)
 
             // 用 sortOrder 匹配本地章节（比标题匹配更可靠）
             if let chapters = try? awaitPublisher(chapterRepository.fetchChapters(bookId: book.id)),

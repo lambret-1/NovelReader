@@ -14,27 +14,47 @@ enum NaturalSort {
         // 去除文件扩展名
         let nameWithoutExtension = (fileName as NSString).deletingPathExtension
 
-        // 模式1：第X章 / 第X节 / 第X回
-        if let range = nameWithoutExtension.range(of: "第[0-9]+", options: .regularExpression) {
-            let numStr = String(nameWithoutExtension[range].dropFirst()) // 去掉"第"
-            if let num = Int(numStr) {
-                return num
+        // 模式1：第X章 / 第X节 / 第X回 / 第X集
+        // 使用 NSString 配合 NSRegularExpression 更可靠
+        let nsString = nameWithoutExtension as NSString
+        if let regex = try? NSRegularExpression(pattern: "第(\\d+)", options: []) {
+            let matches = regex.matches(in: nameWithoutExtension, options: [], range: NSRange(location: 0, length: nsString.length))
+            if let match = matches.first, match.numberOfRanges > 1 {
+                let numberRange = match.range(at: 1)
+                if numberRange.location != NSNotFound {
+                    let numberStr = nsString.substring(with: numberRange)
+                    if let num = Int(numberStr) {
+                        return num
+                    }
+                }
             }
         }
 
         // 模式2：数字开头（如 1.xxx、001_xxx、1-xxx）
-        if let range = nameWithoutExtension.range(of: "^[0-9]+", options: .regularExpression) {
-            let numStr = String(nameWithoutExtension[range])
-            if let num = Int(numStr) {
-                return num
+        if let regex = try? NSRegularExpression(pattern: "^(\\d+)", options: []) {
+            let matches = regex.matches(in: nameWithoutExtension, options: [], range: NSRange(location: 0, length: nsString.length))
+            if let match = matches.first, match.numberOfRanges > 1 {
+                let numberRange = match.range(at: 1)
+                if numberRange.location != NSNotFound {
+                    let numberStr = nsString.substring(with: numberRange)
+                    if let num = Int(numberStr) {
+                        return num
+                    }
+                }
             }
         }
 
         // 模式3：文件名中包含的第一个数字
-        if let range = nameWithoutExtension.range(of: "[0-9]+", options: .regularExpression) {
-            let numStr = String(nameWithoutExtension[range])
-            if let num = Int(numStr) {
-                return num
+        if let regex = try? NSRegularExpression(pattern: "(\\d+)", options: []) {
+            let matches = regex.matches(in: nameWithoutExtension, options: [], range: NSRange(location: 0, length: nsString.length))
+            if let match = matches.first, match.numberOfRanges > 1 {
+                let numberRange = match.range(at: 1)
+                if numberRange.location != NSNotFound {
+                    let numberStr = nsString.substring(with: numberRange)
+                    if let num = Int(numberStr) {
+                        return num
+                    }
+                }
             }
         }
 

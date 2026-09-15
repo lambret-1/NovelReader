@@ -89,7 +89,16 @@ final class ChapterListViewController: UIViewController {
         chapterRepository.fetchChapters(bookId: book.id)
             .receive(on: DispatchQueue.main)
             .sink(receiveCompletion: { _ in }, receiveValue: { [weak self] chapters in
-                self?.chapters = chapters
+                // 显示前按章节标题中的数字重新排序，确保第1章到第100章正确顺序
+                let sortedChapters = chapters.sorted { chapter1, chapter2 in
+                    let num1 = NaturalSort.extractChapterNumber(from: chapter1.title)
+                    let num2 = NaturalSort.extractChapterNumber(from: chapter2.title)
+                    if num1 != num2 {
+                        return num1 < num2
+                    }
+                    return chapter1.title < chapter2.title
+                }
+                self?.chapters = sortedChapters
                 self?.tableView.reloadData()
                 self?.emptyState.isHidden = !chapters.isEmpty
             })
