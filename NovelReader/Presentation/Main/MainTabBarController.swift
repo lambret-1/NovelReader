@@ -19,7 +19,7 @@ final class MainTabBarController: UITabBarController {
     private func setupViewControllers() {
         // 书架
         let libraryVC = AppContainer.shared.makeLibraryViewController()
-        let libraryNav = UINavigationController(rootViewController: libraryVC)
+        let libraryNav = BaseNavigationController(rootViewController: libraryVC)
         libraryNav.tabBarItem = UITabBarItem(
             title: "书架",
             image: UIImage(systemName: "books.vertical"),
@@ -28,7 +28,7 @@ final class MainTabBarController: UITabBarController {
 
         // 同步
         let syncVC = AppContainer.shared.makeSyncViewController()
-        let syncNav = UINavigationController(rootViewController: syncVC)
+        let syncNav = BaseNavigationController(rootViewController: syncVC)
         syncNav.tabBarItem = UITabBarItem(
             title: "同步",
             image: UIImage(systemName: "arrow.triangle.2.circlepath"),
@@ -37,7 +37,7 @@ final class MainTabBarController: UITabBarController {
 
         // 我的
         let settingsVC = AppContainer.shared.makeSettingsViewController()
-        let settingsNav = UINavigationController(rootViewController: settingsVC)
+        let settingsNav = BaseNavigationController(rootViewController: settingsVC)
         settingsNav.tabBarItem = UITabBarItem(
             title: "我的",
             image: UIImage(systemName: "person.circle"),
