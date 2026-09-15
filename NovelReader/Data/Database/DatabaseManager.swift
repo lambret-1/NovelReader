@@ -3,11 +3,13 @@ import GRDB
 
 /// 数据库管理器
 final class DatabaseManager {
+    /// 共享单例（向后兼容，新代码优先使用依赖注入）
     static let shared = DatabaseManager()
 
     let dbQueue: DatabaseQueue
 
-    private init() {
+    /// 公开初始化方法，支持依赖注入和测试
+    init() {
         let queue: DatabaseQueue
         do {
             let fileManager = FileManager.default
