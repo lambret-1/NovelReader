@@ -214,14 +214,14 @@
 			path = "Configuration";
 			sourceTree = "<group>";
 		};
-		{utils_group_id} /* Utils */ = {{
+		C11111111111111111111111 /* Utils */ = {
 			isa = PBXGroup;
 			children = (
 				A26D491CABF5E4DC4B3E00A6 /* NaturalSort.swift */,
 			);
 			path = Utils;
 			sourceTree = "<group>";
-		}};
+		};
 		F0940197CE878AABEBE0B314 /* Data */ = {
 			isa = PBXGroup;
 			children = (
