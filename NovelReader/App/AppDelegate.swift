@@ -12,7 +12,13 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         NetworkMonitor.shared.startMonitoring()
 
         // 初始化依赖注入容器
-        _ = AppContainer.shared
+        let container = AppContainer.shared
+
+        // 启动时自动从 Keychain 加载已保存的 Token，避免每次同步都重新输入
+        if let savedToken = container.authService.loadSavedToken() {
+            container.apiClient.setToken(savedToken)
+            AppLogger.info("启动时已自动加载已保存的 GitHub Token")
+        }
 
         AppLogger.info("应用启动完成")
         return true
