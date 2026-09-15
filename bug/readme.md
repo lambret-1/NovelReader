@@ -1,8 +1,8 @@
 # 🐛 可视化警告日志报告 (Bug Log)
 
-**生成时间**: 2026-09-15 21:19:35 UTC
+**生成时间**: 2026-09-15 21:40:43 UTC
 **源日志文件**: `build.log`
-**构建状态**: ✅ 构建成功
+**构建状态**: ❌ 构建失败
 
 ---
 
@@ -10,7 +10,7 @@
 
 | 类型 | 数量 | 状态 |
 |------|------|------|
-| 🔴 错误 | **00** 个 | 无错误 |
+| 🔴 错误 | **01** 个 | 需修复 |
 | 🟡 警告 | **07** 个 | 建议清理 |
 
 ---
@@ -44,7 +44,7 @@
 ### 📦 未使用变量警告 (5个)
 
 ```
-/Users/runner/work/NovelReader/NovelReader/NovelReader/Presentation/Reader/ReaderViewController.swift:392:17: warning: initialization of immutable value 'chapter' was never used; consider replacing with assignment to '_' or removing it
+/Users/runner/work/NovelReader/NovelReader/NovelReader/Presentation/Reader/ReaderViewController.swift:396:17: warning: initialization of immutable value 'chapter' was never used; consider replacing with assignment to '_' or removing it
 /Users/runner/work/NovelReader/NovelReader/NovelReader/Presentation/Sync/SyncViewController.swift:366:16: warning: value 'token' was defined but never used; consider replacing with boolean test
 /Users/runner/work/NovelReader/NovelReader/NovelReader/SyncEngine/SyncEngine.swift:83:13: warning: initialization of variable 'uploadedCount' was never used; consider replacing with assignment to '_' or removing it
 /Users/runner/work/NovelReader/NovelReader/NovelReader/SyncEngine/SyncEngine.swift:84:13: warning: initialization of variable 'downloadedCount' was never used; consider replacing with assignment to '_' or removing it
@@ -82,11 +82,15 @@
 
 ### 📊 质量评级
 
-- **质量评级**: **B级（良好，警告较少）**
+- **质量评级**: **F级（构建失败）**
 - **警告密度**: 每千行约 0 个警告
-- **代码总行数**: 11228 行
+- **代码总行数**: 11299 行
 
 ### 💡 修复建议
+
+#### 1. 编译错误 (1个)
+- 优先修复所有编译错误，确保构建通过
+- 查看上方错误详情定位问题文件和行号
 
 #### 2. 未使用变量警告 (5个)
 - 删除未使用的变量和函数
