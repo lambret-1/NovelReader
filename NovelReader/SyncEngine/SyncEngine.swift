@@ -123,7 +123,7 @@ final class SyncEngine: SyncEngineProtocol {
         DispatchQueue.main.async { self.currentStatus = .pulling(progress: 0.3) }
 
         // 拉取远端文件树（使用 do-catch 捕获具体错误，避免静默失败）
-        let remoteTree: GitTree
+        var remoteTree: GitTree?
         do {
             remoteTree = try awaitPublisher(fileService.getRepositoryTree(owner: owner, repo: repo))
         } catch {
@@ -140,8 +140,8 @@ final class SyncEngine: SyncEngineProtocol {
             
             if isEmptyRepo {
                 AppLogger.info("检测到空仓库，视为远端无文件，继续同步流程")
-                // 空仓库：设置空的remoteManifest，继续执行同步流程
-                let remoteManifest = Manifest(version: 1, entries: [])
+                // 空仓库：设置空的remoteTree，继续执行同步流程
+                remoteTree = GitTree(sha: "", tree: [], truncated: false)
                 // 继续执行下面的同步流程
             } else {
             
@@ -156,6 +156,11 @@ final class SyncEngine: SyncEngineProtocol {
         var downloadedCount = 0
         var conflictCount = 0
 
+        guard let remoteTree = remoteTree else {
+            DispatchQueue.main.async { self.currentStatus = .error(message: "拉取远端文件失败") }
+            promise(.failure(SyncError.pullFailed))
+            return
+        }
         let remoteManifest = ManifestManager.generateRemoteManifest(from: remoteTree)
 
         // 4. 获取本地所有书籍和章节
