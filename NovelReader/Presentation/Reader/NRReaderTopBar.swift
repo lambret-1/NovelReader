@@ -25,7 +25,7 @@ final class NRReaderTopBar: UIView {
     private let titleLabel: UILabel = {
         let label = UILabel()
         label.translatesAutoresizingMaskIntoConstraints = false
-        label.font = DesignToken.Typography.title3 // 标题字体17pt
+        label.font = DesignToken.Font.headline // 标题字体17pt
         label.textColor = DesignToken.Color.textPrimary
         label.textAlignment = .center
         label.lineBreakMode = .byTruncatingTail // 超长截断
