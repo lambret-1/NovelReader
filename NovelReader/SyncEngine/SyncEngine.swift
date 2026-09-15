@@ -33,7 +33,7 @@ final class SyncEngine: SyncEngineProtocol {
         let repo: String
         let books: [Book]
         let allChapters: [Chapter]
-        let diffs: [ManifestDiff]
+        let diffs: [FileDiff]
         let downloadedCount: Int
     }
     private var pendingContext: PendingSyncContext?
@@ -198,7 +198,9 @@ final class SyncEngine: SyncEngineProtocol {
         // 8. 上传本地修改（只上传 dirty 章节和新增书籍）
         DispatchQueue.main.async { self.currentStatus = .pushing(progress: 0.5) }
 
-        let localChanges = diffs.filter { $0.type == .localAdded || $0.type == .conflict }
+        let localAdded = diffs.filter { $0.type == .localAdded }
+        let conflictChanges = diffs.filter { $0.type == .conflict }
+        let localChanges = localAdded + conflictChanges
         var filesToUpload: [String: String] = [:]
 
         for diff in localChanges {
@@ -269,7 +271,7 @@ final class SyncEngine: SyncEngineProtocol {
             _ = try? awaitPublisher(self.conflictRepository.updateResolution(conflictId: conflictId, resolution: resolution))
 
             self.syncQueue.async {
-                guard let conflicts = try? awaitPublisher(self.conflictRepository.fetchAllConflicts()),
+                guard let conflicts = try? self.awaitPublisher(self.conflictRepository.fetchAllConflicts()),
                       let conflict = conflicts.first(where: { $0.id == conflictId }) else {
                     promise(.success(()))
                     return
@@ -341,12 +343,14 @@ final class SyncEngine: SyncEngineProtocol {
                                      repo: String,
                                      books: [Book],
                                      allChapters: [Chapter],
-                                     diffs: [ManifestDiff],
+                                     diffs: [FileDiff],
                                      downloadedCount: Int) {
         var uploadedCount = 0
         DispatchQueue.main.async { self.currentStatus = .pushing(progress: 0.5) }
 
-        let localChanges = diffs.filter { $0.type == .localAdded || $0.type == .conflict }
+        let localAdded = diffs.filter { $0.type == .localAdded }
+        let conflictChanges = diffs.filter { $0.type == .conflict }
+        let localChanges = localAdded + conflictChanges
         var filesToUpload: [String: String] = [:]
         for diff in localChanges {
             if let (content, _) = localContent(for: diff.path, books: books, chapters: allChapters) {
