@@ -283,6 +283,20 @@ final class SyncViewController: UIViewController {
         present(alert, animated: true)
     }
 
+    /// 展示冲突解决页面
+    private func showConflictList() {
+        // 防止重复弹出
+        guard presentedViewController == nil else { return }
+        let conflictVC = AppContainer.shared.makeConflictListViewController()
+        let nav = UINavigationController(rootViewController: conflictVC)
+        nav.modalPresentationStyle = .pageSheet
+        if let sheet = nav.sheetPresentationController {
+            sheet.detents = [.large()]
+            sheet.prefersGrabberVisible = true
+        }
+        present(nav, animated: true)
+    }
+
     private func showLoginAlert() {
         let alert = UIAlertController(title: "GitHub 登录", message: "请输入 Personal Access Token\n\n在 GitHub → Settings → Developer settings → Personal access tokens 生成，勾选 repo 权限", preferredStyle: .alert)
         alert.addTextField { textField in
