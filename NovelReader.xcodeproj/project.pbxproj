@@ -7,6 +7,11 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		A3902F04F2B2452EB6987376 /* MainTabBarController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1F2C3D4E5F6A7B8C9D0E1F2 /* MainTabBarController.swift */; };
+		A56DE617F5FB404E8D515825 /* LibraryViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 80FD6B229210479DA9B8A9B9 /* LibraryViewController.swift */; };
+		E1BF6A7AAB374991920FDEF6 /* ChapterListViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81E55BB844C04D879E69A5F7 /* ChapterListViewController.swift */; };
+		1EBC5C22DAE24EDCAD2CC0EA /* SettingsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9DF9B19B73C648EF9E63B7C7 /* SettingsViewController.swift */; };
+		D58A5E3E3B824127BE634D07 /* SyncViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D268A326C32F428284A29609 /* SyncViewController.swift */; };
 		BCD741D42030447D2D8F0809 /* NRReaderProgressView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29CE550132313F1FB52FB33C /* NRReaderProgressView.swift */; };
 		695E2F7BC6DF561560006856 /* NRReaderTopBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 812BD2FF36E3F188AAA83EB0 /* NRReaderTopBar.swift */; };
 		1AAA2A2779ED74886C1BDD2C /* NRReaderBottomBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = D247452C5A70EDB3542A4E44 /* NRReaderBottomBar.swift */; };
@@ -68,6 +73,11 @@
 
 /* Begin PBXFileReference section */
 		29CE550132313F1FB52FB33C /* NRReaderProgressView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NRReaderProgressView.swift"; sourceTree = "<group>"; };
+		B1F2C3D4E5F6A7B8C9D0E1F2 /* MainTabBarController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "MainTabBarController.swift"; sourceTree = "<group>"; };
+		80FD6B229210479DA9B8A9B9 /* LibraryViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "LibraryViewController.swift"; sourceTree = "<group>"; };
+		81E55BB844C04D879E69A5F7 /* ChapterListViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ChapterListViewController.swift"; sourceTree = "<group>"; };
+		9DF9B19B73C648EF9E63B7C7 /* SettingsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SettingsViewController.swift"; sourceTree = "<group>"; };
+		D268A326C32F428284A29609 /* SyncViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SyncViewController.swift"; sourceTree = "<group>"; };
 		812BD2FF36E3F188AAA83EB0 /* NRReaderTopBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NRReaderTopBar.swift"; sourceTree = "<group>"; };
 		D247452C5A70EDB3542A4E44 /* NRReaderBottomBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NRReaderBottomBar.swift"; sourceTree = "<group>"; };
 		9F44D65A8798892145546C3C /* NRReaderMoreMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NRReaderMoreMenu.swift"; sourceTree = "<group>"; };
