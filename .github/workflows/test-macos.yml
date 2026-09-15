@@ -1,0 +1,13 @@
+name: Test macOS Runner
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: macos-latest
+    steps:
+      - name: Hello
+        run: echo "Hello from macOS"
+      - name: Xcode version
+        run: xcodebuild -version
