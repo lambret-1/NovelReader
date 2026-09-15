@@ -5,14 +5,14 @@
 	};
 	objectVersion = 56;
 	objects = {
+
 /* Begin PBXBuildFile section */
-		A1B2C3D4E5F6A7B8C9D0E1F2 /* BaseNavigationController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2C3D4E5F6A7B8C9D0E1F2A3 /* BaseNavigationController.swift */; };
+		4A02809012EB453E9B3FB7BF /* BaseNavigationController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88E7D4561060467E9DAC7B20 /* BaseNavigationController.swift */; };
 		A3902F04F2B2452EB6987376 /* MainTabBarController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1F2C3D4E5F6A7B8C9D0E1F2 /* MainTabBarController.swift */; };
 		A56DE617F5FB404E8D515825 /* LibraryViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 80FD6B229210479DA9B8A9B9 /* LibraryViewController.swift */; };
 		E1BF6A7AAB374991920FDEF6 /* ChapterListViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81E55BB844C04D879E69A5F7 /* ChapterListViewController.swift */; };
 		1EBC5C22DAE24EDCAD2CC0EA /* SettingsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9DF9B19B73C648EF9E63B7C7 /* SettingsViewController.swift */; };
 		D58A5E3E3B824127BE634D07 /* SyncViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D268A326C32F428284A29609 /* SyncViewController.swift */; };
-				A1B2C3D4E5F6A7B8C9D0E1F2 /* BaseNavigationController.swift in Sources */,
 		BCD741D42030447D2D8F0809 /* NRReaderProgressView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29CE550132313F1FB52FB33C /* NRReaderProgressView.swift */; };
 		695E2F7BC6DF561560006856 /* NRReaderTopBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 812BD2FF36E3F188AAA83EB0 /* NRReaderTopBar.swift */; };
 		1AAA2A2779ED74886C1BDD2C /* NRReaderBottomBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = D247452C5A70EDB3542A4E44 /* NRReaderBottomBar.swift */; };
@@ -71,9 +71,10 @@
 		30F98EDFD9DCA057D72ACF0B /* ReaderPageViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B5ACA995AAFD71474DAE7CC /* ReaderPageViewController.swift */; };		8A0E807FFBF222A475675C82 /* ReaderSettingsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D599426C1A3F07877499F27 /* ReaderSettingsManager.swift */; };
 		0A0B30EB2642D328187614F3 /* ReadingStatsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E62274257B99FC5C9F51F8E /* ReadingStatsManager.swift */; };
 /* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
+		88E7D4561060467E9DAC7B20 /* BaseNavigationController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Navigation/BaseNavigationController.swift"; sourceTree = "<group>"; };
 		29CE550132313F1FB52FB33C /* NRReaderProgressView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NRReaderProgressView.swift"; sourceTree = "<group>"; };
-		B2C3D4E5F6A7B8C9D0E1F2A3 /* BaseNavigationController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Navigation/BaseNavigationController.swift"; sourceTree = "<group>"; };
 		B1F2C3D4E5F6A7B8C9D0E1F2 /* MainTabBarController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Main/MainTabBarController.swift"; sourceTree = "<group>"; };
 		80FD6B229210479DA9B8A9B9 /* LibraryViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Library/LibraryViewController.swift"; sourceTree = "<group>"; };
 		81E55BB844C04D879E69A5F7 /* ChapterListViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Chapter/ChapterListViewController.swift"; sourceTree = "<group>"; };
@@ -380,7 +381,7 @@
 				81E55BB844C04D879E69A5F7 /* Chapter/ChapterListViewController.swift */,
 				9DF9B19B73C648EF9E63B7C7 /* Settings/SettingsViewController.swift */,
 				D268A326C32F428284A29609 /* Sync/SyncViewController.swift */,
-				B2C3D4E5F6A7B8C9D0E1F2A3 /* Navigation/BaseNavigationController.swift */,
+				88E7D4561060467E9DAC7B20 /* Navigation/BaseNavigationController.swift */,
 			);
 			path = "Presentation";
 			sourceTree = "<group>";
@@ -565,7 +566,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				D58A5E3E3B824127BE634D07 /* SyncViewController.swift in Sources */,
-				A1B2C3D4E5F6A7B8C9D0E1F2 /* BaseNavigationController.swift in Sources */,
+				4A02809012EB453E9B3FB7BF /* BaseNavigationController.swift in Sources */,
 				1EBC5C22DAE24EDCAD2CC0EA /* SettingsViewController.swift in Sources */,
 				E1BF6A7AAB374991920FDEF6 /* ChapterListViewController.swift in Sources */,
 				A56DE617F5FB404E8D515825 /* LibraryViewController.swift in Sources */,
