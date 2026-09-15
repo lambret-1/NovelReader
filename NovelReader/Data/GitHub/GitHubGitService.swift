@@ -17,9 +17,9 @@ final class GitHubGitService {
     }
 
     /// 更新分支引用（指向新的 commit）
-    func updateRef(owner: String, repo: String, ref: String = "heads/main", sha: String) -> AnyPublisher<GitRef, Error> {
+    func updateRef(owner: String, repo: String, ref: String = "heads/main", sha: String) -> AnyPublisher<Void, Error> {
         let body = UpdateRefRequest(sha: sha, force: false)
-        return apiClient.patch("/repos/\(owner)/\(repo)/git/refs/\(ref)", body: body)
+        return apiClient.patchVoid("/repos/\(owner)/\(repo)/git/refs/\(ref)", body: body)
     }
 
     // MARK: - Blob（文件内容）
@@ -105,7 +105,7 @@ final class GitHubGitService {
             .flatMap { commit -> AnyPublisher<GitCommit, Error> in
                 // 更新分支引用
                 self.updateRef(owner: owner, repo: repo, ref: "heads/\(branch)", sha: commit.sha)
-                    .map { _ in commit }
+                    .map { commit }
                     .eraseToAnyPublisher()
             }
             .eraseToAnyPublisher()

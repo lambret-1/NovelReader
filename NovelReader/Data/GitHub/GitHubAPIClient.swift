@@ -52,6 +52,11 @@ final class GitHubAPIClient {
         request(method: "PATCH", path: path, parameters: nil, body: body)
     }
 
+    /// 发送 PATCH 请求（无返回值）
+    func patchVoid<B: Encodable>(_ path: String, body: B) -> AnyPublisher<Void, Error> {
+        requestVoid(method: "PATCH", path: path, body: body)
+    }
+
     /// 发送 PUT 请求
     func put<T: Decodable, B: Encodable>(_ path: String, body: B) -> AnyPublisher<T, Error> {
         request(method: "PUT", path: path, parameters: nil, body: body)
@@ -81,8 +86,8 @@ final class GitHubAPIClient {
             .eraseToAnyPublisher()
     }
 
-    private func requestVoid(method: String, path: String) -> AnyPublisher<Void, Error> {
-        guard let request = buildRequest(method: method, path: path, parameters: nil, body: nil) else {
+    private func requestVoid(method: String, path: String, body: Encodable? = nil) -> AnyPublisher<Void, Error> {
+        guard let request = buildRequest(method: method, path: path, parameters: nil, body: body) else {
             return Fail(error: GitHubError.invalidURL).eraseToAnyPublisher()
         }
 
