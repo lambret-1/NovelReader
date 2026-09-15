@@ -121,6 +121,35 @@ final class ReaderViewController: UIViewController {
         return label
     }()
 
+    // MARK: - 新 UI 组件
+    private lazy var topBar: NRReaderTopBar = {
+        let bar = NRReaderTopBar()
+        bar.onMoreButtonTapped = { [weak self] in
+            self?.showMoreMenu()
+        }
+        return bar
+    }()
+
+    private lazy var bottomBar: NRReaderBottomBar = {
+        let bar = NRReaderBottomBar()
+        bar.onCatalogTapped = { [weak self] in
+            self?.showCatalog()
+        }
+        bar.onNightModeTapped = { [weak self] in
+            self?.toggleNightMode()
+        }
+        bar.onProgressTapped = { [weak self] in
+            self?.showProgressDetail()
+        }
+        return bar
+    }()
+
+    private var moreMenu: NRReaderMoreMenu?
+    private var catalogView: NRReaderCatalogView?
+    private var areBarsHidden = false
+    private var autoHideTimer: Timer?
+    private var isNightMode = false
+
     // MARK: - 初始化
     init(book: Book, chapters: [Chapter], startIndex: Int, viewModel: ReaderViewModel) {
         self.book = book
@@ -146,6 +175,8 @@ final class ReaderViewController: UIViewController {
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         ReadingStatsManager.shared.startSession()
+        resetAutoHideTimer()
+        updateProgress()
     }
 
     override func viewWillDisappear(_ animated: Bool) {
@@ -165,9 +196,16 @@ final class ReaderViewController: UIViewController {
         view.addSubview(pageViewController.view)
         pageViewController.didMove(toParent: self)
 
+        // 新 UI 组件
+        view.addSubview(topBar)
+        view.addSubview(bottomBar)
+
+        // 旧组件（保留，后续迁移）
         view.addSubview(chapterTitleLabel)
         view.addSubview(progressLabel)
         view.addSubview(configPanel)
+        chapterTitleLabel.isHidden = true
+        progressLabel.isHidden = true
 
         configPanel.addSubview(fontSizeSlider)
         configPanel.addSubview(lineSpacingSlider)
@@ -182,6 +220,18 @@ final class ReaderViewController: UIViewController {
             pageViewController.view.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             pageViewController.view.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             pageViewController.view.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+
+            // 上工具栏
+            topBar.topAnchor.constraint(equalTo: view.topAnchor),
+            topBar.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            topBar.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            topBar.heightAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 44),
+
+            // 下工具栏
+            bottomBar.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            bottomBar.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            bottomBar.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            bottomBar.heightAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: 54),
 
             chapterTitleLabel.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 8),
             chapterTitleLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
