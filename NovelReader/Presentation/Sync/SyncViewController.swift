@@ -289,11 +289,8 @@ final class SyncViewController: UIViewController {
         guard presentedViewController == nil else { return }
         let conflictVC = AppContainer.shared.makeConflictListViewController()
         let nav = UINavigationController(rootViewController: conflictVC)
-        nav.modalPresentationStyle = .pageSheet
-        if let sheet = nav.sheetPresentationController {
-            sheet.detents = [.large()]
-            sheet.prefersGrabberVisible = true
-        }
+        // iOS 14 兼容：使用 fullScreen，避免使用 iOS 15+ 的 pageSheet
+        nav.modalPresentationStyle = .fullScreen
         present(nav, animated: true)
     }
 
@@ -458,4 +455,5 @@ final class SyncViewModel {
             .store(in: &cancellables)
     }
 }
+
 
