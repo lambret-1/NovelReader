@@ -16,8 +16,8 @@ env:
 jobs:
   build:
     name: Build & Package IPA
-    runs-on: macos-14
-    timeout-minutes: 20
+    runs-on: macos-latest
+    timeout-minutes: 25
 
     steps:
       # 1. 检出代码
@@ -27,13 +27,21 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      # 2. 选择 Xcode 版本（15.4 编译速度最优，兼容 iOS14）
+      # 2. 选择 Xcode 版本（优先 15.4，不存在则用默认最新版，保证编译速度）
       - name: Select Xcode
         run: |
-          sudo xcode-select -s /Applications/Xcode_${{ env.XCODE_VERSION }}.app/Contents/Developer
-          echo "=== Xcode 版本 ==="
+          echo "=== 可用 Xcode 版本 ==="
+          ls -d /Applications/Xcode*.app 2>/dev/null | sort
+          echo ""
+          # 尝试选择指定版本，失败则用默认
+          if [ -d "/Applications/Xcode_${{ env.XCODE_VERSION }}.app" ]; then
+            sudo xcode-select -s "/Applications/Xcode_${{ env.XCODE_VERSION }}.app/Contents/Developer"
+            echo "✅ 已切换到 Xcode ${{ env.XCODE_VERSION }}"
+          else
+            echo "⚠️  Xcode ${{ env.XCODE_VERSION }} 不存在，使用默认版本"
+          fi
+          echo "=== 当前 Xcode 版本 ==="
           xcodebuild -version
-          echo "=== Swift 版本 ==="
           swift --version
 
       # 3. 版本号自动递增（缝九进一）
