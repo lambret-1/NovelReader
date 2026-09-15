@@ -310,10 +310,10 @@ final class SyncViewModel {
         syncMetadataRepository.fetchMetadata()
             .receive(on: DispatchQueue.main)
             .sink(receiveCompletion: { _ in }, receiveValue: { [weak self] metadata in
-                // 如果未配置仓库，自动设置为 username/NovelReader
+                // 如果未配置仓库，自动设置为 username/MyNovels（独立小说数据仓库）
                 var meta = metadata
                 if meta.repoFullName == nil {
-                    meta.repoFullName = "\(username)/NovelReader"
+                    meta.repoFullName = "\(username)/MyNovels"
                     meta.githubUsername = username
                     _ = self?.syncMetadataRepository.updateMetadata(meta)
                 }

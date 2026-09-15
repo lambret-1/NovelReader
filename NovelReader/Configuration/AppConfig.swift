@@ -9,8 +9,8 @@ enum AppConfig {
     /// GitHub API 基础地址
     static let githubAPIBaseURL = "https://api.github.com"
 
-    /// 默认同步仓库名
-    static let defaultRepoName = "NovelReader"
+    /// 默认同步仓库名（专门保存小说文本的独立仓库）
+    static let defaultRepoName = "MyNovels"
 
     /// 同步相关
     static let syncAutoSaveDebounce: TimeInterval = 3.0  // 编辑后自动保存防抖
