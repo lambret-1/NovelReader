@@ -21,7 +21,7 @@ final class DatabaseManager {
         } catch {
             AppLogger.error("数据库初始化失败: \(error)")
             // 兜底：内存数据库
-            queue = DatabaseQueue()
+            queue = try! DatabaseQueue()
         }
         self.dbQueue = queue
         try? migrate()
