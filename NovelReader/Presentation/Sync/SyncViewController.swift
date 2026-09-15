@@ -290,7 +290,7 @@ final class SyncViewController: UIViewController {
         let conflictVC = AppContainer.shared.makeConflictListViewController()
         let nav = UINavigationController(rootViewController: conflictVC)
         // iOS 14 兼容：使用 fullScreen，避免使用 iOS 15+ 的 pageSheet
-        nav.modalPresentationStyle = .fullScreen
+        nav.modalPresentationStyle = UIModalPresentationStyle.fullScreen
         present(nav, animated: true)
     }
 
