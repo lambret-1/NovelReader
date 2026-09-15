@@ -3,6 +3,7 @@ import Combine
 
 /// GitHub API 客户端 - 基础请求封装
 final class GitHubAPIClient {
+    /// 共享单例（向后兼容，新代码优先使用依赖注入）
     static let shared = GitHubAPIClient()
 
     private let session: URLSession
@@ -13,10 +14,11 @@ final class GitHubAPIClient {
     private(set) var rateLimitRemaining: Int = 5000
     private(set) var rateLimitReset: TimeInterval = 0
 
-    private init() {
+    /// 公开初始化方法，支持依赖注入和测试
+    init() {
         let config = URLSessionConfiguration.default
-        config.timeoutIntervalForRequest = 30
-        config.timeoutIntervalForResource = 120
+        config.timeoutIntervalForRequest = 30 // 请求超时30秒，避免长时间挂起
+        config.timeoutIntervalForResource = 120 // 资源超时120秒，大文件下载留足时间
         session = URLSession(configuration: config)
     }
 
