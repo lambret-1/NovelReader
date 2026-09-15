@@ -68,6 +68,7 @@
 		A0E0D545D21BAABC29BC3926 /* SettingsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5361264F7F3A43E7FC4C402 /* SettingsViewController.swift */; };
 		CF89763C99101B68BB4CE66E /* SyncViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA0E737F703DAC8CB63C9DE3 /* SyncViewController.swift */; };
 		74AD02EE1685F03BCF8C3A70 /* ManifestManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6507A923E51AFB1F7ED8B1E4 /* ManifestManager.swift */; };
+		04F4957136D142BF89402130 /* NovelRefreshService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7FC94F19739744E8A7FE0E70 /* NovelRefreshService.swift */; };
 		206E9376722E7A9DA9B0E368 /* SyncEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0727A06B22AD1BBA37C36C6C /* SyncEngine.swift */; };
 		95F893ABF8DE2704294E63B9 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 9788A1872451B15183194D45 /* Assets.xcassets */; };
 		5FDE0B06E2594C7E7C8B19AD /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = A150D45F967B80E4BC5060BB /* LaunchScreen.storyboard */; };
@@ -143,6 +144,7 @@
 		D5361264F7F3A43E7FC4C402 /* SettingsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SettingsViewController.swift"; sourceTree = "<group>"; };
 		CA0E737F703DAC8CB63C9DE3 /* SyncViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SyncViewController.swift"; sourceTree = "<group>"; };
 		6507A923E51AFB1F7ED8B1E4 /* ManifestManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ManifestManager.swift"; sourceTree = "<group>"; };
+		7FC94F19739744E8A7FE0E70 /* NovelRefreshService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NovelRefreshService.swift"; sourceTree = "<group>"; };
 		0727A06B22AD1BBA37C36C6C /* SyncEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SyncEngine.swift"; sourceTree = "<group>"; };
 		9788A1872451B15183194D45 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		A150D45F967B80E4BC5060BB /* LaunchScreen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = LaunchScreen.storyboard; sourceTree = "<group>"; };
@@ -454,6 +456,7 @@
 			isa = PBXGroup;
 			children = (
 				6507A923E51AFB1F7ED8B1E4 /* ManifestManager.swift */,
+				7FC94F19739744E8A7FE0E70 /* NovelRefreshService.swift */,
 				0727A06B22AD1BBA37C36C6C /* SyncEngine.swift */,
 			);
 			path = "SyncEngine";
@@ -648,6 +651,7 @@
 				A0E0D545D21BAABC29BC3926 /* SettingsViewController.swift in Sources */,
 				CF89763C99101B68BB4CE66E /* SyncViewController.swift in Sources */,
 				74AD02EE1685F03BCF8C3A70 /* ManifestManager.swift in Sources */,
+				04F4957136D142BF89402130 /* NovelRefreshService.swift in Sources */,
 				206E9376722E7A9DA9B0E368 /* SyncEngine.swift in Sources */,
 				3ED57DEDBA3C4AA95ADAC088 /* PaginationEngine.swift in Sources */,
 				30F98EDFD9DCA057D72ACF0B /* ReaderPageViewController.swift in Sources */,

@@ -158,7 +158,14 @@ final class LibraryViewController: UIViewController {
         )
         navigationItem.rightBarButtonItem?.tintColor = DesignToken.Color.primary
 
-        // 左侧：设置 + 主题切换
+        // 左侧：API刷新 + 设置 + 主题切换
+        let apiRefreshButton = UIBarButtonItem(
+            image: UIImage(systemName: "arrow.clockwise.circle"),
+            style: .plain,
+            target: self,
+            action: #selector(apiRefreshTapped)
+        )
+        apiRefreshButton.tintColor = DesignToken.Color.primary
         let settingsButton = UIBarButtonItem(
             image: UIImage(systemName: "gearshape"),
             style: .plain,
@@ -171,7 +178,7 @@ final class LibraryViewController: UIViewController {
             target: self,
             action: #selector(themeTapped)
         )
-        navigationItem.leftBarButtonItems = [settingsButton, themeButton]
+        navigationItem.leftBarButtonItems = [apiRefreshButton, settingsButton, themeButton]
     }
 
     // MARK: - 数据绑定
@@ -291,6 +298,70 @@ final class LibraryViewController: UIViewController {
 
     @objc private func handleRefresh() {
         viewModel.refreshTrigger.send()
+    }
+
+    // MARK: - API 自动刷新书籍
+    @objc private func apiRefreshTapped() {
+        guard !NovelRefreshService.shared.isRefreshing else {
+            NRToast.shared.info("正在刷新中，请稍候...")
+            return
+        }
+
+        // 检查 Token
+        guard GitHubAuthService.shared.loadSavedToken() != nil else {
+            NRToast.shared.error("请先在设置中登录 GitHub")
+            return
+        }
+
+        let alert = UIAlertController(
+            title: "API 刷新书籍",
+            message: "将从 MyNovels 仓库拉取所有书籍和章节，文件夹名=书名，文件名=章节名。是否继续？",
+            preferredStyle: .alert
+        )
+        alert.addAction(UIAlertAction(title: "取消", style: .cancel))
+        alert.addAction(UIAlertAction(title: "开始刷新", style: .default) { [weak self] _ in
+            self?.startAPIRefresh()
+        })
+        present(alert, animated: true)
+    }
+
+    private func startAPIRefresh() {
+        // 显示进度 HUD
+        let hud = UIAlertController(title: "正在刷新...", message: "准备中...", preferredStyle: .alert)
+        present(hud, animated: true)
+
+        // 监听进度
+        NovelRefreshService.shared.$refreshMessage
+            .receive(on: DispatchQueue.main)
+            .sink { message in
+                hud.message = message
+            }
+            .store(in: &cancellables)
+
+        NovelRefreshService.shared.$refreshProgress
+            .receive(on: DispatchQueue.main)
+            .sink { progress in
+                hud.title = "正在刷新... \(Int(progress * 100))%"
+            }
+            .store(in: &cancellables)
+
+        // 执行刷新
+        NovelRefreshService.shared.refreshBooks()
+            .receive(on: DispatchQueue.main)
+            .sink(receiveCompletion: { [weak self] completion in
+                hud.dismiss(animated: true) {
+                    if case .failure(let error) = completion {
+                        NRToast.shared.error("刷新失败: \(error.localizedDescription)")
+                    }
+                }
+            }, receiveValue: { [weak self] result in
+                hud.dismiss(animated: true) {
+                    NRToast.shared.success("刷新完成：新增 \(result.addedBooks) 本书，更新 \(result.updatedChapters) 个章节")
+                    // 刷新书架列表
+                    self?.viewModel.refreshTrigger.send()
+                }
+            })
+            .store(in: &cancellables)
     }
 }
 
