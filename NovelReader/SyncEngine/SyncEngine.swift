@@ -229,13 +229,8 @@ final class SyncEngine: SyncEngineProtocol {
             let sortOrder = Int(orderPrefix) ?? 0
 
             // 检查本地是否已有该章节（通过标题匹配）
-            if let existingChapter = try? awaitPublisher(
-                chapterRepository.fetchChapters(bookId: book.id)
-                    .map { chapters in
-                        chapters.first { $0.title == parsed.title }
-                    }
-                    .eraseToAnyPublisher()
-            ), let chapter = existingChapter {
+            if let chapters = try? awaitPublisher(chapterRepository.fetchChapters(bookId: book.id)),
+               let chapter = chapters.first(where: { $0.title == parsed.title }) {
                 // 更新已有章节
                 var updated = chapter
                 updated.updateContent(parsed.body)

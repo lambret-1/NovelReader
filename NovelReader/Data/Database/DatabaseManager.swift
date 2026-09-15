@@ -59,8 +59,8 @@ final class DatabaseManager {
                 t.column("isDirty", .boolean).defaults(to: true)
                 t.column("remotePath", .text).defaults(to: "")
             }
-            try db.createIndex(on: "chapter", columns: ["bookId", "sortOrder"])
-            try db.createIndex(on: "chapter", columns: ["isDirty"])
+            try db.create(index: "idx_chapter_book_sort", on: "chapter", columns: ["bookId", "sortOrder"])
+            try db.create(index: "idx_chapter_dirty", on: "chapter", columns: ["isDirty"])
 
             // 书签表
             try db.create(table: "bookmark") { t in

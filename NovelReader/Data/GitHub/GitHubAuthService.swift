@@ -47,8 +47,8 @@ final class GitHubAuthService {
     /// 检查 Token 是否有效
     func validateToken() -> AnyPublisher<Bool, Error> {
         return apiClient.get("/user")
-            .map { _ in true }
-            .catch { _ in Just(false).setFailureType(to: Error.self) }
+            .map { (_: GitHubUser) in true }
+            .catch { (_: Error) in Just(false).setFailureType(to: Error.self) }
             .eraseToAnyPublisher()
     }
 }

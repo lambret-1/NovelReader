@@ -1,4 +1,5 @@
 import Foundation
+import UIKit
 
 // MARK: - String 扩展
 extension String {
