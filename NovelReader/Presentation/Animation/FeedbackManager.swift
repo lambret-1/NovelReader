@@ -26,19 +26,19 @@ final class FeedbackManager {
     // MARK: - 冲击反馈（按钮按下、卡片点击）
 
     /// 轻触反馈（小按钮、标签点击）
-    func impactLight() {
+    func lightImpact() {
         impactLight.impactOccurred()
         impactLight.prepare()
     }
 
     /// 中触反馈（标准按钮、列表选中）
-    func impactMedium() {
+    func mediumImpact() {
         impactMedium.impactOccurred()
         impactMedium.prepare()
     }
 
     /// 重触反馈（重要操作、删除确认）
-    func impactHeavy() {
+    func heavyImpact() {
         impactHeavy.impactOccurred()
         impactHeavy.prepare()
     }
