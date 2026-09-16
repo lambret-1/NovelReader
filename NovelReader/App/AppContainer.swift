@@ -37,7 +37,7 @@ final class AppContainer {
         self.apiClient = apiClient
 
         // 服务
-        self.authService = GitHubAuthService(apiClient: apiClient)
+        self.authService = GitHubAuthService(apiClient: apiClient, syncMetadataRepository: syncMetadataRepository)
         self.fileService = GitHubFileService(apiClient: apiClient)
         self.gitService = GitHubGitService(apiClient: apiClient)
         self.updateService = UpdateCheckService(apiClient: apiClient)

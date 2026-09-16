@@ -1,5 +1,6 @@
 import Foundation
 import Combine
+import GRDB
 
 /// GitHub 认证服务
 final class GitHubAuthService {
@@ -25,6 +26,27 @@ final class GitHubAuthService {
                 // 验证成功，保存 Token
                 self?.keychain.set(value: token, key: Self.tokenKey)
                 AppLogger.info("GitHub 登录成功: \(user.login)")
+
+                // 自动配置同步仓库：用户名/MyNovels
+                guard let self = self, let repo = self.syncMetadataRepository else { return }
+                let defaultRepo = "\(user.login)/\(AppConfig.defaultRepoName)"
+                _ = repo.fetchMetadata()
+                    .flatMap { metadata -> AnyPublisher<SyncMetadata, Error> in
+                        var updated = metadata
+                        updated.githubUsername = user.login
+                        if updated.repoFullName == nil {
+                            updated.repoFullName = defaultRepo
+                        }
+                        return repo.updateMetadata(updated)
+                    }
+                    .sink(receiveCompletion: { completion in
+                        if case .failure(let error) = completion {
+                            AppLogger.error("保存同步元数据失败: \(error.localizedDescription)")
+                        }
+                    }, receiveValue: { _ in
+                        AppLogger.info("同步仓库已配置: \(defaultRepo)")
+                    })
+                    .store(in: &self.cancellables)
             }, receiveCompletion: { [weak self] completion in
                 if case .failure = completion {
                     self?.apiClient.clearToken()
@@ -32,6 +54,8 @@ final class GitHubAuthService {
             })
             .eraseToAnyPublisher()
     }
+
+    private var cancellables = Set<AnyCancellable>()
 
     /// 登出
     func logout() {

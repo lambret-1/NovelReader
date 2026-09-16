@@ -95,10 +95,16 @@ final class SyncEngine: SyncEngineProtocol {
         _ = try? awaitPublisher(conflictRepository.clearAllConflicts())
         pendingContext = nil
 
-        guard let repoFullName = metadata.repoFullName else {
-            DispatchQueue.main.async { self.currentStatus = .error(message: "未配置同步仓库") }
-            promise(.failure(SyncError.noRepositoryConfigured))
-            return
+        // 兜底逻辑：如果未配置同步仓库，使用默认的 用户名/MyNovels
+        var repoFullName = metadata.repoFullName
+        if repoFullName == nil {
+            if let username = metadata.githubUsername {
+                repoFullName = "\(username)/\(AppConfig.defaultRepoName)"
+            } else {
+                DispatchQueue.main.async { self.currentStatus = .error(message: "未配置同步仓库，请先登录 GitHub") }
+                promise(.failure(SyncError.noRepositoryConfigured))
+                return
+            }
         }
 
         let parts = repoFullName.components(separatedBy: "/")
