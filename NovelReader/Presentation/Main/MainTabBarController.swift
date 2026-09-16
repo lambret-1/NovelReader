@@ -1,6 +1,6 @@
 import UIKit
 
-/// 主标签栏控制器 - 书架/同步/我的
+/// 主标签栏控制器 - 书架/我的
 final class MainTabBarController: UITabBarController {
 
     override func viewDidLoad() {
@@ -26,16 +26,7 @@ final class MainTabBarController: UITabBarController {
             selectedImage: UIImage(systemName: "books.vertical.fill")
         )
 
-        // 同步
-        let syncVC = AppContainer.shared.makeSyncViewController()
-        let syncNav = BaseNavigationController(rootViewController: syncVC)
-        syncNav.tabBarItem = UITabBarItem(
-            title: "同步",
-            image: UIImage(systemName: "arrow.triangle.2.circlepath"),
-            selectedImage: UIImage(systemName: "arrow.triangle.2.circlepath.circle.fill")
-        )
-
-        // 我的
+        // 我的（设置）
         let settingsVC = AppContainer.shared.makeSettingsViewController()
         let settingsNav = BaseNavigationController(rootViewController: settingsVC)
         settingsNav.tabBarItem = UITabBarItem(
@@ -44,7 +35,7 @@ final class MainTabBarController: UITabBarController {
             selectedImage: UIImage(systemName: "person.circle.fill")
         )
 
-        viewControllers = [libraryNav, syncNav, settingsNav]
+        viewControllers = [libraryNav, settingsNav]
         selectedIndex = 0 // 默认选中书架
     }
 }
