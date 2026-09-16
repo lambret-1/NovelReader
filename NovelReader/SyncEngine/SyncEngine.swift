@@ -107,7 +107,11 @@ final class SyncEngine: SyncEngineProtocol {
             }
         }
 
-        let parts = repoFullName.components(separatedBy: "/")
+        guard let repoName = repoFullName else {
+            promise(.failure(SyncError.noRepositoryConfigured))
+            return
+        }
+        let parts = repoName.components(separatedBy: "/")
         guard parts.count == 2 else {
             promise(.failure(SyncError.invalidRepositoryName))
             return

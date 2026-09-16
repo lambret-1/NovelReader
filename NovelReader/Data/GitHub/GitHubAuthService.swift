@@ -6,11 +6,15 @@ import GRDB
 final class GitHubAuthService {
     private let apiClient: GitHubAPIClient
     private let keychain = KeychainManager.shared
+    private let syncMetadataRepository: SyncMetadataRepository?
+    private var cancellables = Set<AnyCancellable>()
 
     private static let tokenKey = "github_personal_access_token"
 
-    init(apiClient: GitHubAPIClient = .shared) {
+    init(apiClient: GitHubAPIClient = .shared,
+         syncMetadataRepository: SyncMetadataRepository? = nil) {
         self.apiClient = apiClient
+        self.syncMetadataRepository = syncMetadataRepository
     }
 
     /// 从 Keychain 加载已保存的 Token
