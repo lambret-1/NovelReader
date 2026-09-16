@@ -122,14 +122,6 @@ final class ReaderViewController: UIViewController {
     }()
 
     // MARK: - 新 UI 组件
-    private lazy var topBar: NRReaderTopBar = {
-        let bar = NRReaderTopBar()
-        bar.onBackButtonTapped = { [weak self] in
-            self?.navigationController?.popViewController(animated: true)
-        }
-        return bar
-    }()
-
     private lazy var bottomBar: NRReaderBottomBar = {
         let bar = NRReaderBottomBar()
         bar.onCatalogTapped = { [weak self] in
@@ -156,6 +148,7 @@ final class ReaderViewController: UIViewController {
         self.currentChapterIndex = startIndex
         self.viewModel = viewModel
         super.init(nibName: nil, bundle: nil)
+        hidesBottomBarWhenPushed = true // 进入阅读器时隐藏底部 tab 栏，提供沉浸式阅读体验
     }
 
     required init?(coder: NSCoder) {
