@@ -137,7 +137,7 @@ final class ReaderViewController: UIViewController {
     }()
 
     private var catalogView: NRReaderCatalogView?
-    private var areBarsHidden = false
+    private var areBarsHidden = true // 底部工具栏默认隐藏，点击屏幕呼出，提供沉浸式阅读体验
     private var autoHideTimer: Timer?
     private var isNightMode = false
 
@@ -162,12 +162,12 @@ final class ReaderViewController: UIViewController {
         bindViewModel()
         viewModel.loadBookmarks(for: book.id)
         loadChapter(at: currentChapterIndex, restorePage: true)
+        bottomBar.alpha = 0 // 底部工具栏默认隐藏，沉浸式阅读
     }
 
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         ReadingStatsManager.shared.startSession()
-        resetAutoHideTimer()
         updateProgress()
     }
 
@@ -210,7 +210,7 @@ final class ReaderViewController: UIViewController {
             pageViewController.view.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor), // 阅读区域从安全区顶部开始，移除顶部工具栏后全屏显示
             pageViewController.view.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             pageViewController.view.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            pageViewController.view.bottomAnchor.constraint(equalTo: bottomBar.topAnchor), // 阅读区域到下工具栏上方结束，不顶着工具栏
+            pageViewController.view.bottomAnchor.constraint(equalTo: view.bottomAnchor), // 阅读区域全屏显示，底部工具栏覆盖在上方
 
             // 上工具栏
             // 下工具栏
@@ -456,7 +456,7 @@ final class ReaderViewController: UIViewController {
             self.bottomBar.alpha = alpha
         }
         if !areBarsHidden {
-            resetAutoHideTimer()
+            resetAutoHideTimer() // 呼出后5秒自动隐藏
         } else {
             autoHideTimer?.invalidate()
         }
@@ -464,7 +464,7 @@ final class ReaderViewController: UIViewController {
 
     private func resetAutoHideTimer() {
         autoHideTimer?.invalidate()
-        autoHideTimer = Timer.scheduledTimer(withTimeInterval: 3.0, repeats: false) { [weak self] _ in
+        autoHideTimer = Timer.scheduledTimer(withTimeInterval: 5.0, repeats: false) // 呼出后5秒自动隐藏 { [weak self] _ in
             self?.hideBars()
         }
     }
