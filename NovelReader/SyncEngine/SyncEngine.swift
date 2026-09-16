@@ -138,24 +138,26 @@ final class SyncEngine: SyncEngineProtocol {
         }
 
         // 4. 处理远端文件（下载到本地）
-        DispatchQueue.main.async { self.currentStatus = .merging }
-
-        let remoteFiles = remoteTree.tree ?? []
+        let remoteFiles = (remoteTree.tree ?? []).filter { item in
+            item.type == "blob" &&
+            (item.path.hasSuffix(".md") || item.path.hasSuffix(".txt")) &&
+            !item.path.hasPrefix(".") // 排除隐藏文件
+        }
         let totalFiles = Double(remoteFiles.count)
+        AppLogger.info("共发现 \(remoteFiles.count) 个章节文件待下载")
 
         for (index, item) in remoteFiles.enumerated() {
-            guard item.type == "blob" else { continue }
-            guard item.path.hasSuffix(".md") || item.path.hasSuffix(".txt") else { continue }
-            guard !item.path.hasPrefix(".") else { continue } // 排除隐藏文件
-
-            // 更新进度
-            let progress = 0.3 + (Double(index) / totalFiles) * 0.7
-            DispatchQueue.main.async { self.currentStatus = .pulling(progress: progress) }
+            // 更新进度（每下载一个文件更新一次，0.3→1.0）
+            let progress = totalFiles > 0 ? 0.3 + (Double(index) / totalFiles) * 0.7 : 1.0
+            DispatchQueue.main.async {
+                self.currentStatus = .pulling(progress: progress)
+            }
 
             // 下载文件内容
-            if let content = try? awaitPublisher(fileService.getFileContent(owner: owner, repo: repo, path: item.path)) {
-                applyRemoteContent(path: item.path, content: content, books: books)
+            if let fileContent = try? awaitPublisher(fileService.getFileContent(owner: owner, repo: repo, path: item.path)) {
+                applyRemoteContent(path: item.path, content: fileContent, books: books)
                 downloadedCount += 1
+                AppLogger.info("已下载 \(index + 1)/\(remoteFiles.count): \(item.path)")
             }
         }
 

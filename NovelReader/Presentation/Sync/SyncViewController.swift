@@ -6,6 +6,7 @@ final class SyncViewController: UIViewController {
 
     private let syncEngine = AppContainer.shared.syncEngine
     private var cancellables = Set<AnyCancellable>()
+    private var lastSyncMessage: String?
 
     // MARK: - UI 组件
     private let scrollView: UIScrollView = {
@@ -188,34 +189,38 @@ final class SyncViewController: UIViewController {
         switch status {
         case .idle:
             progressView.isHidden = true
+            statusIconView.image = UIImage(systemName: "checkmark.circle.fill")
+            statusIconView.tintColor = DesignToken.Color.success
+            statusTitleLabel.text = "下载完成"
+            statusDetailLabel.text = lastSyncMessage ?? "数据已下载到本地"
             syncButton.isEnabled = true
-            syncButton.setTitle("开始下载", for: .normal)
+            lastSyncMessage = result.message
+            syncButton.setTitle("再次下载", for: .normal)
         case .pulling(let progress):
             progressView.isHidden = false
             progressView.setProgress(Float(progress), animated: true)
-            statusTitleLabel.text = "正在拉取..."
-            statusDetailLabel.text = "从 GitHub 拉取最新数据"
+            statusIconView.image = UIImage(systemName: "arrow.down.circle.fill")
+            statusIconView.tintColor = DesignToken.Color.primary
+            statusTitleLabel.text = "正在下载... \(Int(progress * 100))%"
+            statusDetailLabel.text = "从 GitHub 下载章节数据"
             syncButton.isEnabled = false
-        case .idle:
-            progressView.isHidden = true
-            statusIconView.image = UIImage(systemName: "checkmark.circle.fill")
-            statusIconView.tintColor = DesignToken.Color.success
-            statusTitleLabel.text = "同步完成"
-            statusDetailLabel.text = "数据已同步"
-            syncButton.isEnabled = true
-            syncButton.setTitle("再次下载", for: .normal)
+            syncButton.setTitle("下载中...", for: .normal)
+        case .merging:
+            progressView.isHidden = false
+            statusIconView.image = UIImage(systemName: "arrow.down.circle.fill")
+            statusIconView.tintColor = DesignToken.Color.primary
+            statusTitleLabel.text = "正在处理..."
+            statusDetailLabel.text = "保存章节数据到本地"
+            syncButton.isEnabled = false
         case .error(let message):
             progressView.isHidden = true
             statusIconView.image = UIImage(systemName: "xmark.circle.fill")
             statusIconView.tintColor = DesignToken.Color.error
-            statusTitleLabel.text = "同步失败"
+            statusTitleLabel.text = "下载失败"
             statusDetailLabel.text = message
             syncButton.isEnabled = true
             syncButton.setTitle("重试", for: .normal)
             NRToast.shared.error(message)
-        case .merging:
-            statusTitleLabel.text = "正在处理..."
-            statusDetailLabel.text = "下载并保存章节数据"
         }
     }
 
