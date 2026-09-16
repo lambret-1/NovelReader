@@ -55,10 +55,8 @@ final class AppContainer {
             bookRepository: bookRepository,
             chapterRepository: chapterRepository,
             syncMetadataRepository: syncMetadataRepository,
-            conflictRepository: conflictRepository,
             readingProgressRepository: readingProgressRepository,
             fileService: fileService,
-            gitService: gitService,
             apiClient: apiClient
         )
     }

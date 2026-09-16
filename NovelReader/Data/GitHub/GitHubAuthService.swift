@@ -59,7 +59,6 @@ final class GitHubAuthService {
             .eraseToAnyPublisher()
     }
 
-    private var cancellables = Set<AnyCancellable>()
 
     /// 登出
     func logout() {
