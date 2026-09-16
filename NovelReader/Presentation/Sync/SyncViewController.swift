@@ -194,7 +194,6 @@ final class SyncViewController: UIViewController {
             statusTitleLabel.text = "下载完成"
             statusDetailLabel.text = lastSyncMessage ?? "数据已下载到本地"
             syncButton.isEnabled = true
-            lastSyncMessage = result.message
             syncButton.setTitle("再次下载", for: .normal)
         case .pulling(let progress):
             progressView.isHidden = false
