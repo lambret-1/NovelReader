@@ -171,7 +171,7 @@ final class SyncViewController: UIViewController {
             statusTitleLabel.text = "已连接 GitHub"
             statusDetailLabel.text = "数据将同步到 MyNovels 仓库"
             syncButton.isEnabled = true
-            syncButton.setTitle("开始同步", for: .normal)
+            syncButton.setTitle("开始下载", for: .normal)
         }
     }
 
@@ -189,18 +189,12 @@ final class SyncViewController: UIViewController {
         case .idle:
             progressView.isHidden = true
             syncButton.isEnabled = true
-            syncButton.setTitle("开始同步", for: .normal)
+            syncButton.setTitle("开始下载", for: .normal)
         case .pulling(let progress):
             progressView.isHidden = false
             progressView.setProgress(Float(progress), animated: true)
             statusTitleLabel.text = "正在拉取..."
             statusDetailLabel.text = "从 GitHub 拉取最新数据"
-            syncButton.isEnabled = false
-        case .pushing(let progress):
-            progressView.isHidden = false
-            progressView.setProgress(Float(0.5 + progress * 0.5), animated: true)
-            statusTitleLabel.text = "正在上传..."
-            statusDetailLabel.text = "上传本地数据到 GitHub"
             syncButton.isEnabled = false
         case .idle:
             progressView.isHidden = true
@@ -209,7 +203,7 @@ final class SyncViewController: UIViewController {
             statusTitleLabel.text = "同步完成"
             statusDetailLabel.text = "数据已同步"
             syncButton.isEnabled = true
-            syncButton.setTitle("再次同步", for: .normal)
+            syncButton.setTitle("再次下载", for: .normal)
         case .error(let message):
             progressView.isHidden = true
             statusIconView.image = UIImage(systemName: "xmark.circle.fill")
@@ -219,8 +213,9 @@ final class SyncViewController: UIViewController {
             syncButton.isEnabled = true
             syncButton.setTitle("重试", for: .normal)
             NRToast.shared.error(message)
-        case .merging, .conflictWaiting:
-            break
+        case .merging:
+            statusTitleLabel.text = "正在处理..."
+            statusDetailLabel.text = "下载并保存章节数据"
         }
     }
 
