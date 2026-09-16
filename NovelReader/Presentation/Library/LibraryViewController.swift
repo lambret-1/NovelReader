@@ -13,14 +13,6 @@ final class LibraryViewController: UIViewController {
     private var isEditingMode = false
     private var selectedBookIds: Set<String> = []
 
-    // 排序方式
-    private enum SortOption: String, CaseIterable {
-        case byTitle = "按名称"
-        case byDate = "按添加时间"
-        case byRecent = "按最近阅读"
-    }
-    private var currentSort: SortOption = .byDate
-
     // MARK: - UI 组件
     private lazy var collectionView: UICollectionView = {
         let layout = UICollectionViewFlowLayout()
@@ -161,13 +153,6 @@ final class LibraryViewController: UIViewController {
         )
         deleteItem.tintColor = DesignToken.Color.error
 
-        let sortItem = UIBarButtonItem(
-            title: "排序",
-            style: .plain,
-            target: self,
-            action: #selector(showSortOptions)
-        )
-
         let flexibleSpace = UIBarButtonItem(barButtonSystemItem: .flexibleSpace, target: nil, action: nil)
 
         let countItem = UIBarButtonItem(
@@ -177,7 +162,7 @@ final class LibraryViewController: UIViewController {
             action: nil
         )
 
-        editingToolbar.items = [deleteItem, flexibleSpace, countItem, flexibleSpace, sortItem]
+        editingToolbar.items = [deleteItem, flexibleSpace, countItem]
     }
 
     // MARK: - 长按手势
@@ -311,44 +296,6 @@ final class LibraryViewController: UIViewController {
         }
     }
 
-    // MARK: - 排序
-    @objc private func showSortOptions() {
-        let alert = UIAlertController(title: "排序方式", message: nil, preferredStyle: .actionSheet)
-
-        for option in SortOption.allCases {
-            let action = UIAlertAction(title: option.rawValue, style: .default) { [weak self] _ in
-                self?.currentSort = option
-                self?.sortBooks()
-            }
-            if option == currentSort {
-                action.setValue(true, forKey: "checked")
-            }
-            alert.addAction(action)
-        }
-
-        alert.addAction(UIAlertAction(title: "取消", style: .cancel))
-
-        if let popover = alert.popoverPresentationController {
-            popover.sourceView = editingToolbar
-            popover.sourceRect = editingToolbar.bounds
-        }
-
-        present(alert, animated: true)
-    }
-
-    private func sortBooks() {
-        switch currentSort {
-        case .byTitle:
-            books.sort { $0.title.localizedStandardCompare($1.title) == .orderedAscending }
-        case .byDate:
-            books.sort { $0.createdAt > $1.createdAt }
-        case .byRecent:
-            books.sort { $0.updatedAt > $1.updatedAt }
-        }
-        collectionView.reloadData()
-        NRToast.shared.success("已按\(currentSort.rawValue)排序")
-    }
-
     // MARK: - 单本书操作
     private func openBook(_ book: Book) {
         let chapterListVC = AppContainer.shared.makeChapterListViewController(book: book)
@@ -424,7 +371,6 @@ final class LibraryViewController: UIViewController {
             .receive(on: DispatchQueue.main)
             .sink(receiveCompletion: { _ in }, receiveValue: { [weak self] books in
                 self?.books = books
-                self?.sortBooks()
                 self?.collectionView.reloadData()
                 self?.emptyState.isHidden = !books.isEmpty
             })
