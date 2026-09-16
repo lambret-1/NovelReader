@@ -419,6 +419,10 @@ final class ReaderViewController: UIViewController {
         view.backgroundColor = config.currentTheme.backgroundColor
         chapterCache.removeAll()
         paginationEngine.invalidateCache()
+        // 更新当前显示页面的配置（页面间距等）
+        if let currentVC = pageViewController.viewControllers?.first as? ReaderPageViewController {
+            currentVC.updateConfig(config)
+        }
 
         if currentChapterIndex < chapters.count {
             let chapter = chapters[currentChapterIndex]
@@ -487,10 +491,19 @@ final class ReaderViewController: UIViewController {
         toggleBars()
     }
     // MARK: - 设置面板显隐
+    // 点击空白区域关闭设置面板的手势
+    private lazy var configPanelDismissGesture: UITapGestureRecognizer = {
+        let gesture = UITapGestureRecognizer(target: self, action: #selector(dismissConfigPanel))
+        gesture.cancelsTouchesInView = false
+        return gesture
+    }()
+
     @objc private func toggleConfigPanel() {
         let isHidden = configPanel.isHidden
         configPanel.isHidden = !isHidden
         if !isHidden {
+            // 打开面板时，添加点击空白区域关闭手势
+            view.addGestureRecognizer(configPanelDismissGesture)
             // 同步当前配置到控件
             fontSizeValueLabel.text = "\(Int(viewModel.config.fontSize))"
             lineSpacingSlider.value = Float(viewModel.config.lineSpacing)
@@ -498,8 +511,26 @@ final class ReaderViewController: UIViewController {
             if let themeIndex = ReaderTheme.all.firstIndex(where: { $0.id == viewModel.config.themeID }) {
                 themeSegmented.selectedSegmentIndex = themeIndex
             }
+        } else {
+            // 关闭面板时，移除手势
+            view.removeGestureRecognizer(configPanelDismissGesture)
         }
         FeedbackManager.shared.mediumImpact()
+    }
+
+    /// 点击非设置面板区域时关闭面板
+    @objc private func dismissConfigPanel(_ gesture: UITapGestureRecognizer) {
+        let location = gesture.location(in: view)
+        // 如果点击位置在设置面板内，不关闭
+        if configPanel.frame.contains(location) {
+            return
+        }
+        // 点击底部工具栏的设置按钮也不关闭（由按钮自己处理）
+        if bottomBar.frame.contains(location) {
+            return
+        }
+        configPanel.isHidden = true
+        view.removeGestureRecognizer(configPanelDismissGesture)
     }
 
     // MARK: - 工具栏显隐
@@ -608,9 +639,7 @@ final class ReaderViewController: UIViewController {
     }
 
     @objc private func pageMarginChanged() {
-        var config = viewModel.config
-        config.pageMargin = CGFloat(pageMarginSlider.value)
-        viewModel.config = config
+        viewModel.updatePageMargin(CGFloat(pageMarginSlider.value))
     }
 
     @objc private func themeChanged() {
@@ -707,6 +736,7 @@ final class ReaderViewModel {
     func updateFontSize(_ size: CGFloat) { config.fontSize = size }
     func updateTheme(_ themeID: String) { config.themeID = themeID }
     func updateLineSpacing(_ spacing: CGFloat) { config.lineSpacing = spacing }
+    func updatePageMargin(_ margin: CGFloat) { config.pageMargin = margin }
     func updateFontName(_ name: String) { config.fontName = name }
 
     // MARK: - 阅读进度

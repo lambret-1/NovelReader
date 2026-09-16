@@ -3,7 +3,7 @@ import UIKit
 /// 单页阅读视图控制器
 final class ReaderPageViewController: UIViewController {
     let page: PaginationEngine.Page
-    private let config: ReaderConfig
+    private var config: ReaderConfig
 
     private lazy var textView: UITextView = {
         let tv = UITextView()
@@ -18,6 +18,10 @@ final class ReaderPageViewController: UIViewController {
         return tv
     }()
 
+    // textView 约束引用，用于动态更新页面间距
+    private var textViewLeadingConstraint: NSLayoutConstraint!
+    private var textViewTrailingConstraint: NSLayoutConstraint!
+
     init(page: PaginationEngine.Page, config: ReaderConfig) {
         self.page = page
         self.config = config
@@ -25,7 +29,7 @@ final class ReaderPageViewController: UIViewController {
     }
 
     required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
+        fatalError("init(coder:) 未实现")
     }
 
     override func viewDidLoad() {
@@ -33,18 +37,29 @@ final class ReaderPageViewController: UIViewController {
         view.backgroundColor = config.currentTheme.backgroundColor
         view.addSubview(textView)
 
+        // 使用 config.pageMargin 作为页面左右间距
+        textViewLeadingConstraint = textView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: config.pageMargin)
+        textViewTrailingConstraint = textView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -config.pageMargin)
+
         NSLayoutConstraint.activate([
-            textView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 16),
-            textView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
-            textView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
-            textView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -16)
+            textView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 16), // 顶部间距16pt
+            textViewLeadingConstraint,
+            textViewTrailingConstraint,
+            textView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -16) // 底部间距16pt
         ])
 
         textView.attributedText = page.attributedString
     }
 
-    /// 更新配置（主题变化时）
+    /// 更新配置（主题/页面间距变化时调用）
     func updateConfig(_ config: ReaderConfig) {
+        self.config = config
         view.backgroundColor = config.currentTheme.backgroundColor
+        // 动态更新页面左右间距
+        textViewLeadingConstraint.constant = config.pageMargin
+        textViewTrailingConstraint.constant = -config.pageMargin
+        UIView.animate(withDuration: 0.2) { // 动画时长0.2秒，平滑过渡
+            self.view.layoutIfNeeded()
+        }
     }
 }
