@@ -67,6 +67,9 @@ final class LibraryViewController: UIViewController {
 
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
+        // 显式恢复导航栏显示和大标题模式，防止从阅读器返回后导航栏消失
+        navigationController?.setNavigationBarHidden(false, animated: animated)
+        navigationController?.navigationBar.prefersLargeTitles = true
         loadBooks()
     }
 

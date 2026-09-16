@@ -197,6 +197,8 @@ final class ReaderViewController: UIViewController {
         super.viewWillDisappear(animated)
         ReadingStatsManager.shared.endSession()
         saveReadingProgress()
+        // 恢复导航栏显示，防止返回上级页面后导航栏消失
+        navigationController?.setNavigationBarHidden(false, animated: animated)
     }
 
     override var prefersStatusBarHidden: Bool { true }
