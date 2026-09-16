@@ -125,15 +125,6 @@ final class ReaderViewController: UIViewController {
         return sc
     }()
 
-    private lazy var fontButton: UIButton = {
-        let btn = UIButton(type: .system)
-        btn.translatesAutoresizingMaskIntoConstraints = false
-        btn.setTitle("字体", for: .normal)
-        btn.titleLabel?.font = DesignToken.Font.subhead // 字体按钮15pt
-        btn.tintColor = DesignToken.Color.primary
-        return btn
-    }()
-
     private lazy var progressLabel: UILabel = {
         let label = UILabel()
         label.translatesAutoresizingMaskIntoConstraints = false
@@ -237,7 +228,6 @@ final class ReaderViewController: UIViewController {
         configPanel.addSubview(pageMarginLabel)
         configPanel.addSubview(pageMarginSlider)
         configPanel.addSubview(themeSegmented)
-        configPanel.addSubview(fontButton)
 
         NSLayoutConstraint.activate([
             pageViewController.view.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor), // 阅读区域从安全区顶部开始，移除顶部工具栏后全屏显示
@@ -300,10 +290,7 @@ final class ReaderViewController: UIViewController {
             // 主题选择（第四行）
             themeSegmented.topAnchor.constraint(equalTo: pageMarginLabel.bottomAnchor, constant: 20),
             themeSegmented.leadingAnchor.constraint(equalTo: configPanel.leadingAnchor, constant: 24),
-            themeSegmented.widthAnchor.constraint(equalToConstant: 200),
-
-            fontButton.centerYAnchor.constraint(equalTo: themeSegmented.centerYAnchor),
-            fontButton.trailingAnchor.constraint(equalTo: configPanel.trailingAnchor, constant: -24)
+            themeSegmented.trailingAnchor.constraint(equalTo: configPanel.trailingAnchor, constant: -24)
         ])
 
         // 点击中间区域显示/隐藏菜单
@@ -317,7 +304,6 @@ final class ReaderViewController: UIViewController {
         lineSpacingSlider.addTarget(self, action: #selector(lineSpacingChanged), for: .valueChanged)
         pageMarginSlider.addTarget(self, action: #selector(pageMarginChanged), for: .valueChanged)
         themeSegmented.addTarget(self, action: #selector(themeChanged), for: .valueChanged)
-        fontButton.addTarget(self, action: #selector(showFontPicker), for: .touchUpInside)
     }
 
     private func bindViewModel() {
@@ -393,7 +379,7 @@ final class ReaderViewController: UIViewController {
         return NSAttributedString(
             string: text,
             attributes: [
-                .font: (config.fontName.isEmpty ? UIFont.systemFont(ofSize: config.fontSize) : UIFont(name: config.fontName, size: config.fontSize) ?? .systemFont(ofSize: config.fontSize)), // fontName为空时使用系统默认字体
+                .font: UIFont.systemFont(ofSize: config.fontSize), // 统一使用系统默认字体
                 .foregroundColor: config.currentTheme.textColor,
                 .paragraphStyle: paragraphStyle
             ]
@@ -657,21 +643,6 @@ final class ReaderViewController: UIViewController {
         viewModel.updateTheme(theme.id)
     }
 
-    @objc private func showFontPicker() {
-        let alert = UIAlertController(title: "选择字体", message: nil, preferredStyle: .actionSheet)
-        let fonts = ["系统默认", "Georgia", "Times New Roman", "Arial", "Courier New"]
-        for font in fonts {
-            alert.addAction(UIAlertAction(title: font, style: .default) { [weak self] _ in
-                let fontName = font == "系统默认" ? AppConfig.defaultFontName : font
-                self?.viewModel.updateFontName(fontName)
-            })
-        }
-        alert.addAction(UIAlertAction(title: "取消", style: .cancel))
-        if let popover = alert.popoverPresentationController {
-            popover.sourceView = fontButton
-        }
-        present(alert, animated: true)
-    }
 }
 
 // MARK: - UIPageViewControllerDataSource
@@ -760,7 +731,6 @@ final class ReaderViewModel {
     func updateTheme(_ themeID: String) { config.themeID = themeID }
     func updateLineSpacing(_ spacing: CGFloat) { config.lineSpacing = spacing }
     func updatePageMargin(_ margin: CGFloat) { config.pageMargin = margin }
-    func updateFontName(_ name: String) { config.fontName = name }
 
     // MARK: - 阅读进度
     func loadReadingProgress(for bookId: String, completion: @escaping (ReadingProgress?) -> Void) {
