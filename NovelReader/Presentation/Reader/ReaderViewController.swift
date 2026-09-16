@@ -311,6 +311,9 @@ final class ReaderViewController: UIViewController {
         tapGesture.delegate = self
         pageViewController.view.addGestureRecognizer(tapGesture)
 
+        // 设置面板关闭手势（一直存在，通过面板状态判断是否处理）
+        view.addGestureRecognizer(configPanelDismissGesture)
+
         lineSpacingSlider.addTarget(self, action: #selector(lineSpacingChanged), for: .valueChanged)
         pageMarginSlider.addTarget(self, action: #selector(pageMarginChanged), for: .valueChanged)
         themeSegmented.addTarget(self, action: #selector(themeChanged), for: .valueChanged)
@@ -496,12 +499,18 @@ final class ReaderViewController: UIViewController {
 
     // MARK: - 动作
     @objc private func handleTap() {
+        // 如果设置面板打开，先关闭面板，不切换工具栏
+        if !configPanel.isHidden {
+            configPanel.isHidden = true
+            return
+        }
         toggleBars()
     }
     // MARK: - 设置面板显隐
-    // 点击空白区域关闭设置面板的手势
+    // 点击空白区域关闭设置面板的手势（一直存在，通过面板状态判断是否处理）
     private lazy var configPanelDismissGesture: UITapGestureRecognizer = {
         let gesture = UITapGestureRecognizer(target: self, action: #selector(dismissConfigPanel))
+        gesture.delegate = self
         gesture.cancelsTouchesInView = false
         return gesture
     }()
@@ -510,8 +519,6 @@ final class ReaderViewController: UIViewController {
         let isHidden = configPanel.isHidden
         configPanel.isHidden = !isHidden
         if !isHidden {
-            // 打开面板时，添加点击空白区域关闭手势
-            view.addGestureRecognizer(configPanelDismissGesture)
             // 同步当前配置到控件
             fontSizeValueLabel.text = "\(Int(viewModel.config.fontSize))"
             lineSpacingSlider.value = Float(viewModel.config.lineSpacing)
@@ -519,26 +526,21 @@ final class ReaderViewController: UIViewController {
             if let themeIndex = ReaderTheme.all.firstIndex(where: { $0.id == viewModel.config.themeID }) {
                 themeSegmented.selectedSegmentIndex = themeIndex
             }
-        } else {
-            // 关闭面板时，移除手势
-            view.removeGestureRecognizer(configPanelDismissGesture)
         }
         FeedbackManager.shared.mediumImpact()
     }
 
     /// 点击非设置面板区域时关闭面板
     @objc private func dismissConfigPanel(_ gesture: UITapGestureRecognizer) {
+        // 面板未打开时不处理
+        guard !configPanel.isHidden else { return }
+
         let location = gesture.location(in: view)
         // 如果点击位置在设置面板内，不关闭
         if configPanel.frame.contains(location) {
             return
         }
-        // 点击底部工具栏的设置按钮也不关闭（由按钮自己处理）
-        if bottomBar.frame.contains(location) {
-            return
-        }
         configPanel.isHidden = true
-        view.removeGestureRecognizer(configPanelDismissGesture)
     }
 
     // MARK: - 工具栏显隐
@@ -721,6 +723,19 @@ extension ReaderViewController: UIPageViewControllerDelegate {
 // MARK: - UIGestureRecognizerDelegate
 extension ReaderViewController: UIGestureRecognizerDelegate {
     func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer) -> Bool {
+        // 设置面板打开时，关闭手势优先识别，不与阅读区点击手势同时识别
+        if !configPanel.isHidden && gestureRecognizer == configPanelDismissGesture {
+            return false
+        }
+        return true
+    }
+
+    func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldReceive touch: UITouch) -> Bool {
+        // 设置面板关闭手势：如果触摸在设置面板内，不接收（让面板内控件响应）
+        if gestureRecognizer == configPanelDismissGesture {
+            let location = touch.location(in: view)
+            return !configPanel.frame.contains(location)
+        }
         return true
     }
 }
