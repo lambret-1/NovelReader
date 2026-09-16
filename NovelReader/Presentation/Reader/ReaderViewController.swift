@@ -464,7 +464,7 @@ final class ReaderViewController: UIViewController {
 
     private func resetAutoHideTimer() {
         autoHideTimer?.invalidate()
-        autoHideTimer = Timer.scheduledTimer(withTimeInterval: 5.0, repeats: false) // 呼出后5秒自动隐藏 { [weak self] _ in
+        autoHideTimer = Timer.scheduledTimer(withTimeInterval: 5.0, repeats: false) { [weak self] _ in // 呼出后5秒自动隐藏
             self?.hideBars()
         }
     }
