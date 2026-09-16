@@ -1,6 +1,6 @@
 # 🐛 可视化警告日志报告 (Bug Log)
 
-**生成时间**: 2026-09-16 07:19:43 UTC
+**生成时间**: 2026-09-16 07:31:53 UTC
 **源日志文件**: `build.log`
 **构建状态**: ✅ 构建成功
 
@@ -68,7 +68,7 @@
 ### 📝 其他警告 (4个)
 
 ```
-/Users/runner/work/NovelReader/NovelReader/NovelReader/Presentation/Library/LibraryViewController.swift:474:46: warning: variable 'self' was written to, but never read
+/Users/runner/work/NovelReader/NovelReader/NovelReader/Presentation/Library/LibraryViewController.swift:477:46: warning: variable 'self' was written to, but never read
 /Users/runner/work/NovelReader/NovelReader/NovelReader/Presentation/Animation/TransitionManager.swift:122:1: warning: extension declares a conformance of imported type 'UIViewController' to imported protocol 'UIViewControllerTransitioningDelegate'; this will not behave correctly if the owners of 'UIKit' introduce this conformance in the future
 /Users/runner/work/NovelReader/NovelReader/NovelReader/App/AppDelegate.swift:203:57: warning: variable 'self' was written to, but never read
 /Users/runner/work/NovelReader/NovelReader/NovelReader/Data/GitHub/GitHubAuthService.swift:37:17: warning: using '_' to ignore the result of a Void-returning function is redundant
@@ -82,7 +82,7 @@
 
 - **质量评级**: **B级（良好，警告较少）**
 - **警告密度**: 每千行约 0 个警告
-- **代码总行数**: 8988 行
+- **代码总行数**: 8993 行
 
 ### 💡 修复建议
 
