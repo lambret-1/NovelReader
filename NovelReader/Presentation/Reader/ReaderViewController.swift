@@ -369,7 +369,6 @@ final class ReaderViewController: UIViewController {
                     self.pageViewController.setViewControllers([firstVC], direction: .forward, animated: false)
                 }
                 self.updateProgressLabel()
-                self.
             }
         } else {
             currentPageIndex = min(currentPageIndex, max(0, currentPages.count - 1))
