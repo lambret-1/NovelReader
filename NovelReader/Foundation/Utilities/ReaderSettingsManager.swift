@@ -9,6 +9,7 @@ final class ReaderSettingsManager {
     private let keys = (
         fontSize: "reader_font_size",
         lineSpacing: "reader_line_spacing",
+        pageMargin: "reader_page_margin",
         fontName: "reader_font_name",
         themeID: "reader_theme_id",
         pageTransition: "reader_page_transition"
@@ -20,6 +21,7 @@ final class ReaderSettingsManager {
     func saveConfig(_ config: ReaderConfig) {
         defaults.set(Double(config.fontSize), forKey: keys.fontSize)
         defaults.set(Double(config.lineSpacing), forKey: keys.lineSpacing)
+        defaults.set(Double(config.pageMargin), forKey: keys.pageMargin)
         defaults.set(config.fontName, forKey: keys.fontName)
         defaults.set(config.themeID, forKey: keys.themeID)
         defaults.set(config.pageTransition.rawValue, forKey: keys.pageTransition)
@@ -34,6 +36,9 @@ final class ReaderSettingsManager {
         }
         if defaults.object(forKey: keys.lineSpacing) != nil {
             config.lineSpacing = CGFloat(defaults.double(forKey: keys.lineSpacing))
+        }
+        if defaults.object(forKey: keys.pageMargin) != nil {
+            config.pageMargin = CGFloat(defaults.double(forKey: keys.pageMargin))
         }
         if let fontName = defaults.string(forKey: keys.fontName) {
             config.fontName = fontName
@@ -53,6 +58,7 @@ final class ReaderSettingsManager {
     func resetToDefault() {
         defaults.removeObject(forKey: keys.fontSize)
         defaults.removeObject(forKey: keys.lineSpacing)
+        defaults.removeObject(forKey: keys.pageMargin)
         defaults.removeObject(forKey: keys.fontName)
         defaults.removeObject(forKey: keys.themeID)
         defaults.removeObject(forKey: keys.pageTransition)

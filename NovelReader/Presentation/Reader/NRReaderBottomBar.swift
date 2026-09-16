@@ -1,11 +1,11 @@
 import UIKit
 
-/// 阅读器下工具栏 - 目录按钮 + 全书进度条 + 夜间模式按钮
+/// 阅读器下工具栏 - 目录按钮 + 全书进度条 + 设置按钮
 final class NRReaderBottomBar: UIView {
 
     // MARK: - 回调
     var onCatalogTapped: (() -> Void)?
-    var onNightModeTapped: (() -> Void)?
+    var onSettingsTapped: (() -> Void)?
     var onProgressTapped: (() -> Void)?
 
     // MARK: - UI 组件
@@ -35,28 +35,26 @@ final class NRReaderBottomBar: UIView {
 
     private let progressView = NRReaderProgressView()
 
-    private lazy var nightButton: UIButton = {
+    private lazy var settingsButton: UIButton = {
         let btn = UIButton(type: .system)
         btn.translatesAutoresizingMaskIntoConstraints = false
-        btn.setImage(UIImage(systemName: "moon.fill"), for: .normal) // 夜间图标
-        btn.tintColor = DesignToken.Color.textSecondary
-        btn.accessibilityLabel = "切换夜间模式"
-        btn.accessibilityHint = "双击切换日间和夜间模式"
-        btn.addTarget(self, action: #selector(nightModeTapped), for: .touchUpInside)
+        btn.setImage(UIImage(systemName: "gearshape.fill"), for: .normal) // 设置齿轮图标
+        btn.tintColor = DesignToken.Color.textPrimary
+        btn.accessibilityLabel = "阅读设置"
+        btn.accessibilityHint = "双击打开阅读设置面板"
+        btn.addTarget(self, action: #selector(settingsTapped), for: .touchUpInside)
         return btn
     }()
 
-    private lazy var nightLabel: UILabel = {
+    private lazy var settingsLabel: UILabel = {
         let label = UILabel()
         label.translatesAutoresizingMaskIntoConstraints = false
-        label.text = "夜间"
-        label.font = DesignToken.Font.caption2 // 夜间文字10pt
+        label.text = "设置"
+        label.font = DesignToken.Font.caption2 // 设置文字10pt
         label.textColor = DesignToken.Color.textSecondary
         label.textAlignment = .center
         return label
     }()
-
-    private var isNightMode = false
 
     // MARK: - 初始化
     override init(frame: CGRect) {
@@ -97,15 +95,15 @@ final class NRReaderBottomBar: UIView {
         progressView.translatesAutoresizingMaskIntoConstraints = false
         addSubview(progressView)
 
-        // 夜间按钮容器
-        let nightContainer = UIStackView()
-        nightContainer.translatesAutoresizingMaskIntoConstraints = false
-        nightContainer.axis = .vertical
-        nightContainer.spacing = 2
-        nightContainer.alignment = .center
-        nightContainer.addArrangedSubview(nightButton)
-        nightContainer.addArrangedSubview(nightLabel)
-        addSubview(nightContainer)
+        // 设置按钮容器
+        let settingsContainer = UIStackView()
+        settingsContainer.translatesAutoresizingMaskIntoConstraints = false
+        settingsContainer.axis = .vertical
+        settingsContainer.spacing = 2 // 图标与文字间距2pt
+        settingsContainer.alignment = .center
+        settingsContainer.addArrangedSubview(settingsButton)
+        settingsContainer.addArrangedSubview(settingsLabel)
+        addSubview(settingsContainer)
 
         NSLayoutConstraint.activate([
             blurView.topAnchor.constraint(equalTo: topAnchor),
@@ -122,18 +120,18 @@ final class NRReaderBottomBar: UIView {
             catalogContainer.centerYAnchor.constraint(equalTo: centerYAnchor),
             catalogContainer.widthAnchor.constraint(equalToConstant: 44), // 目录按钮宽度44pt
 
-            nightContainer.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -DesignToken.Spacing.lg), // 右边距16pt
-            nightContainer.centerYAnchor.constraint(equalTo: centerYAnchor),
-            nightContainer.widthAnchor.constraint(equalToConstant: 44),
+            settingsContainer.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -DesignToken.Spacing.lg), // 右边距16pt
+            settingsContainer.centerYAnchor.constraint(equalTo: centerYAnchor),
+            settingsContainer.widthAnchor.constraint(equalToConstant: 44), // 设置按钮宽度44pt
 
             progressView.leadingAnchor.constraint(equalTo: catalogContainer.trailingAnchor, constant: DesignToken.Spacing.md), // 进度条左边距12pt
-            progressView.trailingAnchor.constraint(equalTo: nightContainer.leadingAnchor, constant: -DesignToken.Spacing.md),
+            progressView.trailingAnchor.constraint(equalTo: settingsContainer.leadingAnchor, constant: -DesignToken.Spacing.md),
             progressView.centerYAnchor.constraint(equalTo: centerYAnchor),
 
             catalogButton.widthAnchor.constraint(equalToConstant: 24), // 图标24pt
             catalogButton.heightAnchor.constraint(equalToConstant: 24),
-            nightButton.widthAnchor.constraint(equalToConstant: 24),
-            nightButton.heightAnchor.constraint(equalToConstant: 24)
+            settingsButton.widthAnchor.constraint(equalToConstant: 24), // 设置图标24pt
+            settingsButton.heightAnchor.constraint(equalToConstant: 24)
         ])
     }
 
@@ -150,32 +148,14 @@ final class NRReaderBottomBar: UIView {
         onCatalogTapped?()
     }
 
-    @objc private func nightModeTapped() {
+    @objc private func settingsTapped() {
         FeedbackManager.shared.mediumImpact()
-        isNightMode.toggle()
-        updateNightModeUI()
-        onNightModeTapped?()
+        onSettingsTapped?()
     }
 
     @objc private func progressTapped() {
         FeedbackManager.shared.lightImpact()
         onProgressTapped?()
-    }
-
-    // MARK: - 私有方法
-    private func updateNightModeUI() {
-        if isNightMode {
-            nightButton.setImage(UIImage(systemName: "sun.max.fill"), for: .normal) // 切换为太阳图标
-            nightButton.tintColor = DesignToken.Color.primary
-            nightLabel.text = "日间"
-            nightLabel.textColor = DesignToken.Color.primary
-        } else {
-            nightButton.setImage(UIImage(systemName: "moon.fill"), for: .normal)
-            nightButton.tintColor = DesignToken.Color.textSecondary
-            nightLabel.text = "夜间"
-            nightLabel.textColor = DesignToken.Color.textSecondary
-        }
-        progressView.updateForNightMode(isNightMode)
     }
 
     // MARK: - 公共方法
@@ -184,20 +164,22 @@ final class NRReaderBottomBar: UIView {
         progressView.setProgress(progress, animated: animated)
     }
 
-    /// 更新夜间模式（外部调用）
+    /// 更新夜间模式（外部调用，仅更新背景和文字颜色）
     func setNightMode(_ isNight: Bool) {
-        isNightMode = isNight
-        updateNightModeUI()
         if isNight {
             blurView.effect = UIBlurEffect(style: .dark)
             separatorView.backgroundColor = UIColor.white.withAlphaComponent(0.1)
             catalogButton.tintColor = DesignToken.Color.textInverse
+            settingsButton.tintColor = DesignToken.Color.textInverse
             catalogLabel.textColor = DesignToken.Color.textSecondary
+            settingsLabel.textColor = DesignToken.Color.textSecondary
         } else {
             blurView.effect = UIBlurEffect(style: .systemMaterial)
             separatorView.backgroundColor = DesignToken.Color.separator
             catalogButton.tintColor = DesignToken.Color.textPrimary
+            settingsButton.tintColor = DesignToken.Color.textPrimary
             catalogLabel.textColor = DesignToken.Color.textSecondary
+            settingsLabel.textColor = DesignToken.Color.textSecondary
         }
     }
 }
