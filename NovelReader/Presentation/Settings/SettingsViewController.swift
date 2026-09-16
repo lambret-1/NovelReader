@@ -107,7 +107,7 @@ extension SettingsViewController: UITableViewDataSource, UITableViewDelegate {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         switch section {
         case 0: return 1 // GitHub
-        case 1: return 2 // 深色模式、API刷新
+        case 1: return 3 // 深色模式、数据同步、API刷新
         case 2: return 3 // 检查更新、版本、关于
         default: return 0
         }
@@ -138,6 +138,10 @@ extension SettingsViewController: UITableViewDataSource, UITableViewDelegate {
             switchView.addTarget(self, action: #selector(toggleDarkMode(_:)), for: .valueChanged)
             cell.accessoryView = switchView
         case (1, 1):
+            cell.textLabel?.text = "数据同步"
+            cell.imageView?.image = UIImage(systemName: "arrow.triangle.2.circlepath")
+            cell.accessoryType = .disclosureIndicator
+        case (1, 2):
             cell.textLabel?.text = "API 刷新书籍"
             cell.accessoryType = .disclosureIndicator
         case (2, 0):
@@ -166,6 +170,10 @@ extension SettingsViewController: UITableViewDataSource, UITableViewDelegate {
         case (0, 0):
             handleGitHubLogin()
         case (1, 1):
+            // 数据同步 - 跳转到同步页面
+            let syncVC = AppContainer.shared.makeSyncViewController()
+            navigationController?.pushViewController(syncVC, animated: true)
+        case (1, 2):
             // API 刷新
             guard AppContainer.shared.authService.loadSavedToken() != nil else {
                 NRToast.shared.error("请先登录 GitHub")
