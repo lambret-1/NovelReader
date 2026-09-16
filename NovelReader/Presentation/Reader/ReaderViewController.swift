@@ -196,7 +196,6 @@ final class ReaderViewController: UIViewController {
         pageViewController.didMove(toParent: self)
 
         // 新 UI 组件
-        view.addSubview(topBar)
         view.addSubview(bottomBar)
 
         // 旧组件（保留，后续迁移）
@@ -215,17 +214,12 @@ final class ReaderViewController: UIViewController {
         configPanel.addSubview(bookmarkListButton)
 
         NSLayoutConstraint.activate([
-            pageViewController.view.topAnchor.constraint(equalTo: topBar.bottomAnchor), // 阅读区域从上工具栏下方开始，不顶着工具栏
+            pageViewController.view.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor), // 阅读区域从安全区顶部开始，移除顶部工具栏后全屏显示
             pageViewController.view.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             pageViewController.view.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             pageViewController.view.bottomAnchor.constraint(equalTo: bottomBar.topAnchor), // 阅读区域到下工具栏上方结束，不顶着工具栏
 
             // 上工具栏
-            topBar.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor), // 上工具栏从安全区顶部开始，避免刘海遮挡
-            topBar.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            topBar.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            topBar.heightAnchor.constraint(equalToConstant: 44), // 上工具栏高度44pt，标准导航栏高度
-
             // 下工具栏
             bottomBar.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             bottomBar.trailingAnchor.constraint(equalTo: view.trailingAnchor),
@@ -300,7 +294,6 @@ final class ReaderViewController: UIViewController {
         currentChapterIndex = index
         let chapter = chapters[index]
         chapterTitleLabel.text = chapter.title
-        topBar.setTitle(chapter.title) // 上工具栏显示章节标题
 
         if let cachedPages = chapterCache[index] {
             currentPages = cachedPages
@@ -467,7 +460,6 @@ final class ReaderViewController: UIViewController {
         areBarsHidden.toggle()
         let alpha: CGFloat = areBarsHidden ? 0 : 1
         UIView.animate(withDuration: DesignToken.Animation.normal) {
-            self.topBar.alpha = alpha
             self.bottomBar.alpha = alpha
         }
         if !areBarsHidden {
@@ -488,7 +480,6 @@ final class ReaderViewController: UIViewController {
         guard !areBarsHidden else { return }
         areBarsHidden = true
         UIView.animate(withDuration: DesignToken.Animation.normal) {
-            self.topBar.alpha = 0
             self.bottomBar.alpha = 0
         }
     }
@@ -524,7 +515,6 @@ final class ReaderViewController: UIViewController {
     }
 
     private func updateNightModeUI() {
-        topBar.updateForNightMode(isNightMode)
         bottomBar.setNightMode(isNightMode)
         UIView.animate(withDuration: 0.4) {
             if self.isNightMode {

@@ -14,48 +14,14 @@ enum NaturalSort {
         // 去除文件扩展名
         let nameWithoutExtension = (fileName as NSString).deletingPathExtension
 
-        // 模式1：第X章 / 第X节 / 第X回 / 第X集
-        // 使用 NSString 配合 NSRegularExpression 更可靠
-        let nsString = nameWithoutExtension as NSString
-        if let regex = try? NSRegularExpression(pattern: "第(\\d+)", options: []) {
-            let matches = regex.matches(in: nameWithoutExtension, options: [], range: NSRange(location: 0, length: nsString.length))
-            if let match = matches.first, match.numberOfRanges > 1 {
-                let numberRange = match.range(at: 1)
-                if numberRange.location != NSNotFound {
-                    let numberStr = nsString.substring(with: numberRange)
-                    if let num = Int(numberStr) {
-                        return num
-                    }
-                }
-            }
-        }
+        // 使用 Scanner 提取第一个数字
+        // Scanner 会自动跳过非数字字符，然后扫描连续的数字
+        let scanner = Scanner(string: nameWithoutExtension)
+        scanner.charactersToBeSkipped = CharacterSet.decimalDigits.inverted
 
-        // 模式2：数字开头（如 1.xxx、001_xxx、1-xxx）
-        if let regex = try? NSRegularExpression(pattern: "^(\\d+)", options: []) {
-            let matches = regex.matches(in: nameWithoutExtension, options: [], range: NSRange(location: 0, length: nsString.length))
-            if let match = matches.first, match.numberOfRanges > 1 {
-                let numberRange = match.range(at: 1)
-                if numberRange.location != NSNotFound {
-                    let numberStr = nsString.substring(with: numberRange)
-                    if let num = Int(numberStr) {
-                        return num
-                    }
-                }
-            }
-        }
-
-        // 模式3：文件名中包含的第一个数字
-        if let regex = try? NSRegularExpression(pattern: "(\\d+)", options: []) {
-            let matches = regex.matches(in: nameWithoutExtension, options: [], range: NSRange(location: 0, length: nsString.length))
-            if let match = matches.first, match.numberOfRanges > 1 {
-                let numberRange = match.range(at: 1)
-                if numberRange.location != NSNotFound {
-                    let numberStr = nsString.substring(with: numberRange)
-                    if let num = Int(numberStr) {
-                        return num
-                    }
-                }
-            }
+        var number: Int = 0
+        if scanner.scanInt(&number) {
+            return number
         }
 
         // 无法识别数字，排到最后
