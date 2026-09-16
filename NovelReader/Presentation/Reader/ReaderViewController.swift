@@ -38,15 +38,49 @@ final class ReaderViewController: UIViewController {
         return view
     }()
 
-    private lazy var fontSizeSlider: UISlider = {
-        let slider = UISlider()
-        slider.translatesAutoresizingMaskIntoConstraints = false
-        slider.minimumValue = 12
-        slider.maximumValue = 32
-        slider.value = Float(AppConfig.defaultFontSize)
-        slider.minimumTrackTintColor = DesignToken.Color.primary // 滑块主色
-        slider.thumbTintColor = DesignToken.Color.primary
-        return slider
+    // 字体大小调节组（A- / 字号 / A+）
+    private lazy var fontSizeDecreaseButton: UIButton = {
+        let btn = UIButton(type: .system)
+        btn.translatesAutoresizingMaskIntoConstraints = false
+        btn.setTitle("A-", for: .normal)
+        btn.titleLabel?.font = UIFont.systemFont(ofSize: 14) // 减小按钮字号14pt
+        btn.tintColor = DesignToken.Color.textPrimary
+        btn.backgroundColor = DesignToken.Color.backgroundSecondary
+        btn.layer.cornerRadius = 8 // 按钮圆角8pt
+        btn.addTarget(self, action: #selector(fontSizeDecrease), for: .touchUpInside)
+        return btn
+    }()
+
+    private lazy var fontSizeValueLabel: UILabel = {
+        let label = UILabel()
+        label.translatesAutoresizingMaskIntoConstraints = false
+        label.text = "\(Int(AppConfig.defaultFontSize))"
+        label.font = DesignToken.Font.subhead // 字号显示15pt
+        label.textColor = DesignToken.Color.textPrimary
+        label.textAlignment = .center
+        return label
+    }()
+
+    private lazy var fontSizeIncreaseButton: UIButton = {
+        let btn = UIButton(type: .system)
+        btn.translatesAutoresizingMaskIntoConstraints = false
+        btn.setTitle("A+", for: .normal)
+        btn.titleLabel?.font = UIFont.systemFont(ofSize: 18) // 增大按钮字号18pt
+        btn.tintColor = DesignToken.Color.textPrimary
+        btn.backgroundColor = DesignToken.Color.backgroundSecondary
+        btn.layer.cornerRadius = 8 // 按钮圆角8pt
+        btn.addTarget(self, action: #selector(fontSizeIncrease), for: .touchUpInside)
+        return btn
+    }()
+
+    // 行段间距
+    private lazy var lineSpacingLabel: UILabel = {
+        let label = UILabel()
+        label.translatesAutoresizingMaskIntoConstraints = false
+        label.text = "行段间距"
+        label.font = DesignToken.Font.subhead // 标签字号15pt
+        label.textColor = DesignToken.Color.textPrimary
+        return label
     }()
 
     private lazy var lineSpacingSlider: UISlider = {
@@ -55,6 +89,27 @@ final class ReaderViewController: UIViewController {
         slider.minimumValue = 0
         slider.maximumValue = 20
         slider.value = Float(AppConfig.defaultLineSpacing)
+        slider.minimumTrackTintColor = DesignToken.Color.primary
+        slider.thumbTintColor = DesignToken.Color.primary
+        return slider
+    }()
+
+    // 页面间距
+    private lazy var pageMarginLabel: UILabel = {
+        let label = UILabel()
+        label.translatesAutoresizingMaskIntoConstraints = false
+        label.text = "页面间距"
+        label.font = DesignToken.Font.subhead // 标签字号15pt
+        label.textColor = DesignToken.Color.textPrimary
+        return label
+    }()
+
+    private lazy var pageMarginSlider: UISlider = {
+        let slider = UISlider()
+        slider.translatesAutoresizingMaskIntoConstraints = false
+        slider.minimumValue = 8
+        slider.maximumValue = 40
+        slider.value = 20 // 默认页面间距20pt
         slider.minimumTrackTintColor = DesignToken.Color.primary
         slider.thumbTintColor = DesignToken.Color.primary
         return slider
@@ -76,30 +131,6 @@ final class ReaderViewController: UIViewController {
         btn.setTitle("字体", for: .normal)
         btn.titleLabel?.font = DesignToken.Font.subhead // 字体按钮15pt
         btn.tintColor = DesignToken.Color.primary
-        return btn
-    }()
-
-    private lazy var bookmarkButton: UIButton = {
-        let btn = UIButton(type: .system)
-        btn.translatesAutoresizingMaskIntoConstraints = false
-        btn.setImage(UIImage(systemName: "bookmark"), for: .normal)
-        btn.tintColor = DesignToken.Color.textPrimary
-        return btn
-    }()
-
-    private lazy var searchButton: UIButton = {
-        let btn = UIButton(type: .system)
-        btn.translatesAutoresizingMaskIntoConstraints = false
-        btn.setImage(UIImage(systemName: "magnifyingglass"), for: .normal)
-        btn.tintColor = DesignToken.Color.textPrimary
-        return btn
-    }()
-
-    private lazy var bookmarkListButton: UIButton = {
-        let btn = UIButton(type: .system)
-        btn.translatesAutoresizingMaskIntoConstraints = false
-        btn.setImage(UIImage(systemName: "list.bullet"), for: .normal)
-        btn.tintColor = DesignToken.Color.textPrimary
         return btn
     }()
 
@@ -127,8 +158,8 @@ final class ReaderViewController: UIViewController {
         bar.onCatalogTapped = { [weak self] in
             self?.showCatalog()
         }
-        bar.onNightModeTapped = { [weak self] in
-            self?.toggleNightMode()
+        bar.onSettingsTapped = { [weak self] in
+            self?.toggleConfigPanel()
         }
         bar.onProgressTapped = { [weak self] in
             self?.showProgressDetail()
@@ -198,13 +229,15 @@ final class ReaderViewController: UIViewController {
         chapterTitleLabel.isHidden = true
         progressLabel.isHidden = true
 
-        configPanel.addSubview(fontSizeSlider)
+        configPanel.addSubview(fontSizeDecreaseButton)
+        configPanel.addSubview(fontSizeValueLabel)
+        configPanel.addSubview(fontSizeIncreaseButton)
+        configPanel.addSubview(lineSpacingLabel)
         configPanel.addSubview(lineSpacingSlider)
+        configPanel.addSubview(pageMarginLabel)
+        configPanel.addSubview(pageMarginSlider)
         configPanel.addSubview(themeSegmented)
         configPanel.addSubview(fontButton)
-        configPanel.addSubview(bookmarkButton)
-        configPanel.addSubview(searchButton)
-        configPanel.addSubview(bookmarkListButton)
 
         NSLayoutConstraint.activate([
             pageViewController.view.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor), // 阅读区域从安全区顶部开始，移除顶部工具栏后全屏显示
@@ -229,31 +262,48 @@ final class ReaderViewController: UIViewController {
             configPanel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: DesignToken.Spacing.lg),
             configPanel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -DesignToken.Spacing.lg),
             configPanel.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -DesignToken.Spacing.lg),
-            configPanel.heightAnchor.constraint(equalToConstant: 200),
+            configPanel.heightAnchor.constraint(equalToConstant: 280), // 设置面板高度280pt，容纳更多设置项
 
-            fontSizeSlider.topAnchor.constraint(equalTo: configPanel.topAnchor, constant: 20),
-            fontSizeSlider.leadingAnchor.constraint(equalTo: configPanel.leadingAnchor, constant: 24),
-            fontSizeSlider.trailingAnchor.constraint(equalTo: configPanel.trailingAnchor, constant: -24),
+            // 字体大小调节组（第一行）
+            fontSizeDecreaseButton.topAnchor.constraint(equalTo: configPanel.topAnchor, constant: 20),
+            fontSizeDecreaseButton.leadingAnchor.constraint(equalTo: configPanel.leadingAnchor, constant: 24),
+            fontSizeDecreaseButton.widthAnchor.constraint(equalToConstant: 44), // 按钮宽度44pt
+            fontSizeDecreaseButton.heightAnchor.constraint(equalToConstant: 36), // 按钮高度36pt
 
-            lineSpacingSlider.topAnchor.constraint(equalTo: fontSizeSlider.bottomAnchor, constant: 16),
-            lineSpacingSlider.leadingAnchor.constraint(equalTo: configPanel.leadingAnchor, constant: 24),
+            fontSizeValueLabel.centerYAnchor.constraint(equalTo: fontSizeDecreaseButton.centerYAnchor),
+            fontSizeValueLabel.centerXAnchor.constraint(equalTo: configPanel.centerXAnchor),
+            fontSizeValueLabel.widthAnchor.constraint(equalToConstant: 60), // 字号显示宽度60pt
+
+            fontSizeIncreaseButton.centerYAnchor.constraint(equalTo: fontSizeDecreaseButton.centerYAnchor),
+            fontSizeIncreaseButton.trailingAnchor.constraint(equalTo: configPanel.trailingAnchor, constant: -24),
+            fontSizeIncreaseButton.widthAnchor.constraint(equalToConstant: 44),
+            fontSizeIncreaseButton.heightAnchor.constraint(equalToConstant: 36),
+
+            // 行段间距（第二行）
+            lineSpacingLabel.topAnchor.constraint(equalTo: fontSizeDecreaseButton.bottomAnchor, constant: 20),
+            lineSpacingLabel.leadingAnchor.constraint(equalTo: configPanel.leadingAnchor, constant: 24),
+            lineSpacingLabel.widthAnchor.constraint(equalToConstant: 80), // 标签宽度80pt
+
+            lineSpacingSlider.centerYAnchor.constraint(equalTo: lineSpacingLabel.centerYAnchor),
+            lineSpacingSlider.leadingAnchor.constraint(equalTo: lineSpacingLabel.trailingAnchor, constant: 12),
             lineSpacingSlider.trailingAnchor.constraint(equalTo: configPanel.trailingAnchor, constant: -24),
 
-            themeSegmented.topAnchor.constraint(equalTo: lineSpacingSlider.bottomAnchor, constant: 16),
+            // 页面间距（第三行）
+            pageMarginLabel.topAnchor.constraint(equalTo: lineSpacingLabel.bottomAnchor, constant: 20),
+            pageMarginLabel.leadingAnchor.constraint(equalTo: configPanel.leadingAnchor, constant: 24),
+            pageMarginLabel.widthAnchor.constraint(equalToConstant: 80),
+
+            pageMarginSlider.centerYAnchor.constraint(equalTo: pageMarginLabel.centerYAnchor),
+            pageMarginSlider.leadingAnchor.constraint(equalTo: pageMarginLabel.trailingAnchor, constant: 12),
+            pageMarginSlider.trailingAnchor.constraint(equalTo: configPanel.trailingAnchor, constant: -24),
+
+            // 主题选择（第四行）
+            themeSegmented.topAnchor.constraint(equalTo: pageMarginLabel.bottomAnchor, constant: 20),
             themeSegmented.leadingAnchor.constraint(equalTo: configPanel.leadingAnchor, constant: 24),
             themeSegmented.widthAnchor.constraint(equalToConstant: 200),
 
             fontButton.centerYAnchor.constraint(equalTo: themeSegmented.centerYAnchor),
-            fontButton.trailingAnchor.constraint(equalTo: configPanel.trailingAnchor, constant: -24),
-
-            bookmarkButton.topAnchor.constraint(equalTo: themeSegmented.bottomAnchor, constant: 16),
-            bookmarkButton.trailingAnchor.constraint(equalTo: configPanel.centerXAnchor, constant: -40),
-
-            searchButton.topAnchor.constraint(equalTo: themeSegmented.bottomAnchor, constant: 16),
-            searchButton.centerXAnchor.constraint(equalTo: configPanel.centerXAnchor),
-
-            bookmarkListButton.topAnchor.constraint(equalTo: themeSegmented.bottomAnchor, constant: 16),
-            bookmarkListButton.leadingAnchor.constraint(equalTo: configPanel.centerXAnchor, constant: 40)
+            fontButton.trailingAnchor.constraint(equalTo: configPanel.trailingAnchor, constant: -24)
         ])
 
         // 点击中间区域显示/隐藏菜单
@@ -261,13 +311,10 @@ final class ReaderViewController: UIViewController {
         tapGesture.delegate = self
         pageViewController.view.addGestureRecognizer(tapGesture)
 
-        fontSizeSlider.addTarget(self, action: #selector(fontSizeChanged), for: .valueChanged)
         lineSpacingSlider.addTarget(self, action: #selector(lineSpacingChanged), for: .valueChanged)
+        pageMarginSlider.addTarget(self, action: #selector(pageMarginChanged), for: .valueChanged)
         themeSegmented.addTarget(self, action: #selector(themeChanged), for: .valueChanged)
         fontButton.addTarget(self, action: #selector(showFontPicker), for: .touchUpInside)
-        bookmarkButton.addTarget(self, action: #selector(toggleBookmark), for: .touchUpInside)
-        searchButton.addTarget(self, action: #selector(showSearch), for: .touchUpInside)
-        bookmarkListButton.addTarget(self, action: #selector(showBookmarkList), for: .touchUpInside)
     }
 
     private func bindViewModel() {
@@ -448,6 +495,22 @@ final class ReaderViewController: UIViewController {
     @objc private func handleTap() {
         toggleBars()
     }
+    // MARK: - 设置面板显隐
+    @objc private func toggleConfigPanel() {
+        let isHidden = configPanel.isHidden
+        configPanel.isHidden = !isHidden
+        if !isHidden {
+            // 同步当前配置到控件
+            fontSizeValueLabel.text = "\(Int(viewModel.config.fontSize))"
+            lineSpacingSlider.value = Float(viewModel.config.lineSpacing)
+            pageMarginSlider.value = Float(viewModel.config.pageMargin)
+            if let themeIndex = ReaderTheme.all.firstIndex(where: { $0.id == viewModel.config.themeID }) {
+                themeSegmented.selectedSegmentIndex = themeIndex
+            }
+        }
+        FeedbackManager.shared.mediumImpact()
+    }
+
     // MARK: - 工具栏显隐
     private func toggleBars() {
         areBarsHidden.toggle()
@@ -535,12 +598,28 @@ final class ReaderViewController: UIViewController {
     }
 
 
-    @objc private func fontSizeChanged() {
-        viewModel.updateFontSize(CGFloat(fontSizeSlider.value))
+    @objc private func fontSizeDecrease() {
+        let newSize = max(12, viewModel.config.fontSize - 1) // 最小字号12pt
+        viewModel.updateFontSize(newSize)
+        fontSizeValueLabel.text = "\(Int(newSize))"
+        FeedbackManager.shared.lightImpact()
+    }
+
+    @objc private func fontSizeIncrease() {
+        let newSize = min(32, viewModel.config.fontSize + 1) // 最大字号32pt
+        viewModel.updateFontSize(newSize)
+        fontSizeValueLabel.text = "\(Int(newSize))"
+        FeedbackManager.shared.lightImpact()
     }
 
     @objc private func lineSpacingChanged() {
         viewModel.updateLineSpacing(CGFloat(lineSpacingSlider.value))
+    }
+
+    @objc private func pageMarginChanged() {
+        var config = viewModel.config
+        config.pageMargin = CGFloat(pageMarginSlider.value)
+        viewModel.config = config
     }
 
     @objc private func themeChanged() {
