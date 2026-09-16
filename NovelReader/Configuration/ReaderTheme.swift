@@ -83,7 +83,6 @@ struct ReaderConfig: Equatable {
     var fontSize: CGFloat
     var lineSpacing: CGFloat
     var pageMargin: CGFloat // 页面左右间距
-    var fontName: String
     var themeID: String
     var pageTransition: PageTransition
 
@@ -97,7 +96,6 @@ struct ReaderConfig: Equatable {
         fontSize: AppConfig.defaultFontSize,
         lineSpacing: AppConfig.defaultLineSpacing,
         pageMargin: 20, // 默认页面间距20pt
-        fontName: AppConfig.defaultFontName,
         themeID: ReaderTheme.day.id,
         pageTransition: .scroll
     )
