@@ -342,7 +342,8 @@ final class ReaderViewController: UIViewController {
 
         let config = viewModel.config
         let attributedString = makeAttributedString(from: chapter.content, config: config)
-        let bounds = view.bounds.inset(by: UIEdgeInsets(top: 16, left: 20, bottom: 16, right: 20))
+        // 使用 config.pageMargin 作为页面左右间距，与 ReaderPageViewController 保持一致
+        let bounds = view.bounds.inset(by: UIEdgeInsets(top: 16, left: config.pageMargin, bottom: 16, right: config.pageMargin))
         currentPages = paginationEngine.paginate(attributedString: attributedString, bounds: bounds)
         chapterCache[index] = currentPages
     }
@@ -403,7 +404,7 @@ final class ReaderViewController: UIViewController {
 
     private func preloadAdjacentChapters() {
         let config = viewModel.config
-        let bounds = view.bounds.inset(by: UIEdgeInsets(top: 16, left: 20, bottom: 16, right: 20))
+        let bounds = view.bounds.inset(by: UIEdgeInsets(top: 16, left: config.pageMargin, bottom: 16, right: config.pageMargin))
 
         for offset in [-1, 1] {
             let idx = currentChapterIndex + offset
@@ -419,21 +420,28 @@ final class ReaderViewController: UIViewController {
         view.backgroundColor = config.currentTheme.backgroundColor
         chapterCache.removeAll()
         paginationEngine.invalidateCache()
-        // 更新当前显示页面的配置（页面间距等）
-        if let currentVC = pageViewController.viewControllers?.first as? ReaderPageViewController {
-            currentVC.updateConfig(config)
+
+        guard currentChapterIndex < chapters.count else {
+            setNeedsStatusBarAppearanceUpdate()
+            return
         }
 
-        if currentChapterIndex < chapters.count {
-            let chapter = chapters[currentChapterIndex]
-            let offset = currentPages.indices.contains(currentPageIndex) ? currentPages[currentPageIndex].range.location : 0
-            loadChapter(at: currentChapterIndex, restorePage: false)
-            currentPageIndex = paginationEngine.pageIndex(for: offset, in: currentPages)
+        // 保存当前阅读偏移量，用于重新分页后恢复位置
+        let savedOffset = currentPages.indices.contains(currentPageIndex) ? currentPages[currentPageIndex].range.location : 0
+
+        // 重新加载章节（内部会重新分页并设置初始页面）
+        loadChapter(at: currentChapterIndex, restorePage: false)
+
+        // 根据保存的偏移量重新定位到最接近的页面
+        if !currentPages.isEmpty {
+            currentPageIndex = paginationEngine.pageIndex(for: savedOffset, in: currentPages)
+            currentPageIndex = min(currentPageIndex, currentPages.count - 1)
             if let vc = makePageViewController(at: currentPageIndex) {
                 pageViewController.setViewControllers([vc], direction: .forward, animated: false)
             }
             updateProgressLabel()
         }
+
         setNeedsStatusBarAppearanceUpdate()
     }
 

@@ -58,8 +58,6 @@ final class ReaderPageViewController: UIViewController {
         // 动态更新页面左右间距
         textViewLeadingConstraint.constant = config.pageMargin
         textViewTrailingConstraint.constant = -config.pageMargin
-        UIView.animate(withDuration: 0.2) { // 动画时长0.2秒，平滑过渡
-            self.view.layoutIfNeeded()
-        }
+        view.layoutIfNeeded()
     }
 }
