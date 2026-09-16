@@ -232,7 +232,14 @@ final class SyncViewController: UIViewController {
 
         syncEngine.startSync()
             .receive(on: DispatchQueue.main)
-            .sink(receiveCompletion: { _ in }, receiveValue: { _ in })
+            .sink(receiveCompletion: { completion in
+                if case .failure(let error) = completion {
+                    NRToast.shared.error(error.localizedDescription)
+                }
+            }, receiveValue: { [weak self] result in
+                self?.lastSyncMessage = result.message
+                NRToast.shared.success(result.message)
+            })
             .store(in: &cancellables)
     }
 }
