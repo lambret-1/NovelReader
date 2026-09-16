@@ -27,6 +27,15 @@ final class GitHubAPIClient {
         self.token = token
     }
 
+    /// 从 Keychain 自动恢复已保存的 Token
+    /// 调用时机：App 启动时、任何 API 请求前检查
+    func restoreTokenFromKeychain() {
+        if let savedToken = KeychainManager.shared.get(key: "github_personal_access_token") {
+            self.token = savedToken
+            AppLogger.info("GitHubAPIClient 已从 Keychain 恢复 Token")
+        }
+    }
+
     /// 清除 Token
     func clearToken() {
         self.token = nil
@@ -120,6 +129,10 @@ final class GitHubAPIClient {
         request.setValue("application/vnd.github.v3+json", forHTTPHeaderField: "Accept")
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
 
+        // 发送请求前确保 Token 已从 Keychain 恢复（防止单例实例未被设置）
+        if token == nil {
+            restoreTokenFromKeychain()
+        }
         if let token = token {
             request.setValue("token \(token)", forHTTPHeaderField: "Authorization")
         }

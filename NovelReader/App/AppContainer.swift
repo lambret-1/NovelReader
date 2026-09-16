@@ -32,7 +32,7 @@ final class AppContainer {
     ///   - databaseManager: 数据库管理器，默认创建新实例
     ///   - apiClient: GitHub API 客户端，默认创建新实例
     init(databaseManager: DatabaseManager = DatabaseManager(),
-         apiClient: GitHubAPIClient = GitHubAPIClient()) {
+         apiClient: GitHubAPIClient = .shared) {
         self.databaseManager = databaseManager
         self.apiClient = apiClient
 

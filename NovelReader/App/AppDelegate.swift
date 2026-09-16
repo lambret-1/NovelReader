@@ -21,6 +21,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         // 启动时自动从 Keychain 加载已保存的 Token，避免每次同步都重新输入
         if let savedToken = container.authService.loadSavedToken() {
             container.apiClient.setToken(savedToken)
+            GitHubAPIClient.shared.setToken(savedToken) // 确保单例也有 Token
             AppLogger.info("启动时已自动加载已保存的 GitHub Token")
         }
 

@@ -20,12 +20,13 @@ final class NovelRefreshService {
     @Published private(set) var refreshMessage: String = ""
 
     // MARK: - 初始化
-    init(fileService: GitHubFileService = GitHubFileService(),
-         bookRepository: BookRepository = BookRepository(),
-         chapterRepository: ChapterRepository = ChapterRepository()) {
-        self.fileService = fileService
-        self.bookRepository = bookRepository
-        self.chapterRepository = chapterRepository
+    init(fileService: GitHubFileService? = nil,
+         bookRepository: BookRepository? = nil,
+         chapterRepository: ChapterRepository? = nil) {
+        // 使用 AppContainer 的服务，确保 Token 一致
+        self.fileService = fileService ?? AppContainer.shared.fileService
+        self.bookRepository = bookRepository ?? AppContainer.shared.bookRepository
+        self.chapterRepository = chapterRepository ?? AppContainer.shared.chapterRepository
     }
 
     // MARK: - 公共方法
