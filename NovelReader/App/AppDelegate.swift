@@ -36,6 +36,36 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     // MARK: - 检查更新
 
+    /// 手动检查更新（供设置页面调用）
+    /// 检查完成后：有更新则弹窗提示（稍后提醒/立即更新），无更新则Toast提示
+    func manualCheckForUpdates() {
+        let container = AppContainer.shared
+        let currentVersion = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "0.0.0"
+
+        NRToast.shared.info("正在检查更新...")
+        AppLogger.info("手动检查更新，当前版本: \(currentVersion)")
+
+        container.updateService.checkForUpdates()
+            .receive(on: DispatchQueue.main)
+            .sink(receiveCompletion: { completion in
+                if case .failure(let error) = completion {
+                    AppLogger.error("检查更新失败: \(error.localizedDescription)")
+                    NRToast.shared.error("检查更新失败: \(error.localizedDescription)")
+                }
+            }, receiveValue: { [weak self] latestRelease in
+                guard let self = self else { return }
+
+                if container.updateService.hasUpdate(latest: latestRelease, currentVersion: currentVersion) {
+                    AppLogger.info("发现新版本 \(latestRelease.tagName)，弹出更新提示")
+                    self.presentUpdateAlert(release: latestRelease)
+                } else {
+                    AppLogger.info("当前已是最新版本 \(currentVersion)")
+                    NRToast.shared.success("当前已是最新版本 v\(currentVersion)")
+                }
+            })
+            .store(in: &cancellables)
+    }
+
     /// 检查 GitHub 最新 Release，有更新则弹窗提示
     private func checkForUpdates() {
         let container = AppContainer.shared

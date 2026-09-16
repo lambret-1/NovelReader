@@ -78,23 +78,12 @@ final class SettingsViewController: UIViewController {
 
     // MARK: - 检查更新
     private func checkForUpdates() {
-        let currentVersion = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "0.0.0"
-        NRToast.shared.info("正在检查更新...")
-
-        AppContainer.shared.updateService.checkForUpdates()
-            .receive(on: DispatchQueue.main)
-            .sink(receiveCompletion: { completion in
-                if case .failure(let error) = completion {
-                    NRToast.shared.error("检查更新失败: \(error.localizedDescription)")
-                }
-            }, receiveValue: { latest in
-                if AppContainer.shared.updateService.hasUpdate(latest: latest, currentVersion: currentVersion) {
-                    NRToast.shared.info("发现新版本: \(latest.tagName)")
-                } else {
-                    NRToast.shared.success("当前已是最新版本 v\(currentVersion)")
-                }
-            })
-            .store(in: &cancellables)
+        // 调用 AppDelegate 的公共方法，复用更新提示/下载/分享面板逻辑
+        guard let appDelegate = UIApplication.shared.delegate as? AppDelegate else {
+            NRToast.shared.error("检查更新失败")
+            return
+        }
+        appDelegate.manualCheckForUpdates()
     }
 }
 
