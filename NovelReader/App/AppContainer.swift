@@ -36,19 +36,19 @@ final class AppContainer {
         self.databaseManager = databaseManager
         self.apiClient = apiClient
 
-        // 服务
-        self.authService = GitHubAuthService(apiClient: apiClient, syncMetadataRepository: syncMetadataRepository)
-        self.fileService = GitHubFileService(apiClient: apiClient)
-        self.gitService = GitHubGitService(apiClient: apiClient)
-        self.updateService = UpdateCheckService(apiClient: apiClient)
-
-        // Repository
+        // Repository（先初始化，服务依赖这些 Repository）
         self.bookRepository = BookRepository(dbQueue: databaseManager.dbQueue)
         self.chapterRepository = ChapterRepository(dbQueue: databaseManager.dbQueue)
         self.bookmarkRepository = BookmarkRepository(dbQueue: databaseManager.dbQueue)
         self.readingProgressRepository = ReadingProgressRepository(dbQueue: databaseManager.dbQueue)
         self.syncMetadataRepository = SyncMetadataRepository(dbQueue: databaseManager.dbQueue)
         self.conflictRepository = ConflictRepository(dbQueue: databaseManager.dbQueue)
+
+        // 服务
+        self.authService = GitHubAuthService(apiClient: apiClient, syncMetadataRepository: syncMetadataRepository)
+        self.fileService = GitHubFileService(apiClient: apiClient)
+        self.gitService = GitHubGitService(apiClient: apiClient)
+        self.updateService = UpdateCheckService(apiClient: apiClient)
 
         // SyncEngine
         self.syncEngine = SyncEngine(
