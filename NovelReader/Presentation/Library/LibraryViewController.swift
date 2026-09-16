@@ -6,6 +6,7 @@ final class LibraryViewController: UIViewController {
 
     private let bookRepository = AppContainer.shared.bookRepository
     private let chapterRepository = AppContainer.shared.chapterRepository
+    private let readingProgressRepository = AppContainer.shared.readingProgressRepository
     private var cancellables = Set<AnyCancellable>()
     private var books: [Book] = []
 
@@ -297,6 +298,50 @@ final class LibraryViewController: UIViewController {
     }
 
     // MARK: - 单本书操作
+    private func openBookFromLastPosition(_ book: Book) {
+        // 先检查是否有保存的阅读进度
+        readingProgressRepository.fetchProgress(bookId: book.id)
+            .receive(on: DispatchQueue.main)
+            .sink(receiveCompletion: { [weak self] completion in
+                if case .failure = completion {
+                    // 读取进度失败，正常进入章节列表
+                    self?.openBook(book)
+                }
+            }, receiveValue: { [weak self] progress in
+                guard let self = self else { return }
+                if let progress = progress, !progress.chapterId.isEmpty {
+                    // 有阅读进度，加载章节并直接跳转到阅读器
+                    self.chapterRepository.fetchChapters(bookId: book.id)
+                        .receive(on: DispatchQueue.main)
+                        .sink(receiveCompletion: { [weak self] completion in
+                            if case .failure = completion {
+                                self?.openBook(book)
+                            }
+                        }, receiveValue: { [weak self] chapters in
+                            guard let self = self else { return }
+                            // 找到上次阅读章节的索引
+                            if let chapterIndex = chapters.firstIndex(where: { $0.id == progress.chapterId }) {
+                                // 直接跳转到阅读器，定位到上次阅读章节
+                                let readerVC = AppContainer.shared.makeReaderViewController(
+                                    book: book,
+                                    chapters: chapters,
+                                    startIndex: chapterIndex
+                                )
+                                self.navigationController?.pushViewController(readerVC, animated: true)
+                            } else {
+                                // 找不到对应章节，进入章节列表
+                                self.openBook(book)
+                            }
+                        })
+                        .store(in: &self.cancellables)
+                } else {
+                    // 无阅读进度，正常进入章节列表
+                    self.openBook(book)
+                }
+            })
+            .store(in: &cancellables)
+    }
+
     private func openBook(_ book: Book) {
         let chapterListVC = AppContainer.shared.makeChapterListViewController(book: book)
         navigationController?.pushViewController(chapterListVC, animated: true)
@@ -475,9 +520,9 @@ extension LibraryViewController: UICollectionViewDataSource, UICollectionViewDel
             updateNavigationBarItems()
             setupEditingToolbar()
         } else {
-            // 正常模式：打开书籍
+            // 正常模式：检查阅读进度，直接进入上次阅读位置
             collectionView.deselectItem(at: indexPath, animated: true)
-            openBook(book)
+            openBookFromLastPosition(book)
         }
     }
 }
