@@ -1,6 +1,6 @@
 # 🐛 可视化警告日志报告 (Bug Log)
 
-**生成时间**: 2026-09-16 07:01:57 UTC
+**生成时间**: 2026-09-16 07:08:15 UTC
 **源日志文件**: `build.log`
 **构建状态**: ✅ 构建成功
 
@@ -11,7 +11,7 @@
 | 类型 | 数量 | 状态 |
 |------|------|------|
 | 🔴 错误 | **00** 个 | 无错误 |
-| 🟡 警告 | **06** 个 | 建议清理 |
+| 🟡 警告 | **05** 个 | 建议清理 |
 
 ---
 
@@ -20,10 +20,10 @@
 | 警告类型 | 数量 | 占比 |
 |----------|------|------|
 | ⚠️ 弃用API警告 | 00 个 | 0% |
-| 📦 未使用变量警告 | 02 个 | 33% |
+| 📦 未使用变量警告 | 01 个 | 20% |
 | 🔄 类型转换警告 | 00 个 | 0% |
 | 🔍 可空性警告 | 00 个 | 0% |
-| 📝 其他警告 | 04 个 | 66% |
+| 📝 其他警告 | 04 个 | 80% |
 
 ---
 
@@ -35,17 +35,15 @@
 | 2 | `TransitionManager.swift` | 1 个 | 🟢 低 |
 | 3 | `AppDelegate.swift` | 1 个 | 🟢 低 |
 | 4 | `GitHubAuthService.swift` | 1 个 | 🟢 低 |
-| 5 | `ReaderViewController.swift` | 1 个 | 🟢 低 |
-| 6 | `NovelRefreshService.swift` | 1 个 | 🟢 低 |
+| 5 | `NovelRefreshService.swift` | 1 个 | 🟢 低 |
 
 ---
 
 ## 📝 警告详情列表
 
-### 📦 未使用变量警告 (2个)
+### 📦 未使用变量警告 (1个)
 
 ```
-/Users/runner/work/NovelReader/NovelReader/NovelReader/Presentation/Reader/ReaderViewController.swift:428:17: warning: initialization of immutable value 'chapter' was never used; consider replacing with assignment to '_' or removing it
 /Users/runner/work/NovelReader/NovelReader/NovelReader/SyncEngine/NovelRefreshService.swift:119:13: warning: initialization of immutable value 'total' was never used; consider replacing with assignment to '_' or removing it
 ```
 
@@ -84,11 +82,11 @@
 
 - **质量评级**: **B级（良好，警告较少）**
 - **警告密度**: 每千行约 0 个警告
-- **代码总行数**: 9006 行
+- **代码总行数**: 9012 行
 
 ### 💡 修复建议
 
-#### 2. 未使用变量警告 (2个)
+#### 2. 未使用变量警告 (1个)
 - 删除未使用的变量和函数
 - 检查是否是调试代码遗留
 - 使用Xcode的静态分析工具辅助清理
