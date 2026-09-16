@@ -369,7 +369,7 @@ final class ReaderViewController: UIViewController {
                     self.pageViewController.setViewControllers([firstVC], direction: .forward, animated: false)
                 }
                 self.updateProgressLabel()
-                self.updateBookmarkButtonState()
+                self.
             }
         } else {
             currentPageIndex = min(currentPageIndex, max(0, currentPages.count - 1))
@@ -377,7 +377,7 @@ final class ReaderViewController: UIViewController {
                 pageViewController.setViewControllers([firstVC], direction: .forward, animated: false)
             }
             updateProgressLabel()
-            updateBookmarkButtonState()
+            
         }
     }
 
@@ -475,20 +475,12 @@ final class ReaderViewController: UIViewController {
 
         if viewModel.hasBookmark(bookId: book.id, chapterId: chapter.id, offset: offset) {
             viewModel.removeBookmark(bookId: book.id, chapterId: chapter.id, offset: offset)
-            bookmarkButton.setImage(UIImage(systemName: "bookmark"), for: .normal)
+            NRToast.shared.info("已移除书签")
         } else {
             let excerpt = String(chapter.content.dropFirst(offset).prefix(30))
             viewModel.addBookmark(bookId: book.id, chapterId: chapter.id, offset: offset, textExcerpt: excerpt)
-            bookmarkButton.setImage(UIImage(systemName: "bookmark.fill"), for: .normal)
+            NRToast.shared.success("已添加书签")
         }
-    }
-
-    private func updateBookmarkButtonState() {
-        guard currentChapterIndex < chapters.count else { return }
-        let chapter = chapters[currentChapterIndex]
-        let offset = currentPages.indices.contains(currentPageIndex) ? currentPages[currentPageIndex].range.location : 0
-        let hasBookmark = viewModel.hasBookmark(bookId: book.id, chapterId: chapter.id, offset: offset)
-        bookmarkButton.setImage(UIImage(systemName: hasBookmark ? "bookmark.fill" : "bookmark"), for: .normal)
     }
 
     // MARK: - 动作
@@ -680,7 +672,7 @@ extension ReaderViewController: UIPageViewControllerDelegate {
         if let index = currentPages.firstIndex(where: { $0.pageIndex == vc.page.pageIndex }) {
             currentPageIndex = index
             updateProgressLabel()
-            updateBookmarkButtonState()
+            
             // 更新章节标题
             if currentChapterIndex < chapters.count {
                 chapterTitleLabel.text = chapters[currentChapterIndex].title
