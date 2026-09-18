@@ -31,9 +31,9 @@ final class PDFExporter {
     /// 页面四周边距
     private let pageMargin: CGFloat = 50
     /// 正文行间距（4pt，紧凑排版）
-    private let lineSpacing: CGFloat = 4
+    private let lineSpacing: CGFloat = 1
     /// 段落间距（4pt，小说段落紧凑）
-    private let paragraphSpacing: CGFloat = 4
+    private let paragraphSpacing: CGFloat = 2
     /// 正文字号
     private let bodyFontSize: CGFloat = 14
     /// 章节标题字号
@@ -240,13 +240,18 @@ final class PDFExporter {
         var firstPage = true
 
         while true {
+            // 当前可用区域（底部留15pt安全边距，防止最后一行被裁剪）
+            let safeRect = CGRect(x: currentRect.minX,
+                                  y: currentRect.minY,
+                                  width: currentRect.width,
+                                  height: currentRect.height - 15)
             // 用 CTFramesetter 计算当前区域能放下多少字符
             var fitRange = CFRange()
             _ = CTFramesetterSuggestFrameSizeWithConstraints(
                 framesetter,
                 remainingRange,
                 nil,
-                currentRect.size,
+                safeRect.size,
                 &fitRange
             )
 
@@ -264,7 +269,7 @@ final class PDFExporter {
 
             // 用 UIKit 坐标系绘制（文字方向正确）
             let drawOptions: NSStringDrawingOptions = [.usesLineFragmentOrigin, .usesFontLeading]
-            pageText.draw(with: currentRect, options: drawOptions, context: nil)
+            pageText.draw(with: safeRect, options: drawOptions, context: nil)
 
             remainingRange.location += fitRange.length
             remainingRange.length = 0
