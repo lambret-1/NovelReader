@@ -211,6 +211,11 @@ final class LibraryViewController: UIViewController {
             self?.exportBookAsPDF(book, sourceView: alert.view, sourceRect: alert.view.bounds)
         })
 
+        // 导出为 TXT
+        alert.addAction(UIAlertAction(title: "导出为 TXT", style: .default) { [weak self] _ in
+            self?.exportBookAsTXT(book, sourceView: alert.view, sourceRect: alert.view.bounds)
+        })
+
         alert.addAction(UIAlertAction(title: "多选管理", style: .default) { [weak self] _ in
             self?.enterEditingMode()
             self?.selectedBookIds.insert(book.id)
@@ -456,7 +461,75 @@ final class LibraryViewController: UIViewController {
             .store(in: &self.cancellables)
     }
 
-    /// 调起系统分享面板分享 PDF 文件
+    /// 导出整本书为 TXT 纯文本文件
+    private func exportBookAsTXT(_ book: Book, sourceView: UIView?, sourceRect: CGRect) {
+        let hud = showExportHUD(message: "正在准备章节...")
+
+        chapterRepository.fetchChapters(bookId: book.id)
+            .receive(on: DispatchQueue.main)
+            .sink(receiveCompletion: { completion in
+                if case .failure(let error) = completion {
+                    hud.hide(animated: true)
+                    NRToast.shared.show(message: "章节加载失败：\(error.localizedDescription)", type: .error)
+                }
+            }, receiveValue: { [weak self] chapters in
+                guard let self = self else { return }
+                guard !chapters.isEmpty else {
+                    hud.hide(animated: true)
+                    NRToast.shared.show(message: "书籍暂无章节，无法导出", type: .warning)
+                    return
+                }
+                let sortedChapters = chapters.sorted(by: { $0.sortOrder < $1.sortOrder })
+
+                DispatchQueue.global(qos: .userInitiated).async {
+                    do {
+                        // 拼接 TXT 内容
+                        var text = ""
+                        text += "《\(book.title)》\n"
+                        text += "作者：\(book.author.isEmpty ? "佚名" : book.author)\n"
+                        text += String(repeating: "=", count: 30) + "\n\n"
+
+                        for (index, chapter) in sortedChapters.enumerated() {
+                            text += "\(chapter.title)\n\n"
+                            text += "\(chapter.content)\n\n"
+                            text += String(repeating: "-", count: 20) + "\n\n"
+                            let progressValue = Float(index + 1) / Float(sortedChapters.count)
+                            DispatchQueue.main.async {
+                                hud.updateProgress(progressValue,
+                                                    message: String(format: "正在导出 TXT %.0f%%", progressValue * 100))
+                            }
+                        }
+
+                        // 写入临时文件（UTF-8 编码）
+                        let fileName = "\(book.title)_导出.txt"
+                            .components(separatedBy: CharacterSet(charactersIn: "/\\?%*|\"<>"))
+                            .joined()
+                        let fileURL = FileManager.default.temporaryDirectory
+                            .appendingPathComponent(fileName)
+                        if FileManager.default.fileExists(atPath: fileURL.path) {
+                            try FileManager.default.removeItem(at: fileURL)
+                        }
+                        try text.write(to: fileURL, atomically: true, encoding: .utf8)
+
+                        DispatchQueue.main.async {
+                            hud.hide(animated: true)
+                            self.presentSharePanel(fileURL: fileURL,
+                                                   fileName: fileURL.lastPathComponent,
+                                                   sourceView: sourceView,
+                                                   sourceRect: sourceRect)
+                        }
+                    } catch {
+                        DispatchQueue.main.async {
+                            hud.hide(animated: true)
+                            NRToast.shared.show(message: "TXT 导出失败：\(error.localizedDescription)", type: .error)
+                        }
+                    }
+                }
+            })
+            .store(in: &self.cancellables)
+    }
+
+    /// 调起系统分享面板分享文件
     private func presentSharePanel(fileURL: URL, fileName: String, sourceView: UIView?, sourceRect: CGRect) {
         let activityVC = UIActivityViewController(activityItems: [fileURL], applicationActivities: nil)
 
