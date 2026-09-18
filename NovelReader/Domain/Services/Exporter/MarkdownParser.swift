@@ -34,7 +34,6 @@ final class MarkdownParser {
     var firstLineIndent: CGFloat = 28
     /// 正文颜色
     var textColor: UIColor = .black
-    private let firstLineIndent: CGFloat = 28
     private let listIndent: CGFloat = 20
     private let quoteIndent: CGFloat = 20
 
@@ -89,9 +88,9 @@ final class MarkdownParser {
             let size: CGFloat
             let spacingAfter: CGFloat
             switch level {
-            case 1: size = h1FontSize; spacingAfter = 4
-            case 2: size = h2FontSize; spacingAfter = 4
-            default: size = h3FontSize; spacingAfter = 3
+            case 1: size = bodyFontSize * h1Scale; spacingAfter = 4
+            case 2: size = bodyFontSize * h2Scale; spacingAfter = 4
+            default: size = bodyFontSize * h3Scale; spacingAfter = 3
             }
             // 一级二级标题下方加分隔线（贴近GitHub风格）
             result.append(NSAttributedString(string: "\n" + text + "\n",
