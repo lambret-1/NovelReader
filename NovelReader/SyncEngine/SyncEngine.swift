@@ -157,10 +157,11 @@ final class SyncEngine: SyncEngineProtocol {
         }
 
         // 5. 获取本地所有数据（书籍、章节、阅读进度、书签）
-        guard let books = try? awaitPublisher(bookRepository.fetchAllBooks()) else {
+        guard let fetchedBooks = try? awaitPublisher(bookRepository.fetchAllBooks()) else {
             promise(.failure(SyncError.localDataError))
             return
         }
+        var books = fetchedBooks  // 可变数组，同步过程中创建的新书会追加进来
 
         // 获取所有章节（按书籍分组）
         var allChapters: [Chapter] = []
@@ -247,7 +248,7 @@ final class SyncEngine: SyncEngineProtocol {
             }
 
             if let fileContent = try? awaitPublisher(fileService.getFileContent(owner: owner, repo: repo, path: path)) {
-                let success = applyRemoteChapter(path: path, content: fileContent, books: books)
+                let success = applyRemoteChapter(path: path, content: fileContent, books: &books)
                 if success {
                     downloadedCount += 1
                 }
@@ -330,9 +331,10 @@ final class SyncEngine: SyncEngineProtocol {
     // MARK: - 远端章节应用到本地
 
     /// 将远端章节内容应用到本地（优先用 remotePath 匹配，回退 sortOrder）
+    /// - Parameter books: 本地书籍列表（inout，创建新书后会追加进来，避免同书多章重复创建书籍）
     /// - Returns: 是否成功创建或更新章节
     @discardableResult
-    private func applyRemoteChapter(path: String, content: String, books: [Book]) -> Bool {
+    private func applyRemoteChapter(path: String, content: String, books: inout [Book]) -> Bool {
         let components = path.components(separatedBy: "/")
         guard components.count >= 2 else { return false }
 
@@ -347,6 +349,7 @@ final class SyncEngine: SyncEngineProtocol {
             let newBook = Book(title: bookRemotePath, remotePath: bookRemotePath)
             if let created = try? awaitPublisher(bookRepository.createBook(newBook)) {
                 targetBook = created
+                books.append(created)  // 关键：追加到数组，后续章节能匹配到同一本书
             }
         }
 
@@ -354,6 +357,13 @@ final class SyncEngine: SyncEngineProtocol {
 
         // 解析章节内容（标题 + 正文）
         let parsed = ManifestManager.parseChapterMarkdown(content)
+
+        // 纯正文文件无 Markdown 标题行时，从文件名提取标题（去掉 .md 后缀）
+        let chapterTitle: String = {
+            if parsed.title != "未命名章节" { return parsed.title }
+            let nameWithoutExt = (fileName as NSString).deletingPathExtension
+            return nameWithoutExt.isEmpty ? parsed.title : nameWithoutExt
+        }()
 
         // 获取本书所有章节
         guard let chapters = try? awaitPublisher(chapterRepository.fetchChapters(bookId: book.id)) else {
@@ -363,7 +373,7 @@ final class SyncEngine: SyncEngineProtocol {
         // 优先用 remotePath 精确匹配
         if let existing = chapters.first(where: { $0.remotePath == path }) {
             var updated = existing
-            updated.title = parsed.title
+            updated.title = chapterTitle
             updated.updateContent(parsed.body)
             updated.isDirty = false
             updated.remotePath = path
@@ -377,7 +387,7 @@ final class SyncEngine: SyncEngineProtocol {
             let sortOrder = max(0, chapterNum - 1)
             if let existing = chapters.first(where: { $0.sortOrder == sortOrder }) {
                 var updated = existing
-                updated.title = parsed.title
+                updated.title = chapterTitle
                 updated.updateContent(parsed.body)
                 updated.isDirty = false
                 updated.remotePath = path
@@ -391,7 +401,7 @@ final class SyncEngine: SyncEngineProtocol {
         if !titleFromFileName.isEmpty,
            let existing = chapters.first(where: { $0.title == titleFromFileName }) {
             var updated = existing
-            updated.title = parsed.title
+            updated.title = chapterTitle
             updated.updateContent(parsed.body)
             updated.isDirty = false
             updated.remotePath = path
@@ -403,7 +413,7 @@ final class SyncEngine: SyncEngineProtocol {
         let sortOrder = chapterNum == Int.max ? chapters.count : max(0, chapterNum - 1)
         let newChapter = Chapter(
             bookId: book.id,
-            title: parsed.title,
+            title: chapterTitle,
             content: parsed.body,
             sortOrder: sortOrder,
             isDirty: false,

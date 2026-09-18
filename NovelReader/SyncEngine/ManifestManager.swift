@@ -252,6 +252,7 @@ final class ManifestManager {
     }
 
     /// 从 Markdown 内容解析章节标题和正文
+    /// 兼容两种格式：①首行为 `# 标题` 的 Markdown；②纯正文（无标题行，全部内容作为正文）
     static func parseChapterMarkdown(_ content: String) -> (title: String, body: String) {
         let lines = content.components(separatedBy: .newlines)
         var title = "未命名章节"
@@ -265,6 +266,11 @@ final class ManifestManager {
             } else if foundTitle {
                 bodyLines.append(line)
             }
+        }
+
+        // 关键修复：如果没有找到 Markdown 标题行（纯正文文件），则将全部内容作为正文
+        if !foundTitle {
+            bodyLines = lines
         }
 
         // 去掉开头的空行
