@@ -124,7 +124,7 @@ extension ChapterListViewController: UITableViewDataSource, UITableViewDelegate 
 
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: ChapterCell.reuseID, for: indexPath) as! ChapterCell
-        cell.configure(with: chapters[indexPath.row], index: indexPath.row + 1)
+        cell.configure(with: chapters[indexPath.row])
         return cell
     }
 
@@ -145,15 +145,6 @@ final class ChapterCell: UITableViewCell {
         v.backgroundColor = DesignToken.Color.backgroundPrimary
         v.layer.cornerRadius = DesignToken.Radius.md // 圆角12pt
         return v
-    }()
-
-    private let indexLabel: UILabel = {
-        let label = UILabel()
-        label.translatesAutoresizingMaskIntoConstraints = false
-        label.font = DesignToken.Font.caption1
-        label.textColor = DesignToken.Color.primary
-        label.textAlignment = .center
-        return label
     }()
 
     private let titleLabel: UILabel = {
@@ -186,7 +177,6 @@ final class ChapterCell: UITableViewCell {
         backgroundColor = .clear
         selectionStyle = .none
         contentView.addSubview(cardView)
-        cardView.addSubview(indexLabel)
         cardView.addSubview(titleLabel)
         cardView.addSubview(wordCountLabel)
 
@@ -196,11 +186,7 @@ final class ChapterCell: UITableViewCell {
             cardView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -DesignToken.Spacing.md),
             cardView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -DesignToken.Spacing.xs),
 
-            indexLabel.leadingAnchor.constraint(equalTo: cardView.leadingAnchor, constant: DesignToken.Spacing.md),
-            indexLabel.centerYAnchor.constraint(equalTo: cardView.centerYAnchor),
-            indexLabel.widthAnchor.constraint(equalToConstant: 32), // 序号宽度32pt
-
-            titleLabel.leadingAnchor.constraint(equalTo: indexLabel.trailingAnchor, constant: DesignToken.Spacing.sm),
+            titleLabel.leadingAnchor.constraint(equalTo: cardView.leadingAnchor, constant: DesignToken.Spacing.lg),
             titleLabel.topAnchor.constraint(equalTo: cardView.topAnchor, constant: DesignToken.Spacing.md),
             titleLabel.trailingAnchor.constraint(equalTo: cardView.trailingAnchor, constant: -DesignToken.Spacing.md),
 
@@ -210,8 +196,7 @@ final class ChapterCell: UITableViewCell {
         ])
     }
 
-    func configure(with chapter: Chapter, index: Int) {
-        indexLabel.text = String(format: "%02d", index)
+    func configure(with chapter: Chapter) {
         titleLabel.text = chapter.title
         wordCountLabel.text = "\(chapter.wordCount) 字"
     }
