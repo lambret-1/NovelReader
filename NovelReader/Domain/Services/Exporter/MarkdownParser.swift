@@ -146,7 +146,10 @@ final class MarkdownParser {
     private func parseInline(_ text: String, baseAttributes: [NSAttributedString.Key: Any]) -> NSMutableAttributedString {
         let result = NSMutableAttributedString(string: text, attributes: baseAttributes)
 
-        // 按优先级从高到低处理：代码 > 链接 > 加粗 > 斜体
+        // 第一步：用NSString.range扫描处理**加粗**（最可靠，不依赖正则引擎）
+        applyBoldMarkdown(to: result, baseAttributes: baseAttributes)
+
+        // 第二步：用正则处理代码、链接、斜体
         applyInlineRegex(codeRegex, to: result) { inner in
             var attrs = baseAttributes
             attrs[.font] = UIFont.monospacedSystemFont(ofSize: bodyFontSize - 1, weight: .regular)
@@ -162,12 +165,6 @@ final class MarkdownParser {
             return NSAttributedString(string: inner, attributes: attrs)
         }
 
-        applyInlineRegex(boldRegex, to: result) { inner in
-            var attrs = baseAttributes
-            attrs[.font] = UIFont.boldSystemFont(ofSize: bodyFontSize)
-            return NSAttributedString(string: inner, attributes: attrs)
-        }
-
         applyInlineRegex(italicRegex, to: result) { inner in
             var attrs = baseAttributes
             attrs[.font] = UIFont.italicSystemFont(ofSize: bodyFontSize)
@@ -175,6 +172,47 @@ final class MarkdownParser {
         }
 
         return result
+    }
+
+    /// 用NSString.range扫描处理**加粗**（从后往前替换，避免位置偏移）
+    private func applyBoldMarkdown(to attrString: NSMutableAttributedString, baseAttributes: [NSAttributedString.Key: Any]) {
+        let nsString = attrString.string as NSString
+        var searchRange = NSRange(location: 0, length: nsString.length)
+        var boldRanges: [(NSRange, String)] = []
+
+        while true {
+            // 查找第一个 **
+            let firstStar = nsString.range(of: "**", options: [], range: searchRange)
+            guard firstStar.location != NSNotFound else { break }
+
+            // 从第一个 ** 之后查找第二个 **
+            let afterFirst = NSRange(location: firstStar.location + 2,
+                                      length: nsString.length - firstStar.location - 2)
+            let secondStar = nsString.range(of: "**", options: [], range: afterFirst)
+            guard secondStar.location != NSNotFound else { break }
+
+            // 计算整体范围和内部文本范围
+            let fullRange = NSRange(location: firstStar.location,
+                                     length: secondStar.location + 2 - firstStar.location)
+            let innerRange = NSRange(location: firstStar.location + 2,
+                                      length: secondStar.location - firstStar.location - 2)
+            let innerText = nsString.substring(with: innerRange)
+            boldRanges.append((fullRange, innerText))
+
+            // 继续搜索下一对
+            searchRange = NSRange(location: secondStar.location + 2,
+                                   length: nsString.length - secondStar.location - 2)
+        }
+
+        guard !boldRanges.isEmpty else { return }
+
+        // 从后往前替换，避免位置偏移
+        for (fullRange, innerText) in boldRanges.reversed() {
+            var boldAttrs = baseAttributes
+            boldAttrs[.font] = UIFont.boldSystemFont(ofSize: bodyFontSize)
+            attrString.replaceCharacters(in: fullRange,
+                                          with: NSAttributedString(string: innerText, attributes: boldAttrs))
+        }
     }
 
     /// 应用行内正则替换（从后往前，避免位置偏移）
