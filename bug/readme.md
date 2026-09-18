@@ -1,8 +1,8 @@
 # 🐛 可视化警告日志报告 (Bug Log)
 
-**生成时间**: 2026-09-18 16:08:01 UTC
+**生成时间**: 2026-09-18 16:19:42 UTC
 **源日志文件**: `build.log`
-**构建状态**: ✅ 构建成功
+**构建状态**: ❌ 构建失败
 
 ---
 
@@ -10,8 +10,8 @@
 
 | 类型 | 数量 | 状态 |
 |------|------|------|
-| 🔴 错误 | **00** 个 | 无错误 |
-| 🟡 警告 | **07** 个 | 建议清理 |
+| 🔴 错误 | **04** 个 | 需修复 |
+| 🟡 警告 | **06** 个 | 建议清理 |
 
 ---
 
@@ -20,10 +20,10 @@
 | 警告类型 | 数量 | 占比 |
 |----------|------|------|
 | ⚠️ 弃用API警告 | 00 个 | 0% |
-| 📦 未使用变量警告 | 03 个 | 42% |
+| 📦 未使用变量警告 | 02 个 | 33% |
 | 🔄 类型转换警告 | 00 个 | 0% |
 | 🔍 可空性警告 | 00 个 | 0% |
-| 📝 其他警告 | 04 个 | 57% |
+| 📝 其他警告 | 04 个 | 66% |
 
 ---
 
@@ -32,22 +32,20 @@
 | 排名 | 文件名 | 警告数量 | 严重程度 |
 |------|--------|----------|----------|
 | 1 | `PDFExporter.swift` | 1 个 | 🟢 低 |
-| 2 | `MarkdownParser.swift` | 1 个 | 🟢 低 |
-| 3 | `LibraryViewController.swift` | 1 个 | 🟢 低 |
-| 4 | `TransitionManager.swift` | 1 个 | 🟢 低 |
-| 5 | `AppDelegate.swift` | 1 个 | 🟢 低 |
-| 6 | `GitHubAuthService.swift` | 1 个 | 🟢 低 |
-| 7 | `NovelRefreshService.swift` | 1 个 | 🟢 低 |
+| 2 | `LibraryViewController.swift` | 1 个 | 🟢 低 |
+| 3 | `TransitionManager.swift` | 1 个 | 🟢 低 |
+| 4 | `AppDelegate.swift` | 1 个 | 🟢 低 |
+| 5 | `GitHubAuthService.swift` | 1 个 | 🟢 低 |
+| 6 | `NovelRefreshService.swift` | 1 个 | 🟢 低 |
 
 ---
 
 ## 📝 警告详情列表
 
-### 📦 未使用变量警告 (3个)
+### 📦 未使用变量警告 (2个)
 
 ```
 /Users/runner/work/NovelReader/NovelReader/NovelReader/Domain/Services/Exporter/PDFExporter.swift:73:13: warning: initialization of immutable value 'bodyFont' was never used; consider replacing with assignment to '_' or removing it
-/Users/runner/work/NovelReader/NovelReader/NovelReader/Domain/Services/Exporter/MarkdownParser.swift:82:17: warning: immutable value 'spacingAfter' was never used; consider removing it
 /Users/runner/work/NovelReader/NovelReader/NovelReader/SyncEngine/NovelRefreshService.swift:119:13: warning: initialization of immutable value 'total' was never used; consider replacing with assignment to '_' or removing it
 ```
 
@@ -84,13 +82,17 @@
 
 ### 📊 质量评级
 
-- **质量评级**: **B级（良好，警告较少）**
+- **质量评级**: **F级（构建失败）**
 - **警告密度**: 每千行约 0 个警告
-- **代码总行数**: 9869 行
+- **代码总行数**: 9872 行
 
 ### 💡 修复建议
 
-#### 2. 未使用变量警告 (3个)
+#### 1. 编译错误 (4个)
+- 优先修复所有编译错误，确保构建通过
+- 查看上方错误详情定位问题文件和行号
+
+#### 2. 未使用变量警告 (2个)
 - 删除未使用的变量和函数
 - 检查是否是调试代码遗留
 - 使用Xcode的静态分析工具辅助清理
