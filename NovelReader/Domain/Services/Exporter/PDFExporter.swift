@@ -30,10 +30,10 @@ final class PDFExporter {
     private let pageHeight: CGFloat = 842
     /// 页面四周边距
     private let pageMargin: CGFloat = 50
-    /// 正文行间距（10pt，配合14pt字号使每页约1000字）
-    private let lineSpacing: CGFloat = 10
-    /// 段落间距
-    private let paragraphSpacing: CGFloat = 14
+    /// 正文行间距（4pt，紧凑排版）
+    private let lineSpacing: CGFloat = 4
+    /// 段落间距（4pt，小说段落紧凑）
+    private let paragraphSpacing: CGFloat = 4
     /// 正文字号
     private let bodyFontSize: CGFloat = 14
     /// 章节标题字号
