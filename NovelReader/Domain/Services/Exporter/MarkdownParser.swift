@@ -20,12 +20,20 @@ final class MarkdownParser {
 
     // MARK: 排版常量
 
-    private let bodyFontSize: CGFloat = 14
-    private let h1FontSize: CGFloat = 22
-    private let h2FontSize: CGFloat = 18
-    private let h3FontSize: CGFloat = 16
-    private let lineSpacing: CGFloat = 1
-    private let paragraphSpacing: CGFloat = 1
+    /// 正文字号（可外部配置，阅读器和PDF导出共用）
+    var bodyFontSize: CGFloat = 14
+    /// 标题字号相对于正文字号的缩放比例
+    var h1Scale: CGFloat = 1.6
+    var h2Scale: CGFloat = 1.3
+    var h3Scale: CGFloat = 1.15
+    /// 行间距
+    var lineSpacing: CGFloat = 1
+    /// 段间距
+    var paragraphSpacing: CGFloat = 1
+    /// 首行缩进
+    var firstLineIndent: CGFloat = 28
+    /// 正文颜色
+    var textColor: UIColor = .black
     private let firstLineIndent: CGFloat = 28
     private let listIndent: CGFloat = 20
     private let quoteIndent: CGFloat = 20
@@ -204,7 +212,7 @@ final class MarkdownParser {
         return [
             .font: UIFont.systemFont(ofSize: bodyFontSize),
             .paragraphStyle: para,
-            .foregroundColor: UIColor.black
+            .foregroundColor: textColor
         ]
     }
 
@@ -216,7 +224,7 @@ final class MarkdownParser {
         return [
             .font: UIFont.boldSystemFont(ofSize: size),
             .paragraphStyle: para,
-            .foregroundColor: UIColor.black
+            .foregroundColor: textColor
         ]
     }
 

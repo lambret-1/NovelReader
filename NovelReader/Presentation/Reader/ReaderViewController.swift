@@ -373,19 +373,14 @@ final class ReaderViewController: UIViewController {
     }
 
     private func makeAttributedString(from text: String, config: ReaderConfig) -> NSAttributedString {
-        let paragraphStyle = NSMutableParagraphStyle()
-        paragraphStyle.lineSpacing = config.lineSpacing
-        paragraphStyle.paragraphSpacing = config.lineSpacing * 1.5
-        paragraphStyle.firstLineHeadIndent = config.fontSize * 2
-
-        return NSAttributedString(
-            string: text,
-            attributes: [
-                .font: UIFont.systemFont(ofSize: config.fontSize), // 统一使用系统默认字体
-                .foregroundColor: config.currentTheme.textColor,
-                .paragraphStyle: paragraphStyle
-            ]
-        )
+        // 使用 MarkdownParser 解析富文本（加粗/斜体/标题/列表等）
+        let parser = MarkdownParser()
+        parser.bodyFontSize = config.fontSize
+        parser.textColor = config.currentTheme.textColor
+        parser.lineSpacing = config.lineSpacing
+        parser.paragraphSpacing = config.lineSpacing * 1.5
+        parser.firstLineIndent = config.fontSize * 2
+        return parser.parse(text)
     }
 
     private func makePageViewController(at index: Int) -> ReaderPageViewController? {
