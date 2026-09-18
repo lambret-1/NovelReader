@@ -33,7 +33,7 @@ final class PDFExporter {
     /// 正文行间距（4pt，紧凑排版）
     private let lineSpacing: CGFloat = 1
     /// 段落间距（4pt，小说段落紧凑）
-    private let paragraphSpacing: CGFloat = 2
+    private let paragraphSpacing: CGFloat = 1
     /// 正文字号
     private let bodyFontSize: CGFloat = 14
     /// 章节标题字号
