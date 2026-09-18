@@ -127,11 +127,13 @@ final class MarkdownParser {
             return
         }
 
-        // 引用块
+        // 引用块（支持行内语法：**加粗**、*斜体*等）
         if let match = quoteRegex.firstMatch(in: trimmed, range: fullRange) {
             let textRange = match.range(at: 1)
             let text = (trimmed as NSString).substring(with: textRange)
-            result.append(NSMutableAttributedString(string: text + "\n", attributes: quoteAttributes()))
+            let attr = parseInline(text, baseAttributes: quoteAttributes())
+            attr.append(NSAttributedString(string: "\n", attributes: quoteAttributes()))
+            result.append(attr)
             return
         }
 
@@ -285,7 +287,7 @@ final class MarkdownParser {
         return [
             .font: UIFont.systemFont(ofSize: bodyFontSize),
             .paragraphStyle: para,
-            .foregroundColor: UIColor.darkGray
+            .foregroundColor: textColor.withAlphaComponent(0.7) // 引用块用70%透明度，适配日间/夜间模式
         ]
     }
 }
