@@ -10,8 +10,9 @@ import UIKit
 /// 轻量 Markdown 解析器
 ///
 /// 支持语法：
-/// - `# 一级标题` / `## 二级标题` / `### 三级标题`
+/// - `# 一级标题` / `## 二级标题` / `### 三级标题`（支持全角空格）
 /// - `**加粗**` / `*斜体*` / `` `行内代码` ``
+/// - `[链接文本](链接地址)`
 /// - `- 列表项` / `* 列表项`
 /// - `> 引用块`
 /// - `---` 分隔线
@@ -19,34 +20,32 @@ final class MarkdownParser {
 
     // MARK: 排版常量
 
-    /// 正文字号
     private let bodyFontSize: CGFloat = 14
-    /// 一级标题字号
     private let h1FontSize: CGFloat = 22
-    /// 二级标题字号
     private let h2FontSize: CGFloat = 18
-    /// 三级标题字号
     private let h3FontSize: CGFloat = 16
-    /// 正文行间距
     private let lineSpacing: CGFloat = 1
-    /// 段落间距
     private let paragraphSpacing: CGFloat = 1
-    /// 首行缩进
     private let firstLineIndent: CGFloat = 28
-    /// 列表缩进
     private let listIndent: CGFloat = 20
-    /// 引用块左边距
     private let quoteIndent: CGFloat = 20
+
+    // MARK: 预编译正则
+
+    private let headingRegex = try! NSRegularExpression(pattern: #"^(#{1,6})[ \t]+(.+)$"#)
+    private let hrRegex = try! NSRegularExpression(pattern: #"^-{3,}$"#)
+    private let listRegex = try! NSRegularExpression(pattern: #"^[-*+][ \t]+(.+)$"#)
+    private let quoteRegex = try! NSRegularExpression(pattern: #"^>[ \t]*(.*)$"#)
+    private let boldRegex = try! NSRegularExpression(pattern: #"\*\*(.+?)\*\*"#)
+    private let italicRegex = try! NSRegularExpression(pattern: #"(?<!\*)\*([^*]+)\*(?!\*)"#)
+    private let codeRegex = try! NSRegularExpression(pattern: #"`([^`]+)`"#)
+    private let linkRegex = try! NSRegularExpression(pattern: #"\[([^\]]+)\]\(([^)]+)\)"#)
 
     // MARK: 解析入口
 
-    /// 解析 Markdown 文本为 NSAttributedString
-    /// - Parameter markdown: Markdown 原文
-    /// - Returns: 带排版的富文本
     func parse(_ markdown: String) -> NSAttributedString {
         let result = NSMutableAttributedString()
         let lines = markdown.components(separatedBy: .newlines)
-
         for line in lines {
             parseLine(line, into: result)
         }
@@ -57,6 +56,7 @@ final class MarkdownParser {
 
     private func parseLine(_ line: String, into result: NSMutableAttributedString) {
         let trimmed = line.trimmingCharacters(in: .whitespaces)
+        let fullRange = NSRange(location: 0, length: (trimmed as NSString).length)
 
         // 空行
         if trimmed.isEmpty {
@@ -64,52 +64,47 @@ final class MarkdownParser {
             return
         }
 
-        // 分隔线 ---
-        if trimmed.range(of: #"^-{3,}$"#, options: .regularExpression) != nil {
+        // 分隔线
+        if hrRegex.firstMatch(in: trimmed, range: fullRange) != nil {
             result.append(NSAttributedString(string: "\n", attributes: bodyAttributes()))
             return
         }
 
-        // 一级标题 #
-        if trimmed.hasPrefix("# ") && !trimmed.hasPrefix("## ") {
-            let text = String(trimmed.dropFirst(2))
+        // 标题 # / ## / ###
+        if let match = headingRegex.firstMatch(in: trimmed, range: fullRange) {
+            let hashesRange = match.range(at: 1)
+            let textRange = match.range(at: 2)
+            let hashes = (trimmed as NSString).substring(with: hashesRange)
+            let text = (trimmed as NSString).substring(with: textRange)
+            let level = hashes.count
+            let size: CGFloat
+            let spacingAfter: CGFloat
+            switch level {
+            case 1: size = h1FontSize; spacingAfter = 12
+            case 2: size = h2FontSize; spacingAfter = 10
+            default: size = h3FontSize; spacingAfter = 8
+            }
             result.append(NSAttributedString(string: "\n" + text + "\n",
-                                            attributes: headingAttributes(size: h1FontSize, spacingAfter: 12)))
+                                            attributes: headingAttributes(size: size, spacingAfter: spacingAfter)))
             return
         }
 
-        // 二级标题 ##
-        if trimmed.hasPrefix("## ") && !trimmed.hasPrefix("### ") {
-            let text = String(trimmed.dropFirst(3))
-            result.append(NSAttributedString(string: "\n" + text + "\n",
-                                            attributes: headingAttributes(size: h2FontSize, spacingAfter: 10)))
-            return
-        }
-
-        // 三级标题 ###
-        if trimmed.hasPrefix("### ") {
-            let text = String(trimmed.dropFirst(4))
-            result.append(NSAttributedString(string: "\n" + text + "\n",
-                                            attributes: headingAttributes(size: h3FontSize, spacingAfter: 8)))
-            return
-        }
-
-        // 列表项 - 或 *
-        if trimmed.hasPrefix("- ") || trimmed.hasPrefix("* ") {
-            let text = String(trimmed.dropFirst(2))
-            let attr = NSMutableAttributedString(string: "• ", attributes: bodyAttributes())
+        // 列表项
+        if let match = listRegex.firstMatch(in: trimmed, range: fullRange) {
+            let textRange = match.range(at: 1)
+            let text = (trimmed as NSString).substring(with: textRange)
+            let attr = NSMutableAttributedString(string: "• ", attributes: bodyAttributes(indent: listIndent))
             attr.append(parseInline(text, baseAttributes: bodyAttributes(indent: listIndent)))
             attr.append(NSAttributedString(string: "\n", attributes: bodyAttributes(indent: listIndent)))
             result.append(attr)
             return
         }
 
-        // 引用块 >
-        if trimmed.hasPrefix("> ") {
-            let text = String(trimmed.dropFirst(2))
-            let quoteAttr = NSMutableAttributedString(string: text + "\n",
-                                                      attributes: quoteAttributes())
-            result.append(quoteAttr)
+        // 引用块
+        if let match = quoteRegex.firstMatch(in: trimmed, range: fullRange) {
+            let textRange = match.range(at: 1)
+            let text = (trimmed as NSString).substring(with: textRange)
+            result.append(NSMutableAttributedString(string: text + "\n", attributes: quoteAttributes()))
             return
         }
 
@@ -121,33 +116,55 @@ final class MarkdownParser {
 
     // MARK: 行内语法解析
 
-    /// 解析行内语法：**加粗**、*斜体*、`代码`
     private func parseInline(_ text: String, baseAttributes: [NSAttributedString.Key: Any]) -> NSMutableAttributedString {
         let result = NSMutableAttributedString(string: text, attributes: baseAttributes)
 
-        // 解析 **加粗**
-        result.replaceMatches(pattern: #"\*\*(.+?)\*\*"#) { matchText in
-            var attrs = baseAttributes
-            attrs[.font] = UIFont.boldSystemFont(ofSize: bodyFontSize)
-            return NSAttributedString(string: matchText, attributes: attrs)
-        }
-
-        // 解析 *斜体*（避免和加粗冲突，加粗已处理）
-        result.replaceMatches(pattern: #"(?<!\*)\*([^*]+)\*(?!\*)"#) { matchText in
-            var attrs = baseAttributes
-            attrs[.font] = UIFont.italicSystemFont(ofSize: bodyFontSize)
-            return NSAttributedString(string: matchText, attributes: attrs)
-        }
-
-        // 解析 `行内代码`
-        result.replaceMatches(pattern: #"`([^`]+)`"#) { matchText in
+        // 按优先级从高到低处理：代码 > 链接 > 加粗 > 斜体
+        applyInlineRegex(codeRegex, to: result, baseAttributes: baseAttributes) { inner in
             var attrs = baseAttributes
             attrs[.font] = UIFont.monospacedSystemFont(ofSize: bodyFontSize - 1, weight: .regular)
             attrs[.foregroundColor] = UIColor.darkGray
-            return NSAttributedString(string: matchText, attributes: attrs)
+            return NSAttributedString(string: inner, attributes: attrs)
+        }
+
+        applyInlineRegex(linkRegex, to: result, baseAttributes: baseAttributes) { inner in
+            var attrs = baseAttributes
+            attrs[.font] = UIFont.systemFont(ofSize: bodyFontSize)
+            attrs[.foregroundColor] = UIColor.systemBlue
+            attrs[.underlineStyle] = NSUnderlineStyle.single.rawValue
+            return NSAttributedString(string: inner, attributes: attrs)
+        }
+
+        applyInlineRegex(boldRegex, to: result, baseAttributes: baseAttributes) { inner in
+            var attrs = baseAttributes
+            attrs[.font] = UIFont.boldSystemFont(ofSize: bodyFontSize)
+            return NSAttributedString(string: inner, attributes: attrs)
+        }
+
+        applyInlineRegex(italicRegex, to: result, baseAttributes: baseAttributes) { inner in
+            var attrs = baseAttributes
+            attrs[.font] = UIFont.italicSystemFont(ofSize: bodyFontSize)
+            return NSAttributedString(string: inner, attributes: attrs)
         }
 
         return result
+    }
+
+    /// 应用行内正则替换（从后往前，避免位置偏移）
+    private func applyInlineRegex(_ regex: NSRegularExpression,
+                                  to attrString: NSMutableAttributedString,
+                                  baseAttributes: [NSAttributedString.Key: Any],
+                                  replacement: (String) -> NSAttributedString) {
+        let fullRange = NSRange(location: 0, length: attrString.length)
+        guard let matches = regex.matches(in: attrString.string, range: fullRange) as? [NSTextCheckingResult] else { return }
+        // 从后往前替换
+        for match in matches.reversed() {
+            let matchRange = match.range(at: 0)
+            let innerRange = match.range(at: 1)
+            guard innerRange.location != NSNotFound else { continue }
+            let innerText = (attrString.string as NSString).substring(with: innerRange)
+            attrString.replaceCharacters(in: matchRange, with: replacement(innerText))
+        }
     }
 
     // MARK: 属性构造
@@ -188,32 +205,5 @@ final class MarkdownParser {
             .paragraphStyle: para,
             .foregroundColor: UIColor.darkGray
         ]
-    }
-}
-
-// MARK: - NSAttributedString 正则替换扩展
-
-private extension NSMutableAttributedString {
-    /// 用正则匹配并替换为富文本
-    /// - Parameters:
-    ///   - pattern: 正则表达式
-    ///   - replacement: 捕获组1 → 替换为富文本
-    func replaceMatches(pattern: String, replacement: (String) -> NSAttributedString) {
-        guard let regex = try? NSRegularExpression(pattern: pattern) else { return }
-        var fullRange = NSRange(location: 0, length: length)
-
-        // 从后往前替换，避免位置偏移
-        while fullRange.length > 0 {
-            guard let match = regex.firstMatch(in: string, range: fullRange) else { break }
-            let matchRange = match.range(at: 0)
-            let innerRange = match.range(at: 1)
-            let innerText = (string as NSString).substring(with: innerRange)
-            let replacementAttr = replacement(innerText)
-            replaceCharacters(in: matchRange, with: replacementAttr)
-            // 更新剩余搜索范围
-            let newLocation = matchRange.location + replacementAttr.length
-            fullRange = NSRange(location: newLocation,
-                                length: length - newLocation)
-        }
     }
 }
