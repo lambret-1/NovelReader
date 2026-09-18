@@ -16,9 +16,10 @@ import Combine
 /// 设计要点：
 /// - A4 页面（595 × 842 pt），边距 50pt
 /// - 封面页：书名 + 作者 + 导出时间
-/// - 每章新起一页，章节标题加粗
-/// - 使用 CoreText CTFramesetter 做文本自动分页
-/// - 章节级进度回调，主线程更新 HUD
+/// - 每章新起一页，章节标题居中加粗
+/// - 使用 CTFramesetter 计算分页，UIKit 坐标系绘制（避免文字颠倒）
+/// - 每页约 1000 字
+/// - 章节级进度回调
 final class PDFExporter {
 
     // MARK: 页面布局常量
@@ -29,10 +30,10 @@ final class PDFExporter {
     private let pageHeight: CGFloat = 842
     /// 页面四周边距
     private let pageMargin: CGFloat = 50
-    /// 正文行间距
-    private let lineSpacing: CGFloat = 6
+    /// 正文行间距（10pt，配合14pt字号使每页约1000字）
+    private let lineSpacing: CGFloat = 10
     /// 段落间距
-    private let paragraphSpacing: CGFloat = 12
+    private let paragraphSpacing: CGFloat = 14
     /// 正文字号
     private let bodyFontSize: CGFloat = 14
     /// 章节标题字号
@@ -41,8 +42,6 @@ final class PDFExporter {
     private let bookTitleFontSize: CGFloat = 28
     /// 作者字号
     private let authorFontSize: CGFloat = 16
-    /// 页码字号
-    private let pageNumberFontSize: CGFloat = 10
 
     // MARK: 导出入口
 
@@ -75,20 +74,17 @@ final class PDFExporter {
         let titleFont = UIFont.boldSystemFont(ofSize: chapterTitleFontSize)
         let bookTitleFont = UIFont.boldSystemFont(ofSize: bookTitleFontSize)
         let authorFont = UIFont.systemFont(ofSize: authorFontSize)
-        let pageNumberFont = UIFont.systemFont(ofSize: pageNumberFontSize)
 
-        // 段落样式：正文
+        // 段落样式：正文（首行缩进2字符）
         let bodyParagraph = NSMutableParagraphStyle()
-        bodyParagraph.lineSpacing = lineSpacing // 行间距6pt
-        bodyParagraph.paragraphSpacing = paragraphSpacing // 段间距12pt
+        bodyParagraph.lineSpacing = lineSpacing // 行间距10pt
+        bodyParagraph.paragraphSpacing = paragraphSpacing // 段间距14pt
         bodyParagraph.firstLineHeadIndent = bodyFontSize * 2 // 首行缩进2字符
 
-        // 段落样式：章节标题（不缩进）
+        // 段落样式：章节标题（居中）
         let titleParagraph = NSMutableParagraphStyle()
         titleParagraph.alignment = .center // 标题居中
         titleParagraph.paragraphSpacing = 20 // 标题与正文间距20pt
-
-        var pageIndex = 0 // 已绘制页码（含封面）
 
         let pdfData = renderer.pdfData { context in
             // 1. 绘制封面页
@@ -97,14 +93,12 @@ final class PDFExporter {
                       textRect: textRect,
                       bookTitleFont: bookTitleFont,
                       authorFont: authorFont)
-            pageIndex += 1
             DispatchQueue.main.async { progress(0.02) }
 
             // 2. 逐章节绘制
             for (index, chapter) in chapters.enumerated() {
                 // 每章新起一页：章节标题
                 context.beginPage()
-                pageIndex += 1
                 let titleAttr = NSAttributedString(
                     string: chapter.title,
                     attributes: [
@@ -117,10 +111,12 @@ final class PDFExporter {
 
                 // 正文文本区域：标题下方
                 let bodyTopY = textRect.minY + (chapterTitleFontSize + 20)
-                let bodyRect = CGRect(x: textRect.minX,
-                                     y: bodyTopY,
-                                     width: textRect.width,
-                                     height: textRect.maxY - bodyTopY)
+                let firstPageRect = CGRect(x: textRect.minX,
+                                          y: bodyTopY,
+                                          width: textRect.width,
+                                          height: textRect.maxY - bodyTopY)
+                // 后续页完整文本区域
+                let nextPageRect = textRect
 
                 // 章节正文属性
                 let bodyAttr = NSAttributedString(
@@ -132,17 +128,15 @@ final class PDFExporter {
                     ]
                 )
 
-                // 正文分页绘制（可能跨多页）
-                let drawnPages = paginateAndDraw(
+                // 正文分页绘制
+                _ = paginateAndDraw(
                     attributedString: bodyAttr,
                     in: context,
-                    pageRect: bodyRect,
-                    nextPageRect: textRect,
-                    pageNumberFont: pageNumberFont
+                    firstPageRect: firstPageRect,
+                    nextPageRect: nextPageRect
                 )
-                pageIndex += drawnPages
 
-                // 进度回调：按章节数推进（扣除封面占 2%）
+                // 进度回调
                 let chapterProgress = Float(index + 1) / Float(chapters.count)
                 DispatchQueue.main.async {
                     progress(0.02 + chapterProgress * 0.96)
@@ -157,7 +151,6 @@ final class PDFExporter {
         let fileURL = FileManager.default.temporaryDirectory
             .appendingPathComponent(fileName)
 
-        // 覆盖已存在的旧文件
         if FileManager.default.fileExists(atPath: fileURL.path) {
             try FileManager.default.removeItem(at: fileURL)
         }
@@ -177,7 +170,6 @@ final class PDFExporter {
                            authorFont: UIFont) {
         context.beginPage()
 
-        // 垂直居中绘制书名和作者
         let titleAttr = NSAttributedString(
             string: "《\(book.title)》",
             attributes: [
@@ -213,7 +205,6 @@ final class PDFExporter {
         let totalHeight = titleSize.height + 30 + authorSize.height + 60 + dateSize.height
         var y = textRect.midY - totalHeight / 2
 
-        // 书名水平居中
         let titleRect = CGRect(x: textRect.minX, y: y, width: textRect.width, height: titleSize.height)
         titleAttr.draw(in: titleRect)
         y += titleSize.height + 30
@@ -226,51 +217,61 @@ final class PDFExporter {
         dateAttr.draw(in: dateRect)
     }
 
-    /// 将长文本按页面空间分页绘制
+    /// 将长文本按页面空间分页绘制（使用 UIKit 坐标系，文字方向正确）
     /// - Parameters:
     ///   - attributedString: 正文属性串
     ///   - context: PDF 上下文
-    ///   - pageRect: 首页（标题下方）的可用区域
+    ///   - firstPageRect: 首页（标题下方）的可用区域
     ///   - nextPageRect: 后续页的完整文本区域
-    ///   - pageNumberFont: 页码字体
     /// - Returns: 额外绘制的页数（不含首页）
     @discardableResult
     private func paginateAndDraw(attributedString: NSAttributedString,
                                  in context: UIGraphicsPDFRendererContext,
-                                 pageRect: CGRect,
-                                 nextPageRect: CGRect,
-                                 pageNumberFont: UIFont) -> Int {
+                                 firstPageRect: CGRect,
+                                 nextPageRect: CGRect) -> Int {
         guard attributedString.length > 0 else { return 0 }
 
         let cfAttr = attributedString as CFAttributedString
         let framesetter = CTFramesetterCreateWithAttributedString(cfAttr)
 
         var remainingRange = CFRange(location: 0, length: 0)
-        var currentRect = pageRect
+        var currentRect = firstPageRect
         var extraPages = 0
         var firstPage = true
 
         while true {
-            let path = CGMutablePath()
-            path.addRect(currentRect)
-            let frame = CTFramesetterCreateFrame(framesetter, remainingRange, path, nil)
-            let visibleRange = CTFrameGetVisibleStringRange(frame)
+            // 用 CTFramesetter 计算当前区域能放下多少字符
+            let fitRange = CTFramesetterSuggestFrameSizeWithConstraints(
+                framesetter,
+                remainingRange,
+                nil,
+                currentRect.size,
+                nil
+            )
+
+            // 本页要绘制的字符范围
+            let pageRange = NSRange(location: remainingRange.location, length: fitRange.length)
+            guard pageRange.length > 0 else { break }
+
+            // 切片出本页文本
+            let pageText = attributedString.attributedSubstring(from: pageRange)
 
             if !firstPage {
                 context.beginPage()
                 extraPages += 1
             }
-            CTFrameDraw(frame, context.cgContext)
 
-            // 绘制页码
-            let pageNumAttr = NSAttributedString(string: "", attributes: [.font: pageNumberFont])
-            // 页码留空，避免和阅读内容混淆
+            // 用 UIKit 坐标系绘制（文字方向正确）
+            pageText.draw(with: currentRect,
+                          options: [.usesLineFragmentOrigin, .usesFontLeading],
+                          context: nil)
 
-            remainingRange.location += visibleRange.length
+            remainingRange.location += fitRange.length
             remainingRange.length = 0
             firstPage = false
 
-            if visibleRange.length == 0 || remainingRange.location >= attributedString.length {
+            // 绘制完所有字符
+            if remainingRange.location >= attributedString.length {
                 break
             }
             currentRect = nextPageRect
