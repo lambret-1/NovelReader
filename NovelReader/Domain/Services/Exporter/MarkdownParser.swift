@@ -127,11 +127,12 @@ final class MarkdownParser {
             return
         }
 
-        // 引用块（保留 > 符号，支持行内语法：**加粗**、*斜体*等）
+        // 引用块（左侧半透明黑色粗竖线，支持行内语法：**加粗**、*斜体*等）
         if let match = quoteRegex.firstMatch(in: trimmed, range: fullRange) {
             let textRange = match.range(at: 1)
             let text = (trimmed as NSString).substring(with: textRange)
-            let attr = NSMutableAttributedString(string: "> ", attributes: quoteAttributes())
+            let attr = NSMutableAttributedString(attachment: makeQuoteLineAttachment())
+            attr.append(NSAttributedString(string: " ", attributes: quoteAttributes())) // 竖线与文本间距
             attr.append(parseInline(text, baseAttributes: quoteAttributes()))
             attr.append(NSAttributedString(string: "\n", attributes: quoteAttributes()))
             result.append(attr)
@@ -276,5 +277,25 @@ final class MarkdownParser {
             .paragraphStyle: para,
             .foregroundColor: textColor.withAlphaComponent(0.7) // 引用块用70%透明度，适配日间/夜间模式
         ]
+    }
+
+    /// 生成引用块左侧竖线（半透明黑色粗竖线）
+    private func makeQuoteLineAttachment() -> NSTextAttachment {
+        let lineWidth: CGFloat = 4 // 竖线宽度4pt，加粗效果
+        let lineHeight = bodyFontSize * 1.4 // 竖线高度约等于行高
+        let lineColor = textColor.withAlphaComponent(0.3) // 半透明黑色，适配日间/夜间模式
+
+        // 动态生成竖线图片
+        let renderer = UIGraphicsImageRenderer(size: CGSize(width: lineWidth, height: lineHeight))
+        let lineImage = renderer.image { context in
+            lineColor.setFill()
+            context.fill(CGRect(x: 0, y: 0, width: lineWidth, height: lineHeight))
+        }
+
+        let attachment = NSTextAttachment()
+        attachment.image = lineImage
+        // 竖线垂直居中对齐文本
+        attachment.bounds = CGRect(x: 0, y: (bodyFontSize - lineHeight) / 2 - 1, width: lineWidth, height: lineHeight)
+        return attachment
     }
 }
