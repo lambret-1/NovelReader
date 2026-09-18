@@ -48,6 +48,13 @@ final class SyncEngine: SyncEngineProtocol {
     // MARK: - 同步主流程
 
     func startSync() -> AnyPublisher<SyncResult, Error> {
+        // 兜底：从 Keychain 恢复 Token，防止 AppDelegate 启动恢复时序导致 apiClient.token 为 nil
+        // UI 层用 authService.loadSavedToken() 直接读 Keychain 判断登录，
+        // 而本方法用 apiClient.isAuthenticated 检查内存 token，两者可能不一致
+        if !apiClient.isAuthenticated {
+            apiClient.restoreTokenFromKeychain()
+        }
+
         guard apiClient.isAuthenticated else {
             return Fail(error: SyncError.notAuthenticated).eraseToAnyPublisher()
         }
