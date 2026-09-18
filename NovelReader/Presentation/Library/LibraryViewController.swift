@@ -206,6 +206,11 @@ final class LibraryViewController: UIViewController {
         })
 
         // 多选
+        // 导出为 PDF
+        alert.addAction(UIAlertAction(title: "导出为 PDF", style: .default) { [weak self] in
+            self?.exportBookAsPDF(book, sourceView: alert.view, sourceRect: alert.view.bounds)
+        })
+
         alert.addAction(UIAlertAction(title: "多选管理", style: .default) { [weak self] _ in
             self?.enterEditingMode()
             self?.selectedBookIds.insert(book.id)
@@ -386,6 +391,104 @@ final class LibraryViewController: UIViewController {
                 .store(in: &self!.cancellables)
         })
         present(alert, animated: true)
+    }
+
+    // MARK: - PDF 导出
+
+    /// 导出整本书为 PDF 并调起系统分享面板
+    /// - Parameters:
+    ///   - book: 要导出的书籍
+    ///   - sourceView: iPad popover 来源视图
+    ///   - sourceRect: iPad popover 来源矩形
+    private func exportBookAsPDF(_ book: Book, sourceView: UIView?, sourceRect: CGRect) {
+        // 显示导出 HUD
+        let hud = showExportHUD(message: "正在准备章节...")
+
+        // 先拉取章节列表
+        chapterRepository.fetchChapters(bookId: book.id)
+            .receive(on: DispatchQueue.main)
+            .sink(receiveCompletion: { completion in
+                if case .failure(let error) = completion {
+                    hud.hide(animated: true)
+                    NRToast.shared.show(message: "章节加载失败：\(error.localizedDescription)", type: .error)
+                }
+            }, receiveValue: { [weak self] chapters in
+                guard let self = self else { return }
+                guard !chapters.isEmpty else {
+                    hud.hide(animated: true)
+                    NRToast.shared.show(message: "书籍暂无章节，无法导出", type: .warning)
+                    return
+                }
+                // 章节按 sortOrder 排序
+                let sortedChapters = chapters.sorted(by: { $0.sortOrder < $1.sortOrder })
+
+                // 在后台队列执行 PDF 绘制
+                DispatchQueue.global(qos: .userInitiated).async {
+                    do {
+                        let exporter = PDFExporter()
+                        let fileURL = try exporter.export(
+                            book: book,
+                            chapters: sortedChapters,
+                            progress: { progressValue in
+                                DispatchQueue.main.async {
+                                    hud.updateProgress(progressValue,
+                                                        message: String(format: "正在导出 PDF %.0f%%", progressValue * 100))
+                                }
+                            }
+                        )
+
+                        // 导出完成，回到主线程调起分享面板
+                        DispatchQueue.main.async {
+                            hud.hide(animated: true)
+                            self.presentSharePanel(fileURL: fileURL,
+                                                   fileName: fileURL.lastPathComponent,
+                                                   sourceView: sourceView,
+                                                   sourceRect: sourceRect)
+                        }
+                    } catch {
+                        DispatchQueue.main.async {
+                            hud.hide(animated: true)
+                            NRToast.shared.show(message: "PDF 导出失败：\(error.localizedDescription)", type: .error)
+                        }
+                    }
+                }
+            })
+            .store(in: &self.cancellables)
+    }
+
+    /// 调起系统分享面板分享 PDF 文件
+    private func presentSharePanel(fileURL: URL, fileName: String, sourceView: UIView?, sourceRect: CGRect) {
+        let activityVC = UIActivityViewController(activityItems: [fileURL], applicationActivities: nil)
+
+        // 完成后清理临时文件
+        activityVC.completionWithItemsHandler = { [weak self] _, _, _, _ in
+            self?.cleanupTempFile(at: fileURL)
+        }
+
+        // iPad 适配 popover
+        if let popover = activityVC.popoverPresentationController {
+            if let sourceView = sourceView {
+                popover.sourceView = sourceView
+                popover.sourceRect = sourceRect
+            } else {
+                popover.sourceView = self.view
+                popover.sourceRect = self.view.bounds
+            }
+        }
+        activityVC.modalPresentationStyle = .formSheet
+        present(activityVC, animated: true)
+    }
+
+    /// 清理临时文件
+    private func cleanupTempFile(at url: URL) {
+        try? FileManager.default.removeItem(at: url)
+    }
+
+    /// 显示导出 HUD（带进度更新能力）
+    private func showExportHUD(message: String) -> ExportProgressHUD {
+        let hud = ExportProgressHUD()
+        hud.show(in: view, message: message)
+        return hud
     }
 
     private func showBookDetail(_ book: Book) {
