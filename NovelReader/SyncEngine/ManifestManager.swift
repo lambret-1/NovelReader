@@ -199,20 +199,14 @@ final class ManifestManager {
     }
 
     /// 验证是否为有效的小说文件路径
-    /// 格式：书名/meta.json 或 书名/序号_标题.md
+    /// 格式：书名/meta.json 或 书名/任意标题.md（不再要求数字序号前缀）
     private static func isValidNovelFilePath(_ path: String) -> Bool {
         let components = path.components(separatedBy: "/")
         guard components.count == 2 else { return false }
         let fileName = components[1]
         if fileName == "meta.json" { return true }
-        if fileName.hasSuffix(".md") {
-            // 序号_标题.md 格式，序号为 3 位数字
-            let namePart = fileName.dropLast(3) // 去掉 .md
-            if namePart.count >= 4, namePart.prefix(3).allSatisfy({ $0.isNumber }), namePart[namePart.index(namePart.startIndex, offsetBy: 3)] == "_" {
-                return true
-            }
-        }
-        return false
+        // 接受任意 .md 章节文件
+        return fileName.hasSuffix(".md")
     }
 
     /// 对比本地和远端 manifest，返回差异列表

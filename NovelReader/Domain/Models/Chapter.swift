@@ -59,12 +59,11 @@ struct Chapter: Identifiable, Codable, Equatable {
         isDirty = true
     }
 
-    /// 生成远程文件名：序号_标题.md
+    /// 生成远程文件名：标题.md（不含数字序号前缀）
     func remoteFileName() -> String {
-        let order = String(format: "%03d", sortOrder + 1)
         let safeTitle = title.components(separatedBy: CharacterSet(charactersIn: "/\\?%*|\"<>"))
             .joined()
             .trimmingCharacters(in: .whitespacesAndNewlines)
-        return "\(order)_\(safeTitle.isEmpty ? "未命名" : safeTitle).md"
+        return "\(safeTitle.isEmpty ? "未命名" : safeTitle).md"
     }
 }

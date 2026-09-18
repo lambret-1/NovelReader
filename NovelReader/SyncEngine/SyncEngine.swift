@@ -386,6 +386,19 @@ final class SyncEngine: SyncEngineProtocol {
             }
         }
 
+        // 第二回退：用标题匹配（文件名去掉扩展名后与章节标题比较，适用于不带数字前缀的文件名）
+        let titleFromFileName = (fileName as NSString).deletingPathExtension
+        if !titleFromFileName.isEmpty,
+           let existing = chapters.first(where: { $0.title == titleFromFileName }) {
+            var updated = existing
+            updated.title = parsed.title
+            updated.updateContent(parsed.body)
+            updated.isDirty = false
+            updated.remotePath = path
+            _ = try? awaitPublisher(chapterRepository.updateChapter(updated))
+            return true
+        }
+
         // 都匹配不到，创建新章节
         let sortOrder = chapterNum == Int.max ? chapters.count : max(0, chapterNum - 1)
         let newChapter = Chapter(
