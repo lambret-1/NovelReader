@@ -35,6 +35,7 @@ final class MarkdownParser {
     private let headingRegex = try! NSRegularExpression(pattern: #"^(#{1,6})[ \t]+(.+)$"#)
     private let hrRegex = try! NSRegularExpression(pattern: #"^-{3,}$"#)
     private let listRegex = try! NSRegularExpression(pattern: #"^[-*+][ \t]+(.+)$"#)
+    private let orderedListRegex = try! NSRegularExpression(pattern: #"^(\d+)[.、][ \t]+(.+)$"#)
     private let quoteRegex = try! NSRegularExpression(pattern: #"^>[ \t]*(.*)$"#)
     private let boldRegex = try! NSRegularExpression(pattern: #"\*\*(.+?)\*\*"#)
     private let italicRegex = try! NSRegularExpression(pattern: #"(?<!\*)\*([^*]+)\*(?!\*)"#)
@@ -80,12 +81,18 @@ final class MarkdownParser {
             let size: CGFloat
             let spacingAfter: CGFloat
             switch level {
-            case 1: size = h1FontSize; spacingAfter = 12
-            case 2: size = h2FontSize; spacingAfter = 10
-            default: size = h3FontSize; spacingAfter = 8
+            case 1: size = h1FontSize; spacingAfter = 4
+            case 2: size = h2FontSize; spacingAfter = 4
+            default: size = h3FontSize; spacingAfter = 3
             }
+            // 一级二级标题下方加分隔线（贴近GitHub风格）
             result.append(NSAttributedString(string: "\n" + text + "\n",
-                                            attributes: headingAttributes(size: size, spacingAfter: spacingAfter)))
+                                            attributes: headingAttributes(size: size, spacingAfter: 2)))
+            if level <= 2 {
+                let separator = String(repeating: "─", count: 35)
+                result.append(NSAttributedString(string: separator + "\n",
+                                                attributes: separatorAttributes()))
+            }
             return
         }
 
@@ -94,6 +101,19 @@ final class MarkdownParser {
             let textRange = match.range(at: 1)
             let text = (trimmed as NSString).substring(with: textRange)
             let attr = NSMutableAttributedString(string: "• ", attributes: bodyAttributes(indent: listIndent))
+            attr.append(parseInline(text, baseAttributes: bodyAttributes(indent: listIndent)))
+            attr.append(NSAttributedString(string: "\n", attributes: bodyAttributes(indent: listIndent)))
+            result.append(attr)
+            return
+        }
+
+        // 有序列表 1. 2. 3.
+        if let match = orderedListRegex.firstMatch(in: trimmed, range: fullRange) {
+            let numRange = match.range(at: 1)
+            let textRange = match.range(at: 2)
+            let num = (trimmed as NSString).substring(with: numRange)
+            let text = (trimmed as NSString).substring(with: textRange)
+            let attr = NSMutableAttributedString(string: "\(num). ", attributes: bodyAttributes(indent: listIndent))
             attr.append(parseInline(text, baseAttributes: bodyAttributes(indent: listIndent)))
             attr.append(NSAttributedString(string: "\n", attributes: bodyAttributes(indent: listIndent)))
             result.append(attr)
@@ -185,12 +205,23 @@ final class MarkdownParser {
     private func headingAttributes(size: CGFloat, spacingAfter: CGFloat) -> [NSAttributedString.Key: Any] {
         let para = NSMutableParagraphStyle()
         para.alignment = .left
-        para.paragraphSpacingBefore = 10
+        para.paragraphSpacingBefore = 2 // 标题上方留空2pt，紧凑排版
         para.paragraphSpacing = spacingAfter
         return [
             .font: UIFont.boldSystemFont(ofSize: size),
             .paragraphStyle: para,
             .foregroundColor: UIColor.black
+        ]
+    }
+
+    /// 分隔线属性：灰色细字
+    private func separatorAttributes() -> [NSAttributedString.Key: Any] {
+        let para = NSMutableParagraphStyle()
+        para.paragraphSpacing = 4
+        return [
+            .font: UIFont.systemFont(ofSize: 8),
+            .foregroundColor: UIColor.lightGray,
+            .paragraphStyle: para
         ]
     }
 
