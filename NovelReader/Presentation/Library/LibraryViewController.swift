@@ -207,7 +207,7 @@ final class LibraryViewController: UIViewController {
 
         // 多选
         // 导出为 PDF
-        alert.addAction(UIAlertAction(title: "导出为 PDF", style: .default) { [weak self] in
+        alert.addAction(UIAlertAction(title: "导出为 PDF", style: .default) { [weak self] _ in
             self?.exportBookAsPDF(book, sourceView: alert.view, sourceRect: alert.view.bounds)
         })
 
