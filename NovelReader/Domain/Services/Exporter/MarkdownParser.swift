@@ -140,14 +140,14 @@ final class MarkdownParser {
         let result = NSMutableAttributedString(string: text, attributes: baseAttributes)
 
         // 按优先级从高到低处理：代码 > 链接 > 加粗 > 斜体
-        applyInlineRegex(codeRegex, to: result, baseAttributes: baseAttributes) { inner in
+        applyInlineRegex(codeRegex, to: result) { inner in
             var attrs = baseAttributes
             attrs[.font] = UIFont.monospacedSystemFont(ofSize: bodyFontSize - 1, weight: .regular)
             attrs[.foregroundColor] = UIColor.darkGray
             return NSAttributedString(string: inner, attributes: attrs)
         }
 
-        applyInlineRegex(linkRegex, to: result, baseAttributes: baseAttributes) { inner in
+        applyInlineRegex(linkRegex, to: result) { inner in
             var attrs = baseAttributes
             attrs[.font] = UIFont.systemFont(ofSize: bodyFontSize)
             attrs[.foregroundColor] = UIColor.systemBlue
@@ -155,13 +155,13 @@ final class MarkdownParser {
             return NSAttributedString(string: inner, attributes: attrs)
         }
 
-        applyInlineRegex(boldRegex, to: result, baseAttributes: baseAttributes) { inner in
+        applyInlineRegex(boldRegex, to: result) { inner in
             var attrs = baseAttributes
             attrs[.font] = UIFont.boldSystemFont(ofSize: bodyFontSize)
             return NSAttributedString(string: inner, attributes: attrs)
         }
 
-        applyInlineRegex(italicRegex, to: result, baseAttributes: baseAttributes) { inner in
+        applyInlineRegex(italicRegex, to: result) { inner in
             var attrs = baseAttributes
             attrs[.font] = UIFont.italicSystemFont(ofSize: bodyFontSize)
             return NSAttributedString(string: inner, attributes: attrs)
@@ -173,10 +173,16 @@ final class MarkdownParser {
     /// 应用行内正则替换（从后往前，避免位置偏移）
     private func applyInlineRegex(_ regex: NSRegularExpression,
                                   to attrString: NSMutableAttributedString,
-                                  baseAttributes: [NSAttributedString.Key: Any],
                                   replacement: (String) -> NSAttributedString) {
         let fullRange = NSRange(location: 0, length: attrString.length)
-        guard let matches = regex.matches(in: attrString.string, range: fullRange) as? [NSTextCheckingResult] else { return }
+        // 收集所有匹配
+        var matches: [NSTextCheckingResult] = []
+        regex.enumerateMatches(in: attrString.string, range: fullRange) { result, _, _ in
+            if let result = result {
+                matches.append(result)
+            }
+        }
+        guard !matches.isEmpty else { return }
         // 从后往前替换
         for match in matches.reversed() {
             let matchRange = match.range(at: 0)
