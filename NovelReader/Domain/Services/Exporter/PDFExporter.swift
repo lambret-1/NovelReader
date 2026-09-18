@@ -241,12 +241,13 @@ final class PDFExporter {
 
         while true {
             // 用 CTFramesetter 计算当前区域能放下多少字符
-            let fitRange = CTFramesetterSuggestFrameSizeWithConstraints(
+            var fitRange = CFRange()
+            _ = CTFramesetterSuggestFrameSizeWithConstraints(
                 framesetter,
                 remainingRange,
                 nil,
                 currentRect.size,
-                nil
+                &fitRange
             )
 
             // 本页要绘制的字符范围
@@ -262,9 +263,8 @@ final class PDFExporter {
             }
 
             // 用 UIKit 坐标系绘制（文字方向正确）
-            pageText.draw(with: currentRect,
-                          options: [.usesLineFragmentOrigin, .usesFontLeading],
-                          context: nil)
+            let drawOptions: NSStringDrawingOptions = [.usesLineFragmentOrigin, .usesFontLeading]
+            pageText.draw(with: currentRect, options: drawOptions, context: nil)
 
             remainingRange.location += fitRange.length
             remainingRange.length = 0
