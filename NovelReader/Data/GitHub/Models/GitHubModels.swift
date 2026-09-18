@@ -101,12 +101,38 @@ struct CreateTreeRequest: Codable {
     }
 }
 
+/// 创建 Tree 条目
+/// 注意：删除文件时 mode/type/sha 均为 nil，仅编码 path，GitHub API 会将其解释为删除该路径
 struct CreateTreeItem: Codable {
     let path: String
-    let mode: String  // "100644" for file
-    let type: String  // "blob"
-    let sha: String?  // 已有 blob 的 sha
+    let mode: String?  // "100644" for file，删除时为 nil
+    let type: String?  // "blob"，删除时为 nil
+    let sha: String?   // 已有 blob 的 sha，删除时为 nil
     let content: String? // 直接内联内容（小文件）
+
+    enum CodingKeys: String, CodingKey {
+        case path, mode, type, sha, content
+    }
+
+    /// 自定义编码：删除条目仅编码 path，其余字段省略
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(path, forKey: .path)
+        if let mode = mode { try container.encode(mode, forKey: .mode) }
+        if let type = type { try container.encode(type, forKey: .type) }
+        if let sha = sha { try container.encode(sha, forKey: .sha) }
+        if let content = content { try container.encode(content, forKey: .content) }
+    }
+
+    /// 创建普通文件条目（新增/修改）
+    static func fileItem(path: String, sha: String) -> CreateTreeItem {
+        CreateTreeItem(path: path, mode: "100644", type: "blob", sha: sha, content: nil)
+    }
+
+    /// 创建删除条目（从 tree 中移除该路径）
+    static func deleteItem(path: String) -> CreateTreeItem {
+        CreateTreeItem(path: path, mode: nil, type: nil, sha: nil, content: nil)
+    }
 }
 
 /// 创建 Commit 请求

@@ -54,8 +54,95 @@ struct FileDiff {
     let remoteEntry: ManifestEntry?
 }
 
-/// Manifest 管理器 - 负责生成本地 manifest 和对比差异
+// MARK: - 阅读进度同步数据结构
+
+/// 远端阅读进度条目（用 remotePath 关联，避免跨设备 UUID 不一致）
+struct RemoteReadingProgress: Codable, Equatable {
+    let bookPath: String          // 书籍远端路径
+    let chapterPath: String       // 章节远端路径
+    let chapterSortOrder: Int     // 章节序号（兜底匹配）
+    let offset: Int                // 字符偏移
+    let percent: Double           // 阅读百分比
+    let updatedAt: TimeInterval   // 更新时间戳
+
+    enum CodingKeys: String, CodingKey {
+        case bookPath = "book_path"
+        case chapterPath = "chapter_path"
+        case chapterSortOrder = "chapter_sort_order"
+        case offset, percent
+        case updatedAt = "updated_at"
+    }
+}
+
+/// 远端阅读进度文件结构
+struct RemoteReadingProgressFile: Codable, Equatable {
+    let version: Int
+    let generatedAt: TimeInterval
+    var progresses: [RemoteReadingProgress]
+
+    enum CodingKeys: String, CodingKey {
+        case version, progresses
+        case generatedAt = "generated_at"
+    }
+
+    static let currentVersion = 1
+    static let filePath = ".novel-sync/progress.json"
+
+    init(progresses: [RemoteReadingProgress] = []) {
+        self.version = Self.currentVersion
+        self.generatedAt = Date().timeIntervalSince1970
+        self.progresses = progresses
+    }
+}
+
+// MARK: - 书签同步数据结构
+
+/// 远端书签条目
+struct RemoteBookmark: Codable, Equatable {
+    let bookPath: String          // 书籍远端路径
+    let chapterPath: String       // 章节远端路径
+    let chapterSortOrder: Int     // 章节序号（兜底匹配）
+    let offset: Int                // 字符偏移
+    let textExcerpt: String?      // 选中文本摘要
+    let note: String?             // 笔记
+    let createdAt: TimeInterval   // 创建时间戳
+
+    enum CodingKeys: String, CodingKey {
+        case bookPath = "book_path"
+        case chapterPath = "chapter_path"
+        case chapterSortOrder = "chapter_sort_order"
+        case offset
+        case textExcerpt = "text_excerpt"
+        case note
+        case createdAt = "created_at"
+    }
+}
+
+/// 远端书签文件结构
+struct RemoteBookmarkFile: Codable, Equatable {
+    let version: Int
+    let generatedAt: TimeInterval
+    var bookmarks: [RemoteBookmark]
+
+    enum CodingKeys: String, CodingKey {
+        case version, bookmarks
+        case generatedAt = "generated_at"
+    }
+
+    static let currentVersion = 1
+    static let filePath = ".novel-sync/bookmarks.json"
+
+    init(bookmarks: [RemoteBookmark] = []) {
+        self.version = Self.currentVersion
+        self.generatedAt = Date().timeIntervalSince1970
+        self.bookmarks = bookmarks
+    }
+}
+
+/// Manifest 管理器 - 负责生成本地 manifest、对比差异、序列化同步数据
 final class ManifestManager {
+
+    // MARK: - Manifest 生成与对比
 
     /// 从本地书籍和章节数据生成 manifest
     static func generateLocalManifest(books: [Book], chapters: [Chapter]) -> Manifest {
@@ -85,7 +172,8 @@ final class ManifestManager {
                     size: content.utf8.count,
                     lastModified: chapter.updatedAt.timeIntervalSince1970
                 ))
-            }        }
+            }
+        }
 
         return Manifest(entries: entries)
     }
@@ -145,9 +233,7 @@ final class ManifestManager {
                 if local.sha == remote.sha {
                     type = .unchanged
                 } else {
-                    // 双方都有但内容不同，需要进一步判断
-                    // 简化策略：如果本地 isDirty 则认为本地修改了
-                    // 这里只基于 hash 判断为冲突，由 SyncEngine 进一步处理
+                    // 双方都有但内容不同，标记为冲突（由 SyncEngine 决定保留本地或远端）
                     type = .conflict
                 }
             case (.some, .none):
@@ -164,24 +250,7 @@ final class ManifestManager {
         return diffs
     }
 
-    // MARK: - 私有工具方法
-
-    /// 生成书籍元数据 JSON
-    private static func bookMetaJSON(_ book: Book) -> String {
-        let dict: [String: Any] = [
-            "id": book.id,
-            "title": book.title,
-            "author": book.author,
-            "created_at": ISO8601DateFormatter().string(from: book.createdAt),
-            "updated_at": ISO8601DateFormatter().string(from: book.updatedAt),
-            "sort_order": book.sortOrder
-        ]
-        if let data = try? JSONSerialization.data(withJSONObject: dict, options: .prettyPrinted),
-           let json = String(data: data, encoding: .utf8) {
-            return json
-        }
-        return "{}"
-    }
+    // MARK: - 章节 Markdown 序列化
 
     /// 生成章节 Markdown 内容
     static func chapterMarkdown(chapter: Chapter) -> String {
@@ -212,6 +281,137 @@ final class ManifestManager {
         let body = bodyLines.joined(separator: "\n")
         return (title, body)
     }
+
+    // MARK: - 书籍元数据序列化
+
+    /// 生成书籍元数据 JSON
+    static func bookMetaJSON(_ book: Book) -> String {
+        let dict: [String: Any] = [
+            "id": book.id,
+            "title": book.title,
+            "author": book.author,
+            "created_at": ISO8601DateFormatter().string(from: book.createdAt),
+            "updated_at": ISO8601DateFormatter().string(from: book.updatedAt),
+            "sort_order": book.sortOrder
+        ]
+        if let data = try? JSONSerialization.data(withJSONObject: dict, options: .prettyPrinted),
+           let json = String(data: data, encoding: .utf8) {
+            return json
+        }
+        return "{}"
+    }
+
+    /// 解析书籍元数据 JSON
+    static func parseBookMetaJSON(_ content: String) -> (title: String, author: String, sortOrder: Int)? {
+        guard let data = content.data(using: .utf8),
+              let dict = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            return nil
+        }
+        let title = dict["title"] as? String ?? ""
+        let author = dict["author"] as? String ?? ""
+        let sortOrder = dict["sort_order"] as? Int ?? 0
+        return (title, author, sortOrder)
+    }
+
+    // MARK: - 阅读进度序列化
+
+    /// 从本地阅读进度生成远端同步数据
+    /// - Parameters:
+    ///   - progresses: 本地所有阅读进度
+    ///   - books: 本地书籍（用于映射 bookId -> remotePath）
+    ///   - chapters: 本地所有章节（用于映射 chapterId -> remotePath/sortOrder）
+    /// - Returns: 远端阅读进度文件结构
+    static func makeRemoteProgresses(progresses: [ReadingProgress], books: [Book], chapters: [Chapter]) -> RemoteReadingProgressFile {
+        let bookMap = Dictionary(uniqueKeysWithValues: books.map { ($0.id, $0) })
+        let chapterMap = Dictionary(uniqueKeysWithValues: chapters.map { ($0.id, $0) })
+
+        var remoteProgresses: [RemoteReadingProgress] = []
+
+        for progress in progresses {
+            guard let book = bookMap[progress.bookId],
+                  let chapter = chapterMap[progress.chapterId] else {
+                continue
+            }
+            let chapterPath = "\(book.remotePath)/\(chapter.remoteFileName())"
+            remoteProgresses.append(RemoteReadingProgress(
+                bookPath: book.remotePath,
+                chapterPath: chapterPath,
+                chapterSortOrder: chapter.sortOrder,
+                offset: progress.offset,
+                percent: progress.percent,
+                updatedAt: progress.updatedAt.timeIntervalSince1970
+            ))
+        }
+
+        return RemoteReadingProgressFile(progresses: remoteProgresses)
+    }
+
+    /// 序列化阅读进度文件为 JSON 字符串
+    static func progressJSON(_ file: RemoteReadingProgressFile) -> String {
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.prettyPrinted, .withoutEscapingSlashes]
+        if let data = try? encoder.encode(file),
+           let json = String(data: data, encoding: .utf8) {
+            return json
+        }
+        return "{}"
+    }
+
+    /// 解析远端阅读进度 JSON
+    static func parseProgressJSON(_ content: String) -> RemoteReadingProgressFile? {
+        guard let data = content.data(using: .utf8) else { return nil }
+        let decoder = JSONDecoder()
+        return try? decoder.decode(RemoteReadingProgressFile.self, from: data)
+    }
+
+    // MARK: - 书签序列化
+
+    /// 从本地书签生成远端同步数据
+    static func makeRemoteBookmarks(bookmarks: [Bookmark], books: [Book], chapters: [Chapter]) -> RemoteBookmarkFile {
+        let bookMap = Dictionary(uniqueKeysWithValues: books.map { ($0.id, $0) })
+        let chapterMap = Dictionary(uniqueKeysWithValues: chapters.map { ($0.id, $0) })
+
+        var remoteBookmarks: [RemoteBookmark] = []
+
+        for bookmark in bookmarks {
+            guard let book = bookMap[bookmark.bookId],
+                  let chapter = chapterMap[bookmark.chapterId] else {
+                continue
+            }
+            let chapterPath = "\(book.remotePath)/\(chapter.remoteFileName())"
+            remoteBookmarks.append(RemoteBookmark(
+                bookPath: book.remotePath,
+                chapterPath: chapterPath,
+                chapterSortOrder: chapter.sortOrder,
+                offset: bookmark.offset,
+                textExcerpt: bookmark.textExcerpt,
+                note: bookmark.note,
+                createdAt: bookmark.createdAt.timeIntervalSince1970
+            ))
+        }
+
+        return RemoteBookmarkFile(bookmarks: remoteBookmarks)
+    }
+
+    /// 序列化书签文件为 JSON 字符串
+    static func bookmarksJSON(_ file: RemoteBookmarkFile) -> String {
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.prettyPrinted, .withoutEscapingSlashes]
+        if let data = try? encoder.encode(file),
+           let json = String(data: data, encoding: .utf8) {
+            return json
+        }
+        return "{}"
+    }
+
+    /// 解析远端书签 JSON
+    static func parseBookmarksJSON(_ content: String) -> RemoteBookmarkFile? {
+        guard let data = content.data(using: .utf8) else { return nil }
+        let decoder = JSONDecoder()
+        return try? decoder.decode(RemoteBookmarkFile.self, from: data)
+    }
+
+    // MARK: - 私有工具方法
 
     /// SHA256 哈希
     private static func sha256(_ string: String) -> String {

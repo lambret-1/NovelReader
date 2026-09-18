@@ -56,6 +56,8 @@ final class AppContainer {
             chapterRepository: chapterRepository,
             syncMetadataRepository: syncMetadataRepository,
             readingProgressRepository: readingProgressRepository,
+            bookmarkRepository: bookmarkRepository,
+            conflictRepository: conflictRepository,
             fileService: fileService,
             apiClient: apiClient
         )

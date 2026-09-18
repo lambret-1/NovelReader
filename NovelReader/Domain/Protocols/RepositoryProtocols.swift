@@ -26,6 +26,7 @@ protocol ChapterRepositoryProtocol {
 /// 书签仓库协议
 protocol BookmarkRepositoryProtocol {
     func fetchBookmarks(bookId: String) -> AnyPublisher<[Bookmark], Error>
+    func fetchAllBookmarks() -> AnyPublisher<[Bookmark], Error>
     func createBookmark(_ bookmark: Bookmark) -> AnyPublisher<Bookmark, Error>
     func deleteBookmark(id: String) -> AnyPublisher<Void, Error>
 }
@@ -33,6 +34,7 @@ protocol BookmarkRepositoryProtocol {
 /// 阅读进度仓库协议
 protocol ReadingProgressRepositoryProtocol {
     func fetchProgress(bookId: String) -> AnyPublisher<ReadingProgress?, Error>
+    func fetchAllProgresses() -> AnyPublisher<[ReadingProgress], Error>
     func saveProgress(_ progress: ReadingProgress) -> AnyPublisher<Void, Error>
 }
 

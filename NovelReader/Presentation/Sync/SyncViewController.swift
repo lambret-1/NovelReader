@@ -77,7 +77,7 @@ final class SyncViewController: UIViewController {
         label.textColor = DesignToken.Color.textSecondary
         label.textAlignment = .center
         label.numberOfLines = 0
-        label.text = "同步数据将保存到 GitHub 仓库\n包含书籍、章节、阅读进度和书签"
+        label.text = "双向同步：上传本地修改 + 下载远端更新\n包含书籍、章节、阅读进度和书签"
         return label
     }()
 
@@ -170,9 +170,9 @@ final class SyncViewController: UIViewController {
         } else {
             statusIconView.image = UIImage(systemName: "checkmark.circle.fill")
             statusTitleLabel.text = "已连接 GitHub"
-            statusDetailLabel.text = "数据将同步到 MyNovels 仓库"
+            statusDetailLabel.text = "数据将双向同步到 MyNovels 仓库"
             syncButton.isEnabled = true
-            syncButton.setTitle("开始下载", for: .normal)
+            syncButton.setTitle("开始同步", for: .normal)
         }
     }
 
@@ -191,31 +191,40 @@ final class SyncViewController: UIViewController {
             progressView.isHidden = true
             statusIconView.image = UIImage(systemName: "checkmark.circle.fill")
             statusIconView.tintColor = DesignToken.Color.success
-            statusTitleLabel.text = "下载完成"
-            statusDetailLabel.text = lastSyncMessage ?? "数据已下载到本地"
+            statusTitleLabel.text = "同步完成"
+            statusDetailLabel.text = lastSyncMessage ?? "数据已同步到本地和云端"
             syncButton.isEnabled = true
-            syncButton.setTitle("再次下载", for: .normal)
+            syncButton.setTitle("再次同步", for: .normal)
         case .pulling(let progress):
             progressView.isHidden = false
             progressView.setProgress(Float(progress), animated: true)
             statusIconView.image = UIImage(systemName: "arrow.down.circle.fill")
             statusIconView.tintColor = DesignToken.Color.primary
             statusTitleLabel.text = "正在下载... \(Int(progress * 100))%"
-            statusDetailLabel.text = "从 GitHub 下载章节数据"
+            statusDetailLabel.text = "从 GitHub 下载远端更新"
             syncButton.isEnabled = false
-            syncButton.setTitle("下载中...", for: .normal)
+            syncButton.setTitle("同步中...", for: .normal)
+        case .pushing(let progress):
+            progressView.isHidden = false
+            progressView.setProgress(Float(progress), animated: true)
+            statusIconView.image = UIImage(systemName: "arrow.up.circle.fill")
+            statusIconView.tintColor = DesignToken.Color.primary
+            statusTitleLabel.text = "正在上传... \(Int(progress * 100))%"
+            statusDetailLabel.text = "上传本地修改到 GitHub"
+            syncButton.isEnabled = false
+            syncButton.setTitle("同步中...", for: .normal)
         case .merging:
             progressView.isHidden = false
-            statusIconView.image = UIImage(systemName: "arrow.down.circle.fill")
+            statusIconView.image = UIImage(systemName: "arrow.triangle.2.circlepath")
             statusIconView.tintColor = DesignToken.Color.primary
             statusTitleLabel.text = "正在处理..."
-            statusDetailLabel.text = "保存章节数据到本地"
+            statusDetailLabel.text = "合并同步数据"
             syncButton.isEnabled = false
         case .error(let message):
             progressView.isHidden = true
             statusIconView.image = UIImage(systemName: "xmark.circle.fill")
             statusIconView.tintColor = DesignToken.Color.error
-            statusTitleLabel.text = "下载失败"
+            statusTitleLabel.text = "同步失败"
             statusDetailLabel.text = message
             syncButton.isEnabled = true
             syncButton.setTitle("重试", for: .normal)

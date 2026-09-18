@@ -98,13 +98,14 @@ final class GitHubFileService {
         return apiClient.put("/repos/\(owner)/\(repo)/contents/\(encodedPath)", body: body)
     }
 
-    /// 批量写入多个文件（一次 commit，自动检测默认分支，推荐用于同步）
+    /// 批量写入多个文件（一次 commit，自动检测默认分支，推荐用于同步），支持文件删除
     func writeFiles(owner: String,
                     repo: String,
                     files: [String: String],
+                    deletedPaths: [String] = [],
                     message: String,
                     branch: String? = nil) -> AnyPublisher<GitCommit, Error> {
-        return gitService.commitFiles(owner: owner, repo: repo, files: files, message: message, branch: branch)
+        return gitService.commitFiles(owner: owner, repo: repo, files: files, deletedPaths: deletedPaths, message: message, branch: branch)
     }
 
     // MARK: - 仓库管理

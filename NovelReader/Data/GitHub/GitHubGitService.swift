@@ -78,10 +78,16 @@ final class GitHubGitService {
 
     // MARK: - 批量提交
 
-    /// 批量提交多个文件（一次 commit），自动检测默认分支
+    /// 批量提交多个文件（一次 commit），自动检测默认分支，支持文件删除
+    /// - Parameters:
+    ///   - files: 待新增/修改的文件 [路径: 内容]
+    ///   - deletedPaths: 待删除的文件路径列表
+    ///   - message: commit 信息
+    ///   - branch: 分支名，不传则自动检测默认分支
     func commitFiles(owner: String,
                      repo: String,
                      files: [String: String],
+                     deletedPaths: [String] = [],
                      message: String,
                      branch: String? = nil) -> AnyPublisher<GitCommit, Error> {
 
@@ -94,7 +100,7 @@ final class GitHubGitService {
 
         return branchPublisher
             .flatMap { branch -> AnyPublisher<GitCommit, Error> in
-                self.commitFilesOnBranch(owner: owner, repo: repo, files: files, message: message, branch: branch)
+                self.commitFilesOnBranch(owner: owner, repo: repo, files: files, deletedPaths: deletedPaths, message: message, branch: branch)
             }
             .eraseToAnyPublisher()
     }
@@ -102,6 +108,7 @@ final class GitHubGitService {
     private func commitFilesOnBranch(owner: String,
                                      repo: String,
                                      files: [String: String],
+                                     deletedPaths: [String],
                                      message: String,
                                      branch: String) -> AnyPublisher<GitCommit, Error> {
 
@@ -112,6 +119,7 @@ final class GitHubGitService {
                     .eraseToAnyPublisher()
             }
             .flatMap { ref, currentTree -> AnyPublisher<(GitRef, GitTree), Error> in
+                // 1. 为所有新增/修改文件创建 blob
                 let blobPublishers = files.map { path, content in
                     self.createBlob(owner: owner, repo: repo, content: content)
                         .map { (path, $0.sha) }
@@ -120,8 +128,13 @@ final class GitHubGitService {
                 return Publishers.MergeMany(blobPublishers)
                     .collect()
                     .flatMap { pathSHAs -> AnyPublisher<GitTree, Error> in
-                        let items = pathSHAs.map { path, sha in
-                            CreateTreeItem(path: path, mode: "100644", type: "blob", sha: sha, content: nil)
+                        // 2. 构造 tree items：新增/修改文件 + 删除条目
+                        var items: [CreateTreeItem] = pathSHAs.map { path, sha in
+                            CreateTreeItem.fileItem(path: path, sha: sha)
+                        }
+                        // 3. 删除条目：仅编码 path，GitHub API 会从 base_tree 中移除该路径
+                        for deletedPath in deletedPaths {
+                            items.append(CreateTreeItem.deleteItem(path: deletedPath))
                         }
                         return self.createTree(owner: owner, repo: repo, baseTree: currentTree.sha, items: items)
                     }

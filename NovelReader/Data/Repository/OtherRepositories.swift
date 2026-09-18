@@ -26,6 +26,21 @@ final class BookmarkRepository: BookmarkRepositoryProtocol {
         }.eraseToAnyPublisher()
     }
 
+    func fetchAllBookmarks() -> AnyPublisher<[Bookmark], Error> {
+        Future { promise in
+            do {
+                let bookmarks = try self.dbQueue.read { db in
+                    try Bookmark
+                        .order(Column("createdAt").desc)
+                        .fetchAll(db)
+                }
+                promise(.success(bookmarks))
+            } catch {
+                promise(.failure(error))
+            }
+        }.eraseToAnyPublisher()
+    }
+
     func createBookmark(_ bookmark: Bookmark) -> AnyPublisher<Bookmark, Error> {
         Future { promise in
             do {
@@ -72,6 +87,21 @@ final class ReadingProgressRepository: ReadingProgressRepositoryProtocol {
                     try ReadingProgress.filter(Column("bookId") == bookId).fetchOne(db)
                 }
                 promise(.success(progress))
+            } catch {
+                promise(.failure(error))
+            }
+        }.eraseToAnyPublisher()
+    }
+
+    func fetchAllProgresses() -> AnyPublisher<[ReadingProgress], Error> {
+        Future { promise in
+            do {
+                let progresses = try self.dbQueue.read { db in
+                    try ReadingProgress
+                        .order(Column("updatedAt").desc)
+                        .fetchAll(db)
+                }
+                promise(.success(progresses))
             } catch {
                 promise(.failure(error))
             }
