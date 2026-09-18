@@ -594,12 +594,12 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
-		F157B375EB03400C8B09EE32AC65E764 /* PDFExporter.swift in Sources */,
-		C9880D76394E43C7BC03D415D6F0258A /* ExportProgressHUD.swift in Sources */,
 		7EE609159AC086BAB15FF998 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F157B375EB03400C8B09EE32AC65E764 /* PDFExporter.swift in Sources */,
+				C9880D76394E43C7BC03D415D6F0258A /* ExportProgressHUD.swift in Sources */,
 				D58A5E3E3B824127BE634D07 /* SyncViewController.swift in Sources */,
 				4A02809012EB453E9B3FB7BF /* BaseNavigationController.swift in Sources */,
 				1EBC5C22DAE24EDCAD2CC0EA /* SettingsViewController.swift in Sources */,
