@@ -75,12 +75,6 @@ final class PDFExporter {
         let bookTitleFont = UIFont.boldSystemFont(ofSize: bookTitleFontSize)
         let authorFont = UIFont.systemFont(ofSize: authorFontSize)
 
-        // 段落样式：正文（首行缩进2字符）
-        let bodyParagraph = NSMutableParagraphStyle()
-        bodyParagraph.lineSpacing = lineSpacing // 行间距10pt
-        bodyParagraph.paragraphSpacing = paragraphSpacing // 段间距14pt
-        bodyParagraph.firstLineHeadIndent = bodyFontSize * 2 // 首行缩进2字符
-
         // 段落样式：章节标题（居中）
         let titleParagraph = NSMutableParagraphStyle()
         titleParagraph.alignment = .center // 标题居中
@@ -118,15 +112,9 @@ final class PDFExporter {
                 // 后续页完整文本区域
                 let nextPageRect = textRect
 
-                // 章节正文属性
-                let bodyAttr = NSAttributedString(
-                    string: chapter.content,
-                    attributes: [
-                        .font: bodyFont,
-                        .paragraphStyle: bodyParagraph,
-                        .foregroundColor: UIColor.black
-                    ]
-                )
+                // 章节正文属性：用 MarkdownParser 解析 Markdown 排版
+                let markdownParser = MarkdownParser()
+                let bodyAttr = markdownParser.parse(chapter.content)
 
                 // 正文分页绘制
                 _ = paginateAndDraw(

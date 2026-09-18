@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		ACE6D9037B014D8CA31F82AB86F28CFF /* MarkdownParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = A36BE9FD3B9B4C998B169F9DA9434489 /* MarkdownParser.swift */; };
 		F157B375EB03400C8B09EE32AC65E764 /* PDFExporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7FCA5AB38834DF794CBE964BA3ECC5B /* PDFExporter.swift */; };
 		C9880D76394E43C7BC03D415D6F0258A /* ExportProgressHUD.swift in Sources */ = {isa = PBXBuildFile; fileRef = EED2BF10392140899962E60225552BB6 /* ExportProgressHUD.swift */; };
 		B7C39D81E70754DA3926E809 /* NaturalSort.swift in Sources */ = {isa = PBXBuildFile; fileRef = A26D491CABF5E4DC4B3E00A6 /* NaturalSort.swift */; };
@@ -76,6 +77,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		A36BE9FD3B9B4C998B169F9DA9434489 /* MarkdownParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "MarkdownParser.swift"; sourceTree = "<group>"; };
 		A7FCA5AB38834DF794CBE964BA3ECC5B /* PDFExporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "PDFExporter.swift"; sourceTree = "<group>"; };
 		EED2BF10392140899962E60225552BB6 /* ExportProgressHUD.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ExportProgressHUD.swift"; sourceTree = "<group>"; };
 		A26D491CABF5E4DC4B3E00A6 /* NaturalSort.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NaturalSort.swift; sourceTree = "<group>"; };
@@ -299,6 +301,7 @@
 			isa = PBXGroup;
 			children = (
 				A7FCA5AB38834DF794CBE964BA3ECC5B /* PDFExporter.swift */,
+				A36BE9FD3B9B4C998B169F9DA9434489 /* MarkdownParser.swift */,
 			);
 			path = Exporter;
 			sourceTree = "<group>";
@@ -599,6 +602,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				F157B375EB03400C8B09EE32AC65E764 /* PDFExporter.swift in Sources */,
+				ACE6D9037B014D8CA31F82AB86F28CFF /* MarkdownParser.swift in Sources */,
 				C9880D76394E43C7BC03D415D6F0258A /* ExportProgressHUD.swift in Sources */,
 				D58A5E3E3B824127BE634D07 /* SyncViewController.swift in Sources */,
 				4A02809012EB453E9B3FB7BF /* BaseNavigationController.swift in Sources */,
