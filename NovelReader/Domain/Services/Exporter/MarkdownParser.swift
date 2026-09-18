@@ -138,79 +138,33 @@ final class MarkdownParser {
 
     private func parseInline(_ text: String, baseAttributes: [NSAttributedString.Key: Any]) -> NSMutableAttributedString {
         let result = NSMutableAttributedString(string: text, attributes: baseAttributes)
-        let fullString = result.string as NSString
 
-        // 用字符串扫描处理 **加粗**（从后往前，避免位置偏移）
-        var searchRange = NSRange(location: 0, length: fullString.length)
-        var boldRanges: [(NSRange, NSRange)] = [] // (整体范围, 内部文本范围)
-        while true {
-            let firstStar = fullString.range(of: "**", options: [], range: searchRange)
-            guard firstStar.location != NSNotFound else { break }
-            let afterFirst = NSRange(location: firstStar.location + 2, length: fullString.length - firstStar.location - 2)
-            let secondStar = fullString.range(of: "**", options: [], range: afterFirst)
-            guard secondStar.location != NSNotFound else { break }
-            let fullRange = NSRange(location: firstStar.location, length: secondStar.location + 2 - firstStar.location)
-            let innerRange = NSRange(location: firstStar.location + 2, length: secondStar.location - firstStar.location - 2)
-            boldRanges.append((fullRange, innerRange))
-            searchRange = NSRange(location: secondStar.location + 2, length: fullString.length - secondStar.location - 2)
-        }
-        // 从后往前替换
-        for (fullRange, innerRange) in boldRanges.reversed() {
-            let innerText = fullString.substring(with: innerRange)
-            var boldAttrs = baseAttributes
-            boldAttrs[.font] = UIFont.boldSystemFont(ofSize: bodyFontSize)
-            result.replaceCharacters(in: fullRange, with: NSAttributedString(string: innerText, attributes: boldAttrs))
+        // 按优先级从高到低处理：代码 > 链接 > 加粗 > 斜体
+        applyInlineRegex(codeRegex, to: result) { inner in
+            var attrs = baseAttributes
+            attrs[.font] = UIFont.monospacedSystemFont(ofSize: bodyFontSize - 1, weight: .regular)
+            attrs[.foregroundColor] = UIColor.darkGray
+            return NSAttributedString(string: inner, attributes: attrs)
         }
 
-        // 用字符串扫描处理 *斜体*（排除已处理的加粗）
-        let currentString = result.string as NSString
-        var italicRanges: [(NSRange, NSRange)] = []
-        searchRange = NSRange(location: 0, length: currentString.length)
-        while true {
-            let firstStar = currentString.range(of: "*", options: [], range: searchRange)
-            guard firstStar.location != NSNotFound else { break }
-            // 跳过 **（加粗已处理，不会有 ** 了，但保险起见）
-            if firstStar.location + 1 < currentString.length &&
-               currentString.substring(with: NSRange(location: firstStar.location, length: 2)) == "**" {
-                searchRange = NSRange(location: firstStar.location + 2, length: currentString.length - firstStar.location - 2)
-                continue
-            }
-            let afterFirst = NSRange(location: firstStar.location + 1, length: currentString.length - firstStar.location - 1)
-            let secondStar = currentString.range(of: "*", options: [], range: afterFirst)
-            guard secondStar.location != NSNotFound else { break }
-            let fullRange = NSRange(location: firstStar.location, length: secondStar.location + 1 - firstStar.location)
-            let innerRange = NSRange(location: firstStar.location + 1, length: secondStar.location - firstStar.location - 1)
-            italicRanges.append((fullRange, innerRange))
-            searchRange = NSRange(location: secondStar.location + 1, length: currentString.length - secondStar.location - 1)
-        }
-        for (fullRange, innerRange) in italicRanges.reversed() {
-            let innerText = currentString.substring(with: innerRange)
-            var italicAttrs = baseAttributes
-            italicAttrs[.font] = UIFont.italicSystemFont(ofSize: bodyFontSize)
-            result.replaceCharacters(in: fullRange, with: NSAttributedString(string: innerText, attributes: italicAttrs))
+        applyInlineRegex(linkRegex, to: result) { inner in
+            var attrs = baseAttributes
+            attrs[.font] = UIFont.systemFont(ofSize: bodyFontSize)
+            attrs[.foregroundColor] = UIColor.systemBlue
+            attrs[.underlineStyle] = NSUnderlineStyle.single.rawValue
+            return NSAttributedString(string: inner, attributes: attrs)
         }
 
-        // 行内代码 `code`
-        let codeString = result.string as NSString
-        var codeRanges: [(NSRange, NSRange)] = []
-        searchRange = NSRange(location: 0, length: codeString.length)
-        while true {
-            let firstBacktick = codeString.range(of: "`", options: [], range: searchRange)
-            guard firstBacktick.location != NSNotFound else { break }
-            let afterFirst = NSRange(location: firstBacktick.location + 1, length: codeString.length - firstBacktick.location - 1)
-            let secondBacktick = codeString.range(of: "`", options: [], range: afterFirst)
-            guard secondBacktick.location != NSNotFound else { break }
-            let fullRange = NSRange(location: firstBacktick.location, length: secondBacktick.location + 1 - firstBacktick.location)
-            let innerRange = NSRange(location: firstBacktick.location + 1, length: secondBacktick.location - firstBacktick.location - 1)
-            codeRanges.append((fullRange, innerRange))
-            searchRange = NSRange(location: secondBacktick.location + 1, length: codeString.length - secondBacktick.location - 1)
+        applyInlineRegex(boldRegex, to: result) { inner in
+            var attrs = baseAttributes
+            attrs[.font] = UIFont.boldSystemFont(ofSize: bodyFontSize)
+            return NSAttributedString(string: inner, attributes: attrs)
         }
-        for (fullRange, innerRange) in codeRanges.reversed() {
-            let innerText = codeString.substring(with: innerRange)
-            var codeAttrs = baseAttributes
-            codeAttrs[.font] = UIFont.monospacedSystemFont(ofSize: bodyFontSize - 1, weight: .regular)
-            codeAttrs[.foregroundColor] = UIColor.darkGray
-            result.replaceCharacters(in: fullRange, with: NSAttributedString(string: innerText, attributes: codeAttrs))
+
+        applyInlineRegex(italicRegex, to: result) { inner in
+            var attrs = baseAttributes
+            attrs[.font] = UIFont.italicSystemFont(ofSize: bodyFontSize)
+            return NSAttributedString(string: inner, attributes: attrs)
         }
 
         return result
